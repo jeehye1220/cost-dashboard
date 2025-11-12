@@ -204,6 +204,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
                 height: `${getBarHeight(exchangeRateEffect)}px`
               }}
             >
+              <div className="text-sm">환율효과</div>
             </div>
             <div className="text-xs text-gray-500 mt-2 text-center font-medium">FX 영향</div>
           </div>
