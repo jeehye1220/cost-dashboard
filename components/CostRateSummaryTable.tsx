@@ -15,6 +15,9 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
 
   const { total } = summary;
 
+  // 25FW 시즌 판별 (수량 범위로 구분)
+  const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
+
   // 워터폴 데이터 계산
   const materialArtwork24F = total.materialRate24F_usd + total.artworkRate24F_usd;
   const materialArtwork25F = total.materialRate25F_usd + total.artworkRate25F_usd;
@@ -39,9 +42,11 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
             원가율 변동 요약 (전년 USD → 당년 KRW)
           </h3>
         </div>
-        <span className="text-[10px] text-gray-500 whitespace-nowrap">
-          전년: 24.06.01~24.10.31 | 당년: 25.06.01~25.10.31
-        </span>
+        {!is25FW && (
+          <span className="text-[10px] text-gray-500 whitespace-nowrap">
+            전년: 24.06.01~24.10.31 | 당년: 25.06.01~25.10.31
+          </span>
+        )}
       </button>
 
       {showTable && (

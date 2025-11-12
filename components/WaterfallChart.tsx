@@ -19,7 +19,11 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
     return <div>데이터를 불러오는 중...</div>;
   }
 
-  const { total } = summary;
+  const { total, fx } = summary;
+
+  // 환율 정보 추출 (동적)
+  const fxPrev = fx?.prev || 1297;
+  const fxCurr = fx?.curr || 1415;
 
   // 워터폴 데이터 계산
   const materialArtwork24F = total.materialRate24F_usd + total.artworkRate24F_usd;
@@ -254,7 +258,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
             <h4 className="font-semibold text-gray-700 text-sm">환율효과 (FX)</h4>
           </div>
           <p className="text-xs text-gray-600 mb-1">
-            전년 USD원가율 ({total.costRate25F_usd.toFixed(1)}) × 환율 (1,297→1,415)
+            전년 USD원가율 ({total.costRate25F_usd.toFixed(1)}) × 환율 ({fxPrev.toLocaleString()}→{fxCurr.toLocaleString()})
           </p>
           <p className="text-xl font-bold text-red-600">
             +{exchangeRateEffect.toFixed(1)}%p
@@ -301,30 +305,27 @@ interface InsightSectionProps {
 const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, loadingAi, aiInsights }) => {
   const [editMode, setEditMode] = useState<string | null>(null);
   
+  const { total } = summary || {};
+  
   const defaultInsights = {
     action: [
-      'Shoes 원부자재 절감 성과(-1.4%p)를 Bag/Acc_etc로 확대: 소재 표준화 및 공급사 통합',
-      'Bag 공임비(+0.4%p) 및 Shoes 공임 단가(+27%) 억제: 공정 단순화 및 자동화 투자',
-      '환율 헤지 전략 수립: 환율 상승(+9.1%)으로 KRW 원가율 악화 방어',
-      'Bag 고마진 구조(2.2%)를 전 카테고리로 확산하여 마진율 추가 개선',
-      '경비율 절감 성과(-0.6%p) 유지: 물량 증가 기반 고정비 분산 극대화',
-      'Bag(-0.4%p) 및 Acc_etc(-0.1%p) 원가 개선 가속화'
+      'Inner 공정개선 모델을 Outer·Bottom으로 확대 적용 (Inner 공임 14.76 → 12.69 USD, △2.07 USD 감소)',
+      '팬츠·우븐류 봉제 난이도 단순화 및 스티칭 축소 → 원부자재 단가 하락에도 공임비 상승으로 평균원가 개선 폭이 제한된 만큼, 공임 0.5~1.0%p 절감 목표로 설계 단순화 추진',
+      '다운점퍼 충전재 믹스 최적화(구스→덕 80/20) 사례를 타 브랜드로 수평 전개하여 소재단가 구조 절감 확산',
+      '공임 비중 KPI 설정 및 고임금 라인 전환 계획 수립 (카테고리별 공임 비중 목표화로 생산지 효율 관리)'
     ],
     risk: [
-      '환율 상승에 따른 KRW 원가 압력 지속 (1,420원 수준)',
-      '생산량 급증(+170.8%)에 따른 품질 관리 리스크',
-      '경비 증가 추세 전환 시 수익성 저하 우려',
-      'TAG 단가 상승 지속성 불확실 (마켓 수용도 모니터링 필요)'
+      'Outer·팬츠류 공임 비중 상승 → 봉제 복잡도 및 고임금 라인 투입 증가로 원가율 0.6~1.0%p 악화 가능 → 공정 슬리밍 및 패턴 단순화를 통한 생산성 회복 필요',
+      '환율(1,288→1,420원) 상승 영향으로 KRW 기준 원가율 +0.9%p 악화 (USD 기준 개선분 상쇄)',
+      'USD 결제 벤더 환노출 구간 관리 및 환헤지 전략 강화 (재무팀 협업 필요)'
     ],
     success: [
-      '원부자재 원가율 0.2%p 개선으로 USD 기준 원가 절감 달성',
-      '경비 원가율 0.6%p 대폭 절감 (1.0% → 0.4%), 규모의 경제 실현',
-      '마진율 0.2%p 축소로 공급망 협상력 강화 입증',
-      'USD 기준 1.1%p 원가율 개선 성과 (17.1% → 16.0%)',
-      'TAG 단가 +23.2% 상승으로 생산단가 증가 상쇄',
-      '대량생산 체제(758만개) 진입으로 시장 지배력 확대'
+      '정상마진 –0.2%p 하락 (2.0% → 1.8%) → 벤더 마진 회수 성공, 협상력 개선을 통한 구매단가 절감 효과 확인',
+      '충전재 믹스 최적화(구스→덕 80/20)로 소재단가 평균 –1.88 USD 절감 (12.91 → 11.03 USD), 협상이 아닌 조성비 전략 기반 구조적 절감 달성',
+      'Inner 봉제공정 단순화로 공임 –2.07 USD 절감 (14.76 → 12.69 USD), 유일하게 실질 제조 효율이 개선된 카테고리',
+      'USD 기준 전사 원가율 –0.8%p 개선 (18.2% → 17.4%), 협상력 강화 + 공정 효율화 효과가 병행된 구조적 개선 시즌'
     ],
-    message: '당년 시즌은 대량생산 체제 전환을 통해 USD 기준 1.1%p 원가율 개선을 달성했으나, 환율 상승(+10.2%)으로 KRW 기준 0.4%p 악화. 원부자재·경비·마진 전방위 절감 노력은 우수하나, 환율 리스크 관리가 향후 핵심 과제. TAG 단가 상승(+23.2%)이 생산단가 증가(+15.5%)를 상회하며 수익성 방어 성공.'
+    message: '25F 시즌은 구스→덕(80/20) 충전재 믹스 조정과 봉제 공정 단순화를 통해 실질 원가 효율이 개선된 시즌입니다. 벤더 마진을 0.2%p 회수하며 협상력이 강화되었으나, 환율 상승(1,288→1,420원)과 공임 부담이 수익성을 압박하였습니다. 다음 시즌은 Outer·Bottom 중심으로 공정 슬리밍과 생산지 효율화를 확대하여 원가율을 안정적으로 관리할 필요가 있습니다.'
   };
 
   const [insights, setInsights] = useState(defaultInsights);

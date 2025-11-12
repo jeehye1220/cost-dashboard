@@ -266,10 +266,10 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
           <span className="text-lg mr-2">💡</span>
           <strong className="text-blue-900">전체 및 각 카테고리의 원가 구성 비율을 5각형 레이더 차트로 표시합니다.</strong>
           <br />
-          <span className="text-gray-600 ml-6">
-            • 회색 영역: 24F(전년) 데이터 | 컬러 영역: 25F(당년) 데이터<br />
-            • 차트 하단 테이블에서 각 항목별 정확한 수치 확인 가능<br />
-            • 파란색 숫자는 개선(감소), 빨간색 숫자는 악화(증가)를 의미
+          <span className="text-gray-600">
+            <span className="ml-7">• 회색 영역: 24F(전년) 데이터 | 컬러 영역: 25F(당년) 데이터<br /></span>
+            <span className="ml-7">• 차트 하단 테이블에서 각 항목별 정확한 수치 확인 가능<br /></span>
+            <span className="ml-7">• 파란색 숫자는 개선(감소), 빨간색 숫자는 악화(증가)를 의미</span>
           </span>
         </p>
       </div>

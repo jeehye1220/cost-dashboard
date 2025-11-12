@@ -8,10 +8,11 @@ import WaterfallChart from '@/components/WaterfallChart';
 import ExecutiveSummary from '@/components/ExecutiveSummary';
 import KeyMetricsTable from '@/components/KeyMetricsTable';
 import CostRateSummaryTable from '@/components/CostRateSummaryTable';
-import { loadCostData, loadSummaryData } from '@/lib/csvParser';
+import { loadCostData, loadSummaryData, loadExchangeRates } from '@/lib/csvParser';
 import { CostDataItem } from '@/lib/types';
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<'25FW' | 'NON'>('25FW');
   const [items, setItems] = useState<CostDataItem[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -22,13 +23,30 @@ export default function Home() {
       try {
         setLoading(true);
         
+        // 탭에 따라 다른 CSV 파일 로드
+        const csvFileName = activeTab === '25FW' ? 'MLB FW.csv' : 'MLB non  251111.csv';
+        const fxFileName = activeTab === '25FW' ? 'FX FW.csv' : 'FX 251111.csv';
+        const summaryFileName = activeTab === '25FW' ? 'summary_25fw.json' : 'summary.json';
+        
         // CSV 파일에서 아이템별 데이터 로드
-        const costData = await loadCostData();
+        const costData = await loadCostData(csvFileName, fxFileName);
         setItems(costData);
         
         // summary.json 로드
-        const summaryData = await loadSummaryData();
-        setSummary(summaryData);
+        const summaryData = await loadSummaryData(summaryFileName);
+        
+        // 환율 정보 로드하여 summary에 추가
+        const fxRates = await loadExchangeRates(fxFileName);
+        const enrichedSummary = {
+          ...summaryData,
+          fx: {
+            prev: fxRates.prev,
+            curr: fxRates.curr,
+            fileName: fxFileName
+          }
+        };
+        
+        setSummary(enrichedSummary);
         
         setLoading(false);
       } catch (err) {
@@ -39,7 +57,7 @@ export default function Home() {
     };
 
     loadData();
-  }, []);
+  }, [activeTab]);
 
   // 실제 데이터에 존재하는 카테고리만 필터링
   const availableCategories = React.useMemo(() => {
@@ -83,9 +101,9 @@ export default function Home() {
       {/* 헤더 */}
       <header className="bg-gradient-to-r from-slate-700 to-slate-600 text-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-bold mb-1">F&F 원가 대시보드 (MLB NON시즌 원가)</h1>
+          <h1 className="text-2xl font-bold mb-1">F&F 원가 대시보드</h1>
           <p className="text-slate-200 text-sm">
-            시즌별 원가 분석 및 인사이트 (v1.3.0)
+            시즌별 원가 분석 및 인사이트 (v1.4.0)
           </p>
           <div className="mt-3 flex items-center gap-6 text-xs">
             <div className="flex items-center gap-2">
@@ -94,6 +112,34 @@ export default function Home() {
             </div>
             <div>
               <span className="text-slate-300">마지막 업데이트: 2025-11-11</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 탭 메뉴 */}
+        <div className="bg-slate-800/50 border-t border-slate-600">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setActiveTab('25FW')}
+                className={`px-6 py-3 font-semibold text-sm transition-all ${
+                  activeTab === '25FW'
+                    ? 'bg-white text-slate-800 border-t-4 border-blue-500'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                25FW
+              </button>
+              <button
+                onClick={() => setActiveTab('NON')}
+                className={`px-6 py-3 font-semibold text-sm transition-all ${
+                  activeTab === 'NON'
+                    ? 'bg-white text-slate-800 border-t-4 border-blue-500'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                NON
+              </button>
             </div>
           </div>
         </div>
@@ -126,11 +172,9 @@ export default function Home() {
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-8">
           <h3 className="font-bold text-blue-800 mb-2">📊 데이터 정보</h3>
           <div className="text-sm text-blue-700 space-y-1">
-            <p>• 총 {items.length}개 아이템 분석</p>
-            <p>• 데이터 기준: MLB non 251111.csv</p>
             <p>• 원부자재 = 원자재 + 부자재 + 본사공급자재 + 택/라벨</p>
             <p>• 원가율 = (평균원가 ÷ (평균TAG / 1.1)) × 100</p>
-            <p>• USD 환율: 전년 1,297 KRW / 당년 1,415 KRW</p>
+            <p>• USD 환율: 전년 {summary?.fx?.prev?.toLocaleString() || '1,297'} KRW / 당년 {summary?.fx?.curr?.toLocaleString() || '1,415'} KRW</p>
           </div>
         </div>
 

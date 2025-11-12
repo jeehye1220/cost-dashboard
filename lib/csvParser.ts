@@ -80,9 +80,9 @@ function parseCsv(csvText: string): RawCostData[] {
  * - 수량 가중 평균 사용
  * - 원가율 = (평균원가 ÷ (평균TAG / 1.1)) × 100
  */
-async function aggregateByItem(rawData: RawCostData[]): Promise<CostDataItem[]> {
+async function aggregateByItem(rawData: RawCostData[], fxFileName: string = 'FX 251111.csv'): Promise<CostDataItem[]> {
   // 환율 데이터 로드
-  const fxRates = await loadExchangeRates();
+  const fxRates = await loadExchangeRates(fxFileName);
   
   const itemMap = new Map<string, {
     category: string;
@@ -105,9 +105,12 @@ async function aggregateByItem(rawData: RawCostData[]): Promise<CostDataItem[]> 
     }
     
     const group = itemMap.get(key)!;
-    if (row.season === '전년') {
+    // '전년' 또는 '24F'
+    if (row.season === '전년' || row.season === '24F') {
       group.dataPrev.push(row);
-    } else if (row.season === '당년') {
+    } 
+    // '당년' 또는 '25F'
+    else if (row.season === '당년' || row.season === '25F') {
       group.dataCurr.push(row);
     }
   });
@@ -238,11 +241,11 @@ async function aggregateByItem(rawData: RawCostData[]): Promise<CostDataItem[]> 
 }
 
 /**
- * FX 환율 데이터 로드
+ * FX 환율 데이터 로드 (외부에서도 사용 가능하도록 export)
  */
-async function loadExchangeRates(): Promise<{ prev: number; curr: number }> {
+export async function loadExchangeRates(fxFileName: string = 'FX 251111.csv'): Promise<{ prev: number; curr: number }> {
   try {
-    const response = await fetch('/FX 251111.csv');
+    const response = await fetch(`/${fxFileName}`);
     const csvText = await response.text();
     const lines = csvText.split('\n');
     const values = lines[1].split(','); // 두 번째 줄 (데이터)
@@ -251,7 +254,7 @@ async function loadExchangeRates(): Promise<{ prev: number; curr: number }> {
       curr: parseFloat(values[1]) || 1415.00   // 당년
     };
   } catch (error) {
-    console.error('FX 파일 로드 실패:', error);
+    console.error(`FX 파일 로드 실패 (${fxFileName}):`, error);
     // 기본값 반환
     return { prev: 1296.77, curr: 1415.00 };
   }
@@ -260,17 +263,17 @@ async function loadExchangeRates(): Promise<{ prev: number; curr: number }> {
 /**
  * CSV 파일을 로드하고 아이템별 데이터로 집계
  */
-export async function loadCostData(): Promise<CostDataItem[]> {
+export async function loadCostData(fileName: string = 'MLB non  251111.csv', fxFileName: string = 'FX 251111.csv'): Promise<CostDataItem[]> {
   try {
-    const response = await fetch('/MLB non  251111.csv');
+    const response = await fetch(`/${fileName}`);
     const csvText = await response.text();
     
     const rawData = parseCsv(csvText);
-    const items = await aggregateByItem(rawData);
+    const items = await aggregateByItem(rawData, fxFileName);
     
     return items;
   } catch (error) {
-    console.error('CSV 파일 로드 실패:', error);
+    console.error(`CSV 파일 로드 실패 (${fileName}):`, error);
     return [];
   }
 }
@@ -278,13 +281,13 @@ export async function loadCostData(): Promise<CostDataItem[]> {
 /**
  * Summary JSON 파일 로드
  */
-export async function loadSummaryData() {
+export async function loadSummaryData(fileName: string = 'summary.json') {
   try {
-    const response = await fetch('/summary.json');
+    const response = await fetch(`/${fileName}`);
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('summary.json 로드 실패:', error);
+    console.error(`${fileName} 로드 실패:`, error);
     return null;
   }
 }
