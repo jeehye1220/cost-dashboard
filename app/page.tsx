@@ -101,7 +101,7 @@ export default function Home() {
       {/* 헤더 */}
       <header className="bg-gradient-to-r from-slate-700 to-slate-600 text-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <h1 className="text-2xl font-bold mb-1">F&F 원가 대시보드</h1>
+          <h1 className="text-2xl font-bold mb-1">F&F 원가 대시보드 (MLB)</h1>
           <p className="text-slate-200 text-sm">
             시즌별 원가 분석 및 인사이트 (v1.4.0)
           </p>
@@ -197,7 +197,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h4 className="font-bold mb-3">F&F 원가 대시보드 (MLB NON시즌 원가)</h4>
+              <h4 className="font-bold mb-3">F&F 원가 대시보드 (MLB)</h4>
               <p className="text-sm text-gray-400">
                 시즌별 원가 데이터 분석 및 인사이트 제공
               </p>
