@@ -31,9 +31,9 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
   const exchangeRateEffect = total.costRate25F_krw - total.costRate25F_usd;
   const realCostChange = total.costRate25F_usd - total.costRate24F_usd;
 
-  // 그래프 높이 계산 (비례 스케일: 1%p = 50px)
-  const heightScale = 50; // 1%p당 50px
-  const minHeight = 40; // 최소 높이
+  // 그래프 높이 계산 (비례 스케일: 1%p = 100px)
+  const heightScale = 100; // 1%p당 100px (차이를 명확하게 표시)
+  const minHeight = 50; // 최소 높이
   
   const getBarHeight = (value: number) => {
     return Math.max(minHeight, Math.abs(value) * heightScale);
@@ -88,7 +88,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
 
       {/* 워터폴 박스 차트 */}
       <div className="mb-6">
-        <div className="flex items-end justify-center gap-2 min-h-[280px] px-2">
+        <div className="flex items-end justify-center gap-2 min-h-[350px] px-2">
           {/* 전년 시작 */}
           <div className="flex flex-col items-center">
             <div
