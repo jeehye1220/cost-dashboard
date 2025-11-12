@@ -31,6 +31,14 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
   const exchangeRateEffect = total.costRate25F_krw - total.costRate25F_usd;
   const realCostChange = total.costRate25F_usd - total.costRate24F_usd;
 
+  // 그래프 높이 계산 (비례 스케일: 1%p = 50px)
+  const heightScale = 50; // 1%p당 50px
+  const minHeight = 40; // 최소 높이
+  
+  const getBarHeight = (value: number) => {
+    return Math.max(minHeight, Math.abs(value) * heightScale);
+  };
+
   const generateAIComment = async () => {
     setLoadingAi(true);
     try {
@@ -108,7 +116,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
               style={{
                 backgroundColor: materialArtworkChange < 0 ? '#10b981' : '#ef4444',
                 width: '80px',
-                height: `${Math.max(70, Math.abs(materialArtworkChange) * 40)}px`
+                height: `${getBarHeight(materialArtworkChange)}px`
               }}
             >
             </div>
@@ -125,10 +133,9 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
               style={{
                 backgroundColor: marginChange < 0 ? '#10b981' : '#ef4444',
                 width: '80px',
-                height: `${Math.max(50, Math.abs(marginChange) * 80)}px`
+                height: `${getBarHeight(marginChange)}px`
               }}
             >
-              <div className="text-xs opacity-90">마진</div>
             </div>
             <div className="text-xs text-gray-500 mt-2 text-center font-medium">마진<br/>변동</div>
           </div>
@@ -143,10 +150,9 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
               style={{
                 backgroundColor: laborChange < 0 ? '#10b981' : '#ef4444',
                 width: '80px',
-                height: `${Math.max(60, Math.abs(laborChange) * 80)}px`
+                height: `${getBarHeight(laborChange)}px`
               }}
             >
-              <div className="text-xs opacity-90">공임</div>
             </div>
             <div className="text-xs text-gray-500 mt-2 text-center font-medium">공임<br/>변동</div>
           </div>
@@ -161,10 +167,9 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
               style={{
                 backgroundColor: expenseChange < 0 ? '#10b981' : '#ef4444',
                 width: '80px',
-                height: `${Math.max(45, Math.abs(expenseChange) * 150)}px`
+                height: `${getBarHeight(expenseChange)}px`
               }}
             >
-              <div className="text-xs opacity-90">경비</div>
             </div>
             <div className="text-xs text-gray-500 mt-2 text-center font-medium">경비<br/>변동</div>
           </div>
@@ -196,10 +201,9 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
               style={{
                 backgroundColor: '#ef4444',
                 width: '100px',
-                height: `${Math.max(90, Math.abs(exchangeRateEffect) * 25)}px`
+                height: `${getBarHeight(exchangeRateEffect)}px`
               }}
             >
-              <div className="text-base mb-1">환율<br/>효과</div>
             </div>
             <div className="text-xs text-gray-500 mt-2 text-center font-medium">FX 영향</div>
           </div>
