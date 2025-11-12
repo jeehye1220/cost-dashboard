@@ -61,6 +61,15 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
   // MLB KIDS 시즌 여부 판별
   const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
   
+  // 당년 USD 원가율 개선/악화 판단 (전년 USD와 비교)
+  const usdCostRateChange = realCostChange; // 이미 계산됨
+  const usdStatus = usdCostRateChange < 0 ? '개선' : usdCostRateChange > 0 ? '악화' : '동일';
+  const usdStatusIcon = usdCostRateChange < 0 ? '✅' : usdCostRateChange > 0 ? '⚠️' : '➡️';
+  
+  // 당년 KRW 원가율 개선/악화 판단 (당년 USD와 비교 - 환율 효과)
+  const krwStatus = exchangeRateEffect > 0 ? '악화' : exchangeRateEffect < 0 ? '개선' : '동일';
+  const krwStatusIcon = exchangeRateEffect > 0 ? '⚠️' : exchangeRateEffect < 0 ? '✅' : '➡️';
+  
   // 그래프 높이 계산 (변동 바는 시작/끝 박스보다 작게)
   // 전년/당년 원가율 박스: 고정 180px
   // 변동 바: 최대 120px (시작/끝의 2/3), 최소 40px (작은 차이 구분 가능)
@@ -225,7 +234,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
             >
               <div className="text-2xl mb-1">{total.costRate25F_usd.toFixed(1)}%</div>
               <div className="text-xs opacity-90">당년 USD</div>
-              <div className="text-xs opacity-75 mt-1">✅ 개선</div>
+              <div className="text-xs opacity-75 mt-1">{usdStatusIcon} {usdStatus}</div>
             </div>
             <div className="text-xs text-gray-500 mt-2 text-center font-medium">당년 USD</div>
           </div>
@@ -260,7 +269,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
             >
               <div className="text-2xl mb-1">{total.costRate25F_krw.toFixed(1)}%</div>
               <div className="text-xs opacity-90">당년 KRW</div>
-              <div className="text-xs opacity-75 mt-1">⚠️ 악화</div>
+              <div className="text-xs opacity-75 mt-1">{krwStatusIcon} {krwStatus}</div>
             </div>
             <div className="text-xs text-gray-500 mt-2 text-center font-medium">당년 KRW</div>
           </div>
