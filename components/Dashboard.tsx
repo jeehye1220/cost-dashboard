@@ -254,8 +254,8 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                               color: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#065f46' : '#991b1b'
                             }}
                           >
-                            {(materialChange + artworkChange + laborChange + marginChange + expenseChange) >= 0 ? '+' : ''}
-                            ${(materialChange + artworkChange + laborChange + marginChange + expenseChange).toFixed(2)}
+                            {(materialChange + artworkChange + laborChange + marginChange + expenseChange) >= 0 ? '+' : '-'}
+                            ${Math.abs(materialChange + artworkChange + laborChange + marginChange + expenseChange).toFixed(2)}
                           </td>
                           
                           {/* 원부자재 */}
