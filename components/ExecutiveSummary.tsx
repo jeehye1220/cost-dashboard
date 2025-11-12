@@ -14,19 +14,18 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
 
   const { total } = summary;
 
+  // 시즌 타입 확인 (컴포넌트 최상위에서 선언)
+  const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
+  const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
+  const isDISCOVERY = total.qty24F > 1200000 && total.qty24F < 1400000;
+
   // 25FW와 NON, KIDS, DISCOVERY 시즌별 초기 텍스트 설정
   const getInitialTexts = () => {
-    // 25FW 시즌인지 확인 (total.qty24F가 390만개 정도면 25FW)
-    const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
-    // MLB KIDS 시즌인지 확인 (total.qty24F가 60만~70만개 정도면 KIDS)
-    const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
-    // DISCOVERY 시즌인지 확인 (total.qty24F가 120만~140만개 정도면 DISCOVERY)
-    const isDISCOVERY = total.qty24F > 1200000 && total.qty24F < 1400000;
-    
     if (isKIDS) {
       // MLB KIDS 시즌 텍스트
       return {
         usd: {
+          title: 'USD 기준: TAG 가격 상승으로 원가율 개선 ⚠️',
           mainChange: `▼ 0.5%p 개선`,
           items: [
             {
@@ -45,6 +44,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
           summary: `TAG 상승(+7.3%)과 고가 제품 믹스 개선으로 원가율 개선. 단, 실질적인 제조 효율 향상보다 가격설정 재구조화 및 판가 상승 전략의 성과.`
         },
         krw: {
+          title: '환율·제조원가 동반 상승으로 악화 ⚠️',
           mainChange: `▲ 1.6%p 악화`,
           items: [
             {
@@ -67,64 +67,55 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
       // DISCOVERY 시즌 텍스트
       return {
         usd: {
+          title: 'USD 기준: 원가율 상승 ⚠️',
           mainChange: `▲ 0.5%p 악화`,
           items: [
             {
               icon: '📦',
               title: '원부자재 단가 상승',
-              change: `+0.78%p`,
-              description: `고가 소재(다운, 기능성 원단 등) 사용 비중 확대로 글로벌 원자재 시세 상승. 소재비 비중 14.42% → 15.20%로 확대됐으며, 70% 이상 기여.`
+              change: `+0.8%p`,
+              description: `고가 소재(다운, 기능성 원단 등) 사용 비중 확대로 소재비 비중 14.4% → 15.2%로 상승. 평균원가 $34.12 → $35.11 (+2.9%) 증가했으나 TAG는 $169.33 → $169.84 (+0.3%)로 거의 변화 없어 원가율 악화.`
             },
             {
               icon: '🏷️',
               title: '공임비 절감',
-              change: `▼ 0.06%p`,
-              description: `협동 아이템(박터, 트리밍)에서 공임비 6.90 → 6.83 USD/PCS로 감소. 단, Outer(다운류) 공임비 효율화(14.42→15.20%)로 기여도 감소.`
-            },
-            {
-              icon: '📊',
-              title: '정상마진 상승',
-              change: `▲ 0.09%p`,
-              description: `협력사 마진 부담 증가. 경비를 마진에 부과 지원됨 2.26% → 2.34%로 상승.`
+              change: `▼ 0.1%p`,
+              description: `공임비율 4.5% → 4.4%로 소폭 감소. Inner/Bottom 카테고리에서 봉제 효율화 성과 있으나, Outer(다운류) 공임단가 상승으로 기여도 제한됨.`
             },
             {
               icon: '💸',
-              title: '아트웍/기타경비 절감',
-              change: `▼ 0.23%p`,
-              description: `아트웍, 관세, 제품공시비등 간접비용 효율화를 통해 경비율 절감.`
+              title: '경비율 절감',
+              change: `▼ 0.2%p`,
+              description: `아트웍·간접비용 효율화로 경비율 0.9% → 0.7%로 개선. 생산수량 23.4% 증가(134만→166만개)로 고정비 분산 효과.`
             }
           ],
-          summary: `공임·경비 절감 노력에도 불구하고 원부자재 단가 상승(+0.78%p)과 협력사 마진 압박(+0.09%p)이 누적되며 USD 원가율 +0.5%p 악화. "소재단가 통제 실패" 시즌.`
+          summary: `TAG 거의 정체(+0.3%) 상황에서 원부자재 단가 상승(+0.8%p)이 공임·경비 절감 효과(-0.3%p)를 상쇄하며 USD 원가율 +0.5%p 악화. "TAG 동결 + 소재비 급등" 구조.`
         },
         krw: {
-          mainChange: `▲ 0.8%p 악화`,
+          title: 'KRW 기준: 환율로 추가 악화 ⚠️',
+          mainChange: `▲ 1.4%p 악화`,
           items: [
             {
               icon: '💱',
               title: '환율 효과',
-              change: `+0.8%p`,
-              description: `환율 1,350 → 1,400원(+3.7%) 상승으로 KRW 환가율 추가 상승.`
-            },
-            {
-              icon: '💵',
-              title: '환율의 추가 부담',
-              change: `+0.8%p`,
-              description: `USD 기준 22.7% 원가율에 환율 상승이 물리며 KRW 기준 23.6%로 상승. 환가율인조로 환가율 +0.8%p 추가 악화. 환헤지·선환 전략 미비로 충당되지 못함.`
+              change: `+0.9%p`,
+              description: `환율 1,350 → 1,400원(+3.7%) 상승으로 KRW 기준 추가 부담. USD 기준 +0.5%p 악화에 환율 효과 +0.9%p가 더해져 총 1.4%p 악화.`
             },
             {
               icon: '🔥',
-              title: 'Outer 카테고리 환율 영향 집중',
+              title: 'Outer 카테고리 집중 타격',
               change: `58% 비중`,
-              description: `다운원면 등 Outer가 전체 생산의 58% 비중. 공임단가 상승(9.17 USD) 원물 변동에 가장 민감. 추가 환율 악화 구간에서 충수지 감소 방어 계획 필수.`
+              description: `Outer가 전체 생산의 58%(96만개) 차지. Outer 원가율 22.4% → 24.0% (+1.6%p) 급등으로 전체 원가율 상승 주도. 다운 소재 + 환율 이중 악재.`
             }
           ],
-          summary: `원자재 가격 상승과 환율 악재가 동시에 작용하며 원가 경쟁력 악화. 소재 조달 전략 및 공임비 강화 시급.`
+          summary: `TAG 상승 없이 원자재 단가만 급등하며 USD 기준 악화. 여기에 환율 3.7% 상승이 더해져 KRW 기준 실손익 크게 압박. TAG 인상 전략 부재가 치명적.`
         }
       };
     } else if (is25FW) {
       // 25FW 시즌 텍스트
       return {
         usd: {
+          title: 'USD 기준: 개선 성공',
           mainChange: `▼ 0.8%p 개선`,
           items: [
             {
@@ -149,6 +140,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
           summary: `소재 믹스 개선과 공임 효율화로 절감 효과를 달성했으나, 전체 평균 품목 단가 상승이 실질 개선폭 제한`
         },
         krw: {
+          title: 'KRW 기준: 환율에 상쇄',
           mainChange: `▲ 1.0%p 악화`,
           items: [
             {
@@ -177,6 +169,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
       // NON 시즌 텍스트
       return {
         usd: {
+          title: 'USD 기준: 개선 성공',
           mainChange: `▼ ${Math.abs(total.costRate25F_usd - total.costRate24F_usd).toFixed(1)}%p 개선`,
           items: [
             {
@@ -207,6 +200,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
           summary: `TAG 상승과 원가 절감의 동시효과로 USD 기준 원가율 –1.1%p 개선. 생산단가 인상 압력 속에서도 가격 믹스 전략으로 구조적 개선 달성`
         },
         krw: {
+          title: 'KRW 기준: 환율에 상쇄',
           mainChange: `▲ ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화`,
           items: [
             {
@@ -241,9 +235,6 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
   };
 
   const initialTexts = getInitialTexts();
-
-  // 시즌 판별
-  const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
   
   // 편집 가능한 텍스트 상태
   const [usdTexts, setUsdTexts] = useState(initialTexts.usd);
@@ -440,7 +431,12 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
             <div>
               <h3 className="text-base font-bold text-green-600 flex items-center gap-2">
                 <CheckCircle className="w-4 h-4" />
-                {isKIDS ? 'USD 기준: TAG 가격 상승으로 원가율 개선 ⚠️' : 'USD 기준: 개선 성공'}
+                <EditableText
+                  id="usd-title"
+                  value={usdTexts.title}
+                  className=""
+                  onSave={(val: string) => handleTextEdit('usd', 'title', val)}
+                />
               </h3>
               <div className="text-2xl font-bold text-gray-700 mt-2">
                 <span className="text-gray-500">{total.costRate24F_usd.toFixed(1)}%</span>
@@ -553,7 +549,12 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
             <div>
               <h3 className="text-base font-bold text-orange-600 flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
-                {isKIDS ? '환율·제조원가 동반 상승으로 악화 ⚠️' : 'KRW 기준: 환율에 상쇄'}
+                <EditableText
+                  id="krw-title"
+                  value={krwTexts.title}
+                  className=""
+                  onSave={(val: string) => handleTextEdit('krw', 'title', val)}
+                />
               </h3>
               <div className="text-2xl font-bold text-gray-700 mt-2">
                 <span className="text-gray-500">{total.costRate25F_usd.toFixed(1)}%</span>
