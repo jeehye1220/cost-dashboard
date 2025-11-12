@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
+import { saveInsightsToCSV } from '@/lib/insightsSaver';
 
 interface KeyMetricsTableProps {
   summary: any;
@@ -113,7 +114,10 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
           autoFocus
         />
         <button
-          onClick={() => setEditMode(null)}
+          onClick={async () => {
+            await saveToCSV();
+            setEditMode(null);
+          }}
           className="self-end text-xs bg-blue-500 text-white px-2 py-1 rounded"
         >
           저장
@@ -134,6 +138,25 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
   
   const handleInsightEdit = (key: string, value: string) => {
     setInsights({ ...insights, [key]: value });
+  };
+
+  // CSV 파일에 저장하는 함수
+  const saveToCSV = async () => {
+    const seasonType = detectSeasonType(total.qty24F);
+    const updates: { [key: string]: string } = {};
+    
+    if (insights.title) updates['metrics_title'] = insights.title;
+    if (insights.volume) updates['metrics_volume'] = insights.volume;
+    if (insights.tag) updates['metrics_tag'] = insights.tag;
+    if (insights.fx) updates['metrics_fx'] = insights.fx;
+    if (insights.conclusion) updates['metrics_conclusion'] = insights.conclusion;
+    
+    const success = await saveInsightsToCSV({ season: seasonType, updates });
+    if (success) {
+      // 저장 성공 (알림은 선택사항)
+    } else {
+      alert('저장에 실패했습니다. 다시 시도해주세요.');
+    }
   };
   
   // 섹션 제목 및 아이콘 설정

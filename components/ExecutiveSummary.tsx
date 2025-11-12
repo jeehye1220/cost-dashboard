@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
+import { saveStructuredInsights } from '@/lib/insightsSaver';
 
 interface ExecutiveSummaryProps {
   summary: any;
@@ -376,7 +377,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
   };
 
   // 항목 추가 함수
-  const addItem = (section: 'usd' | 'krw') => {
+  const addItem = async (section: 'usd' | 'krw') => {
     const newItem = {
       icon: '📝',
       title: '새 항목',
@@ -395,10 +396,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         items: [...krwTexts.items, newItem]
       });
     }
+    await saveToCSV();
   };
 
   // 항목 삭제 함수
-  const deleteItem = (section: 'usd' | 'krw', index: number) => {
+  const deleteItem = async (section: 'usd' | 'krw', index: number) => {
     if (section === 'usd') {
       const newItems = usdTexts.items.filter((_item: any, idx: number) => idx !== index);
       setUsdTexts({
@@ -424,6 +426,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         return newSet;
       });
     }
+    await saveToCSV();
   };
 
   const handleTextEdit = (section: 'usd' | 'krw', field: string, value: string, itemIndex?: number) => {
@@ -443,6 +446,31 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
       } else {
         setKrwTexts({ ...krwTexts, [field]: value });
       }
+    }
+  };
+
+  // CSV 파일에 저장하는 함수
+  const saveToCSV = async () => {
+    const insights = {
+      usd: {
+        title: usdTexts.title,
+        mainChange: usdTexts.mainChange,
+        items: usdTexts.items,
+        summary: usdTexts.summary,
+      },
+      krw: {
+        title: krwTexts.title,
+        mainChange: krwTexts.mainChange,
+        items: krwTexts.items,
+        summary: krwTexts.summary,
+      },
+    };
+    
+    const success = await saveStructuredInsights(seasonType, insights);
+    if (success) {
+      alert('저장되었습니다!');
+    } else {
+      alert('저장에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
@@ -470,7 +498,10 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
           />
         )}
         <button
-          onClick={() => setEditMode(null)}
+          onClick={async () => {
+            await saveToCSV();
+            setEditMode(null);
+          }}
           className="self-end text-xs bg-blue-500 text-white px-2 py-1 rounded"
         >
           저장

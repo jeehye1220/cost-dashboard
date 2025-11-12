@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
+import { saveStructuredInsights } from '@/lib/insightsSaver';
 
 interface WaterfallChartProps {
   summary: any;
@@ -360,6 +361,9 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
   
   const { total } = summary || {};
   
+  // 시즌 타입 확인
+  const seasonType = detectSeasonType(total?.qty24F || 0);
+  
   // MLB KIDS 시즌 여부 판별 (qty24F가 60만~70만 정도면 KIDS)
   const isKIDS = total?.qty24F > 600000 && total?.qty24F < 700000;
   // DISCOVERY 시즌 여부 판별 (qty24F가 120만~140만 정도면 DISCOVERY)
@@ -449,6 +453,26 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
     }
   }, [aiInsights]);
 
+  // CSV 파일에 저장하는 함수
+  const saveToCSV = async () => {
+    const insightsData = {
+      actions: insights.action,
+      risks: insights.risk,
+      success: insights.success,
+      actionSummary: aiInsights?.actionSummary,
+      riskSummary: aiInsights?.riskSummary,
+      successSummary: aiInsights?.successSummary,
+      message: insights.message,
+    };
+    
+    const success = await saveStructuredInsights(seasonType, insightsData);
+    if (success) {
+      // 저장 성공 (알림은 선택사항)
+    } else {
+      alert('저장에 실패했습니다. 다시 시도해주세요.');
+    }
+  };
+
   const handleEdit = (section: string, index: number, value: string) => {
     const sectionData = insights[section as keyof typeof insights];
     if (Array.isArray(sectionData)) {
@@ -458,18 +482,20 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
     }
   };
 
-  const handleAdd = (section: string) => {
+  const handleAdd = async (section: string) => {
     const sectionData = insights[section as keyof typeof insights];
     if (Array.isArray(sectionData)) {
       setInsights({ ...insights, [section]: [...sectionData, '새 항목'] });
+      await saveToCSV();
     }
   };
 
-  const handleDelete = (section: string, index: number) => {
+  const handleDelete = async (section: string, index: number) => {
     const sectionData = insights[section as keyof typeof insights];
     if (Array.isArray(sectionData)) {
       const newData = sectionData.filter((_, i) => i !== index);
       setInsights({ ...insights, [section]: newData });
+      await saveToCSV();
     }
   };
 
@@ -509,7 +535,10 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                       autoFocus
                     />
                     <button
-                      onClick={() => setEditMode(null)}
+                      onClick={async () => {
+                        await saveToCSV();
+                        setEditMode(null);
+                      }}
                       className="text-xs bg-blue-500 text-white px-2 rounded"
                     >
                       ✓
@@ -674,7 +703,10 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                   autoFocus
                 />
                 <button
-                  onClick={() => setEditMode(null)}
+                  onClick={async () => {
+                    await saveToCSV();
+                    setEditMode(null);
+                  }}
                   className="mt-2 text-sm bg-purple-500 text-white px-4 py-1 rounded"
                 >
                   저장
