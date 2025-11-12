@@ -15,8 +15,11 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
 
   const { total } = summary;
 
-  // 25FW 시즌 판별 (수량 범위로 구분)
+  // 시즌 판별 (수량 범위로 구분)
   const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
+  const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
+  const isDISCOVERY = total.qty24F > 1200000 && total.qty24F < 1400000;
+  const isNON = !is25FW && !isKIDS && !isDISCOVERY; // MLB NON 시즌
 
   // 워터폴 데이터 계산
   const materialArtwork24F = total.materialRate24F_usd + total.artworkRate24F_usd;
@@ -42,7 +45,7 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
             원가율 변동 요약 (전년 USD → 당년 KRW)
           </h3>
         </div>
-        {!is25FW && (
+        {isNON && (
           <span className="text-[10px] text-gray-500 whitespace-nowrap">
             전년: 24.06.01~24.10.31 | 당년: 25.06.01~25.10.31
           </span>

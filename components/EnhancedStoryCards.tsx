@@ -15,8 +15,14 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
 
   const { total, categories } = summary;
 
-  // FW/SS 시즌용 카테고리 선택 로직
-  // 규칙: Outer, Inner, Bottom 무조건 표시 + (Wear_etc 있으면 Wear_etc, 없으면 Acc_etc)
+  // 시즌 판별
+  const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
+  const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
+  const isDISCOVERY = total.qty24F > 1200000 && total.qty24F < 1400000;
+  const isNON = !is25FW && !isKIDS && !isDISCOVERY; // MLB NON 시즌
+  const isFWSS = is25FW || isKIDS || isDISCOVERY; // FW/SS 시즌
+
+  // 카테고리 선택 로직
   const categoryData = (() => {
     const allCategoryData = CATEGORIES.map(cat => {
       const data = categories.find((c: any) => c.category === cat.id);
@@ -26,20 +32,53 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
       };
     }).filter(cat => cat.data !== null);
 
-    // 필수 카테고리: Outer, Inner, Bottom
-    const requiredCategories = ['Outer', 'Inner', 'Bottom'];
-    const selected = allCategoryData.filter(cat => requiredCategories.includes(cat.id));
+    if (isFWSS) {
+      // FW/SS 시즌: Outer, Inner, Bottom 무조건 표시 + (Wear_etc 있으면 Wear_etc, 없으면 Acc_etc)
+      const requiredCategories = ['Outer', 'Inner', 'Bottom'];
+      const selected = allCategoryData.filter(cat => requiredCategories.includes(cat.id));
 
-    // 4번째 카드: Wear_etc 있으면 Wear_etc, 없으면 Acc_etc
-    const wearEtc = allCategoryData.find(cat => cat.id === 'Wear_etc');
-    const accEtc = allCategoryData.find(cat => cat.id === 'Acc_etc');
-    const etcCategory = wearEtc || accEtc;
-    
-    if (etcCategory) {
-      selected.push(etcCategory);
+      // 4번째 카드: Wear_etc 있으면 Wear_etc, 없으면 Acc_etc
+      const wearEtc = allCategoryData.find(cat => cat.id === 'Wear_etc');
+      const accEtc = allCategoryData.find(cat => cat.id === 'Acc_etc');
+      const etcCategory = wearEtc || accEtc;
+      
+      if (etcCategory) {
+        selected.push(etcCategory);
+      }
+
+      return selected;
+    } else {
+      // NON 시즌: 발주 비중(생산수량) 상위 4개 표시, ETC는 항상 마지막
+      const sortedByQty = [...allCategoryData].sort((a, b) => {
+        const qtyA = a.data?.qty25F || 0;
+        const qtyB = b.data?.qty25F || 0;
+        return qtyB - qtyA; // 내림차순
+      });
+
+      // ETC 카테고리 분리
+      const etcCategories = sortedByQty.filter(cat => 
+        cat.id === 'Acc_etc' || cat.id === 'Wear_etc'
+      );
+      const nonEtcCategories = sortedByQty.filter(cat => 
+        cat.id !== 'Acc_etc' && cat.id !== 'Wear_etc'
+      );
+
+      // 상위 4개 선택 (ETC 제외)
+      const top4 = nonEtcCategories.slice(0, 4);
+      
+      // ETC가 있으면 마지막에 추가
+      if (etcCategories.length > 0) {
+        // ETC 중 하나만 선택 (Wear_etc 우선, 없으면 Acc_etc)
+        const etcToAdd = etcCategories.find(cat => cat.id === 'Wear_etc') || etcCategories[0];
+        // 이미 4개가 있으면 마지막 것을 제거하고 ETC 추가
+        if (top4.length >= 4) {
+          top4.pop();
+        }
+        top4.push(etcToAdd);
+      }
+
+      return top4;
     }
-
-    return selected;
   })();
 
   // 변동 표시 컴포넌트

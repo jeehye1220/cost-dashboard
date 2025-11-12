@@ -32,14 +32,14 @@ function parseCsv(csvText: string): RawCostData[] {
     if (values.length < 30) continue; // 최소 컬럼 수 체크
     
     data.push({
-      brand: values[0] || '',
-      season: values[1] || '',
-      style: values[2] || '',
-      category: values[3] || '',
-      item_name: values[4] || '',
+      brand: (values[0] || '').trim(),
+      season: (values[1] || '').trim(),
+      style: (values[2] || '').trim(),
+      category: (values[3] || '').trim(),
+      item_name: (values[4] || '').trim(),
       po: values[5] || '',
       tag: parseFloat(values[6]) || 0,
-      qty: parseFloat(values[7]) || 0,
+      qty: parseFloat((values[7] || '').toString().replace(/,/g, '')) || 0,
       tag_total: parseFloat(values[8]) || 0,
       tag_usd_amount: parseFloat(values[9]) || 0,
       estimate_no: values[10] || '',
@@ -92,14 +92,17 @@ async function aggregateByItem(rawData: RawCostData[], fxFileName: string = 'FX 
     dataCurr: RawCostData[];
   }>();
   
-  // 아이템별로 그룹핑
+  // 아이템별로 그룹핑 (아이템명 정규화: 공백 제거, 소문자 변환)
   rawData.forEach(row => {
-    const key = `${row.category}_${row.item_name}`;
+    // 아이템명 정규화: 앞뒤 공백 제거, 중간 공백은 유지
+    const normalizedItemName = (row.item_name || '').trim();
+    const normalizedCategory = (row.category || '').trim();
+    const key = `${normalizedCategory}_${normalizedItemName}`;
     
     if (!itemMap.has(key)) {
       itemMap.set(key, {
-        category: row.category,
-        item_name: row.item_name,
+        category: normalizedCategory,
+        item_name: normalizedItemName,
         dataPrev: [],
         dataCurr: [],
       });
