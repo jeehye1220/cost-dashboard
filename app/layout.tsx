@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "F&F 원가 대시보드 (MLB)",
+  title: "F&F 원가 대시보드",
   description: "F&F 시즌별 원가 분석 대시보드",
 };
 

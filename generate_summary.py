@@ -143,6 +143,7 @@ def calculate_season_kpi(df_season: pd.DataFrame, season: str, currency: str = '
     expense_rate = (expense / tag_excl_vat) * 100 if tag_excl_vat > 0 else 0
     
     return {
+        f'qty_{season}': int(qty),
         f'avgTag_{season}': round(avg_tag, 2),
         f'avgCost_{season}': round(avg_cost, 2),
         f'costRate_{season}': round(cost_rate, 1),
@@ -257,6 +258,7 @@ def calculate_category_stats(df: pd.DataFrame) -> list:
         kpi_curr_krw = calculate_season_kpi(df_curr, '당년', 'KRW')
         
         # YOY 계산
+        qty_yoy = (kpi_curr_usd['qty_당년'] / kpi_prev_usd['qty_전년']) * 100 if kpi_prev_usd['qty_전년'] > 0 else 0
         tag_yoy_usd = (kpi_curr_usd['avgTag_당년'] / kpi_prev_usd['avgTag_전년']) * 100 if kpi_prev_usd['avgTag_전년'] > 0 else 0
         cost_yoy_usd = (kpi_curr_usd['avgCost_당년'] / kpi_prev_usd['avgCost_전년']) * 100 if kpi_prev_usd['avgCost_전년'] > 0 else 0
         cost_rate_change_usd = kpi_curr_usd['costRate_당년'] - kpi_prev_usd['costRate_전년']
@@ -267,6 +269,9 @@ def calculate_category_stats(df: pd.DataFrame) -> list:
         
         categories.append({
             'category': category,
+            'qty24F': kpi_prev_usd['qty_전년'],
+            'qty25F': kpi_curr_usd['qty_당년'],
+            'qtyYoY': round(qty_yoy, 1),
             
             # USD 기준
             'costRate24F_usd': kpi_prev_usd['costRate_전년'],

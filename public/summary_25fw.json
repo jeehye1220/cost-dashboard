@@ -45,6 +45,9 @@
   "categories": [
     {
       "category": "Outer",
+      "qty24F": 1071925,
+      "qty25F": 1306474,
+      "qtyYoY": 121.9,
       "costRate24F_usd": 18.9,
       "costRate25F_usd": 17.8,
       "costRateChange_usd": -1.1,
@@ -86,6 +89,9 @@
     },
     {
       "category": "Inner",
+      "qty24F": 1521890,
+      "qty25F": 1484644,
+      "qtyYoY": 97.6,
       "costRate24F_usd": 17.4,
       "costRate25F_usd": 17.0,
       "costRateChange_usd": -0.4,
@@ -127,6 +133,9 @@
     },
     {
       "category": "Bottom",
+      "qty24F": 608449,
+      "qty25F": 707590,
+      "qtyYoY": 116.3,
       "costRate24F_usd": 18.5,
       "costRate25F_usd": 17.6,
       "costRateChange_usd": -0.9,
@@ -168,6 +177,9 @@
     },
     {
       "category": "Acc_etc",
+      "qty24F": 708927,
+      "qty25F": 969037,
+      "qtyYoY": 136.7,
       "costRate24F_usd": 15.8,
       "costRate25F_usd": 13.9,
       "costRateChange_usd": -1.9,

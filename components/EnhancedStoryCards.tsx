@@ -60,6 +60,10 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
             </div>
             <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center">
+                <span className="opacity-80">생산수량</span>
+                <span className="font-bold">{(total.qty25F / 1000000).toFixed(1)}M ({total.qtyYoY?.toFixed(1) || '0'}%)</span>
+              </div>
+              <div className="flex justify-between items-center">
                 <span className="opacity-80">TAG YOY</span>
                 <span className="font-bold">{total.tagYoY_usd.toFixed(0)}%</span>
               </div>
@@ -92,6 +96,12 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                   <ChangeIndicator value={cat.data.costRateChange_usd} />
                 </div>
                 <div className="space-y-2 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">생산수량</span>
+                    <span className="font-bold text-gray-800">
+                      {cat.data.qty25F ? `${(cat.data.qty25F / 1000000).toFixed(1)}M (${cat.data.qtyYoY?.toFixed(1) || '0'}%)` : '-'}
+                    </span>
+                  </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">TAG YOY</span>
                     <span className="font-bold text-gray-800">
@@ -306,6 +316,10 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
               </div>
             </div>
             <div className="space-y-2 text-xs">
+              <div className="flex justify-between items-center">
+                <span className="opacity-80">생산수량</span>
+                <span className="font-bold">{(total.qty25F / 1000000).toFixed(1)}M ({total.qtyYoY?.toFixed(1) || '0'}%)</span>
+              </div>
               <div className="flex justify-between items-center">
                 <span className="opacity-80">TAG YOY</span>
                 <span className="font-bold">{total.tagYoY_krw.toFixed(0)}%</span>

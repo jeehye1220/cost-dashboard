@@ -45,6 +45,9 @@
   "categories": [
     {
       "category": "Shoes",
+      "qty24F": 1013076,
+      "qty25F": 2645792,
+      "qtyYoY": 261.2,
       "costRate24F_usd": 18.8,
       "costRate25F_usd": 16.8,
       "costRateChange_usd": -2.0,
@@ -86,6 +89,9 @@
     },
     {
       "category": "Bag",
+      "qty24F": 288066,
+      "qty25F": 286053,
+      "qtyYoY": 99.3,
       "costRate24F_usd": 16.1,
       "costRate25F_usd": 15.7,
       "costRateChange_usd": -0.4,
@@ -127,6 +133,9 @@
     },
     {
       "category": "Headwear",
+      "qty24F": 2888882,
+      "qty25F": 4447614,
+      "qtyYoY": 154.0,
       "costRate24F_usd": 15.3,
       "costRate25F_usd": 14.3,
       "costRateChange_usd": -1.0,
@@ -168,6 +177,9 @@
     },
     {
       "category": "Acc_etc",
+      "qty24F": 251784,
+      "qty25F": 208602,
+      "qtyYoY": 82.8,
       "costRate24F_usd": 17.2,
       "costRate25F_usd": 17.1,
       "costRateChange_usd": -0.1,
