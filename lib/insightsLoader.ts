@@ -1,0 +1,164 @@
+/**
+ * CSV 형식의 인사이트 파일을 로드하고 파싱하는 유틸리티
+ */
+
+interface InsightItem {
+  icon: string;
+  title: string;
+  change: string;
+  description: string;
+}
+
+interface InsightsData {
+  prevUsdCostRate?: number; // 전년 USD 원가율 (CSV에서 로드)
+  prevKrwCostRate?: number; // 전년 KRW 원가율 (CSV에서 로드)
+  usd: {
+    title: string;
+    mainChange: string;
+    items: InsightItem[];
+    summary: string;
+  };
+  krw: {
+    title: string;
+    mainChange: string;
+    items: InsightItem[];
+    summary: string;
+  };
+  actions: string[];
+  risks: string[];
+  success: string[];
+  message: string;
+}
+
+/**
+ * CSV 파일을 파싱하여 인사이트 데이터로 변환
+ */
+export async function loadInsightsFromCSV(season: string): Promise<InsightsData | null> {
+  try {
+    // 시즌별 CSV 파일 매핑
+    const fileMap: { [key: string]: string } = {
+      '25FW': '/insights_25fw.csv',
+      'NON': '/insights_non.csv',
+      'KIDS': '/insights_kids.csv',
+      'DISCOVERY': '/insights_discovery.csv',
+    };
+
+    const filePath = fileMap[season];
+    if (!filePath) {
+      console.warn(`Unknown season: ${season}`);
+      return null;
+    }
+
+    const response = await fetch(filePath);
+    if (!response.ok) {
+      console.warn(`Failed to load insights CSV: ${filePath}`);
+      return null;
+    }
+
+    const csvText = await response.text();
+    const lines = csvText.split('\n').filter(line => line.trim());
+    
+    // 헤더 제거
+    lines.shift();
+
+    // 데이터 파싱
+    const data: { [key: string]: string } = {};
+    lines.forEach(line => {
+      // CSV 파싱: section,key,value 형식
+      const firstComma = line.indexOf(',');
+      const secondComma = line.indexOf(',', firstComma + 1);
+      
+      if (firstComma === -1 || secondComma === -1) return;
+      
+      const section = line.substring(0, firstComma).trim();
+      const key = line.substring(firstComma + 1, secondComma).trim();
+      const value = line.substring(secondComma + 1).trim();
+      
+      data[section] = value;
+    });
+
+    // USD 항목 구성
+    const usdItems: InsightItem[] = [];
+    let itemIndex = 1;
+    while (data[`usd_item_${itemIndex}_icon`]) {
+      usdItems.push({
+        icon: data[`usd_item_${itemIndex}_icon`] || '',
+        title: data[`usd_item_${itemIndex}_title`] || '',
+        change: data[`usd_item_${itemIndex}_change`] || '',
+        description: data[`usd_item_${itemIndex}_description`] || '',
+      });
+      itemIndex++;
+    }
+
+    // KRW 항목 구성
+    const krwItems: InsightItem[] = [];
+    itemIndex = 1;
+    while (data[`krw_item_${itemIndex}_icon`]) {
+      krwItems.push({
+        icon: data[`krw_item_${itemIndex}_icon`] || '',
+        title: data[`krw_item_${itemIndex}_title`] || '',
+        change: data[`krw_item_${itemIndex}_change`] || '',
+        description: data[`krw_item_${itemIndex}_description`] || '',
+      });
+      itemIndex++;
+    }
+
+    // 액션, 리스크, 성공 포인트 수집
+    const actions: string[] = [];
+    const risks: string[] = [];
+    const success: string[] = [];
+
+    itemIndex = 1;
+    while (data[`action_${itemIndex}`]) {
+      actions.push(data[`action_${itemIndex}`]);
+      itemIndex++;
+    }
+
+    itemIndex = 1;
+    while (data[`risk_${itemIndex}`]) {
+      risks.push(data[`risk_${itemIndex}`]);
+      itemIndex++;
+    }
+
+    itemIndex = 1;
+    while (data[`success_${itemIndex}`]) {
+      success.push(data[`success_${itemIndex}`]);
+      itemIndex++;
+    }
+
+    return {
+      prevUsdCostRate: data['prev_usd_cost_rate'] ? parseFloat(data['prev_usd_cost_rate']) : undefined,
+      prevKrwCostRate: data['prev_krw_cost_rate'] ? parseFloat(data['prev_krw_cost_rate']) : undefined,
+      usd: {
+        title: data['usd_title'] || '',
+        mainChange: data['usd_main_change'] || '',
+        items: usdItems,
+        summary: data['usd_summary'] || '',
+      },
+      krw: {
+        title: data['krw_title'] || '',
+        mainChange: data['krw_main_change'] || '',
+        items: krwItems,
+        summary: data['krw_summary'] || '',
+      },
+      actions,
+      risks,
+      success,
+      message: data['message'] || '',
+    };
+  } catch (error) {
+    console.error('Error loading insights CSV:', error);
+    return null;
+  }
+}
+
+/**
+ * 시즌 타입을 감지하여 반환
+ */
+export function detectSeasonType(qty24F: number): string {
+  if (qty24F > 3000000 && qty24F < 4000000) return '25FW';
+  if (qty24F > 600000 && qty24F < 700000) return 'KIDS';
+  if (qty24F > 1200000 && qty24F < 1400000) return 'DISCOVERY';
+  return 'NON';
+}
+

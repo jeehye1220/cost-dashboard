@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
 
 interface WaterfallChartProps {
   summary: any;
@@ -14,12 +15,34 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
     success: string[];
     message: string;
   } | null>(null);
+  
+  // CSV 인사이트 데이터
+  const [csvInsights, setCsvInsights] = useState<any>(null);
 
   if (!summary || !summary.total) {
     return <div>데이터를 불러오는 중...</div>;
   }
 
   const { total, fx } = summary;
+  
+  // 시즌 타입 감지
+  const seasonType = detectSeasonType(total.qty24F);
+  
+  // CSV 인사이트 로드
+  useEffect(() => {
+    loadInsightsFromCSV(seasonType).then(data => {
+      if (data) {
+        setCsvInsights(data);
+        // CSV 데이터를 aiInsights로 설정
+        setAiInsights({
+          action: data.actions,
+          risk: data.risks,
+          success: data.success,
+          message: data.message,
+        });
+      }
+    });
+  }, [seasonType]);
 
   // 환율 정보 추출 (동적)
   const fxPrev = fx?.prev || 1297;
@@ -38,13 +61,19 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
   // MLB KIDS 시즌 여부 판별
   const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
   
-  // 그래프 높이 계산 (시즌별 스케일 조정)
-  // MLB KIDS는 변화량 막대를 작게 표시하되, 작은 차이도 구분되도록 최소 높이 낮춤
-  const heightScale = isKIDS ? 100 : 100; // KIDS: 1%p당 100px
-  const minHeight = isKIDS ? 30 : 50; // KIDS: 최소 30px (작은 차이도 구분), 기타: 50px
+  // 그래프 높이 계산 (변동 바는 시작/끝 박스보다 작게)
+  // 전년/당년 원가율 박스: 고정 180px
+  // 변동 바: 최대 120px (시작/끝의 2/3), 최소 40px (작은 차이 구분 가능)
+  const baseBoxHeight = 180; // 시작/끝 박스 고정 높이
+  const maxChangeBarHeight = 120; // 변동 바 최대 높이 (시작/끝의 2/3)
+  const minChangeBarHeight = 40; // 변동 바 최소 높이
   
+  // 변동 바 높이 계산: 값에 비례하되 최소/최대 범위 내
   const getBarHeight = (value: number) => {
-    return Math.max(minHeight, Math.abs(value) * heightScale);
+    const absValue = Math.abs(value);
+    // 0.1%p = 40px, 1.0%p = 120px로 선형 스케일
+    const scaledHeight = minChangeBarHeight + (absValue * 80);
+    return Math.min(Math.max(minChangeBarHeight, scaledHeight), maxChangeBarHeight);
   };
 
   const generateAIComment = async () => {
@@ -104,10 +133,12 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
               style={{
                 backgroundColor: '#64748b',
                 width: '100px',
-                height: '180px'
+                height: `${baseBoxHeight}px`
               }}
             >
-              <div className="text-2xl mb-1">{total.costRate24F_usd.toFixed(1)}%</div>
+              <div className="text-2xl mb-1">
+                {csvInsights?.prevUsdCostRate ? csvInsights.prevUsdCostRate.toFixed(1) : total.costRate24F_usd.toFixed(1)}%
+              </div>
               <div className="text-xs opacity-90">전년 시작</div>
               <div className="text-xs opacity-75 mt-1">USD/KRW</div>
             </div>
@@ -189,7 +220,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
               style={{
                 backgroundColor: '#818cf8',
                 width: '100px',
-                height: '180px'
+                height: `${baseBoxHeight}px`
               }}
             >
               <div className="text-2xl mb-1">{total.costRate25F_usd.toFixed(1)}%</div>
@@ -224,7 +255,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
               style={{
                 backgroundColor: '#f97316',
                 width: '100px',
-                height: '200px'
+                height: `${baseBoxHeight}px`
               }}
             >
               <div className="text-2xl mb-1">{total.costRate25F_krw.toFixed(1)}%</div>
@@ -262,7 +293,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
             <h4 className="font-semibold text-gray-700 text-sm">환율효과 (FX)</h4>
           </div>
           <p className="text-xs text-gray-600 mb-1">
-            전년 USD원가율 ({total.costRate25F_usd.toFixed(1)}) × 환율 ({fxPrev.toFixed(2)}→{fxCurr.toFixed(2)})
+            전년 USD원가율 ({csvInsights?.prevUsdCostRate ? csvInsights.prevUsdCostRate.toFixed(1) : total.costRate24F_usd.toFixed(1)}) × 환율 ({fxPrev.toFixed(2)}→{fxCurr.toFixed(2)})
           </p>
           <p className="text-xl font-bold text-red-600">
             +{exchangeRateEffect.toFixed(1)}%p

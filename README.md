@@ -706,9 +706,19 @@ python generate_summary.py
   - "MLB(글로벌기준) 주요 지표 비교" → "XXX(글로벌기준) 주요 지표 비교"
   - XXX는 각 탭 이름으로 자동 변경: MLB 25FW, MLB NON, MLB KIDS, DISCOVERY
   - 목적: 각 브랜드별 명확한 구분 및 일관성 향상
-- **MLB KIDS 워터폴 차트 스케일 최적화** 🆕:
-  - 변화량이 작은 MLB KIDS에 맞춰 최소 높이 30px로 조정
-  - -0.1%p와 -0.6%p 차이가 시각적으로 명확히 구분됨 (30px vs 60px)
+- **워터폴 차트 스케일 최적화** 🆕:
+  - **시작/끝 박스 (전년/당년 원가율)**: 고정 180px
+    - 전년 USD/KRW 원가율 (회색)
+    - 당년 USD 원가율 (파란색)
+    - 당년 KRW 원가율 (주황색)
+  - **변동 바 (원부자재/마진/공임/경비/환율)**:
+    - 최소 높이: 40px → 0.1%p 변화도 눈에 잘 보임
+    - 최대 높이: 120px → 시작/끝 박스의 2/3 크기 (절대 180px를 넘지 않음)
+    - 선형 스케일: 0.1%p = 40px, 0.5%p = 72px, 1.0%p = 120px
+  - **개선 효과**:
+    - ✅ 시작/끝 박스가 항상 변동 바보다 큼 (180px > 최대 120px)
+    - ✅ 작은 변화도 구분 가능 (0.1%, 0.2%, 0.5% 차이가 명확)
+    - ✅ 큰 변화는 적당히 제한 (1.0%p 이상도 120px까지만)
 - **주요 지표 하단 분석 멘트 편집 기능** ✏️🆕:
   - 모든 탭(MLB 25FW, MLB NON, MLB KIDS, DISCOVERY)에서 하단 분석 멘트 실시간 편집 가능
   - 편집 항목: 핵심 성과, 생산 규모, TAG 효과, 환율 리스크, 시사점 (총 5개)
@@ -733,6 +743,59 @@ python generate_summary.py
   - 모든 환율 표시를 소수점 둘째자리까지 통일
   - 적용 위치: 주요 지표 테이블, 워터폴 차트, 데이터 정보 박스, 하단 분석 멘트
   - 예시: 1,297 → 1297.00, 1,415 → 1415.00
+- **CSV 기반 인사이트 관리 시스템** 🆕📝:
+  - **구조**: 각 탭별로 독립된 CSV 파일로 인사이트 관리
+    - `public/insights_25fw.csv` - MLB 25FW 시즌 멘트
+    - `public/insights_non.csv` - MLB NON 시즌 멘트
+    - `public/insights_kids.csv` - MLB KIDS 시즌 멘트
+    - `public/insights_discovery.csv` - DISCOVERY 시즌 멘트
+  - **CSV 파일 형식** (UTF-8 BOM, Excel 호환):
+    ```csv
+    section,key,value
+    prev_usd_cost_rate,,18.2
+    prev_krw_cost_rate,,18.2
+    usd_title,,USD 기준: 개선 성공
+    usd_main_change,,▼ 0.8%p 개선
+    usd_item_1_icon,,🎨
+    usd_item_1_title,,소재단가 절감
+    usd_item_1_change,,▼ 0.9%p
+    usd_item_1_description,,구스/덕 충전재 80/20...
+    action_1,,Inner 공정개선 모델을 Outer·Bottom으로 확대 적용
+    risk_1,,Outer·팬츠류 공임 비중 상승...
+    success_1,,정상마진 –0.2%p 하락...
+    message,,25F 시즌은 구스→덕(80/20)...
+    ```
+  - **수정 가능한 항목**:
+    - ✅ **전년 USD/KRW 원가율** 🆕: CSV에서 자동 로드, 00.0% 형식으로 표시
+      - `prev_usd_cost_rate`: 워터폴 차트 "전년 시작 USD/KRW" 박스에 표시
+      - `prev_krw_cost_rate`: 필요 시 사용 (현재는 USD와 동일)
+      - 각 탭별 기본값:
+        - **MLB 25FW**: 18.2%
+        - **MLB NON**: 17.1%
+        - **MLB KIDS**: 23.9%
+        - **DISCOVERY**: 22.2%
+      - 적용 위치:
+        - 워터폴 차트 전년 시작 박스 (회색)
+        - ExecutiveSummary USD 기준 섹션
+    - ✅ USD/KRW 기준 제목 (예: "USD 기준: 개선 성공")
+    - ✅ 변동폭 (예: "▼ 0.8%p 개선")
+    - ✅ 각 항목 아이콘/제목/변화량/설명
+    - ✅ 핵심 메시지
+    - ✅ 즉시 액션 (action_1, action_2, ...)
+    - ✅ 리스크 관리 (risk_1, risk_2, ...)
+    - ✅ 성공 포인트/시사점 (success_1, success_2, ...)
+    - ✅ 경영진 핵심 메시지 (message)
+  - **작동 방식**:
+    - 시즌 자동 감지 → 해당 CSV 파일 로드 → UI 자동 업데이트
+    - Excel에서 CSV 파일 수정 → 저장 → 브라우저 새로고침 → 즉시 반영 🚀
+  - **적용 범위**:
+    - USD/KRW 기준 원가율 비교 분석 (`ExecutiveSummary.tsx`)
+    - 즉시 액션 / 리스크 관리 / 성공 포인트(시사점) (`WaterfallChart.tsx`)
+    - 경영진 핵심 메시지 (`WaterfallChart.tsx`)
+  - **CSV 생성 스크립트**:
+    - `generate_all_insights.py` - 25FW, NON CSV 생성
+    - `generate_kids_discovery.py` - KIDS, DISCOVERY CSV 생성
+    - UTF-8 BOM 인코딩으로 Excel 한글 깨짐 방지
 
 ### v1.3.0 (2025-01-07)
 - **환율 적용 로직 변경**: 25F TAG USD 변환 시 24F 환율(1288) 적용

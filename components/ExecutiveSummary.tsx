@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
+import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
 
 interface ExecutiveSummaryProps {
   summary: any;
@@ -15,12 +16,34 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
   const { total } = summary;
 
   // 시즌 타입 확인 (컴포넌트 최상위에서 선언)
-  const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
-  const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
-  const isDISCOVERY = total.qty24F > 1200000 && total.qty24F < 1400000;
+  const seasonType = detectSeasonType(total.qty24F);
+  const is25FW = seasonType === '25FW';
+  const isKIDS = seasonType === 'KIDS';
+  const isDISCOVERY = seasonType === 'DISCOVERY';
+  
+  // CSV에서 로드된 인사이트 데이터
+  const [csvInsights, setCsvInsights] = useState<any>(null);
+  
+  // CSV 인사이트 로드
+  useEffect(() => {
+    loadInsightsFromCSV(seasonType).then(data => {
+      if (data) {
+        setCsvInsights(data);
+      }
+    });
+  }, [seasonType]);
 
   // 25FW와 NON, KIDS, DISCOVERY 시즌별 초기 텍스트 설정
   const getInitialTexts = () => {
+    // CSV 데이터가 있으면 CSV 데이터 사용
+    if (csvInsights) {
+      return {
+        usd: csvInsights.usd,
+        krw: csvInsights.krw,
+      };
+    }
+    
+    // CSV 데이터가 없으면 기본 데이터 사용 (fallback)
     if (isKIDS) {
       // MLB KIDS 시즌 텍스트
       return {
@@ -239,6 +262,14 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
   // 편집 가능한 텍스트 상태
   const [usdTexts, setUsdTexts] = useState(initialTexts.usd);
   const [krwTexts, setKrwTexts] = useState(initialTexts.krw);
+  
+  // CSV 데이터가 로드되면 state 업데이트
+  useEffect(() => {
+    if (csvInsights) {
+      setUsdTexts(csvInsights.usd);
+      setKrwTexts(csvInsights.krw);
+    }
+  }, [csvInsights]);
 
   const [editMode, setEditMode] = useState<string | null>(null);
   const [showManageButtons, setShowManageButtons] = useState(false);
@@ -439,7 +470,9 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                 />
               </h3>
               <div className="text-2xl font-bold text-gray-700 mt-2">
-                <span className="text-gray-500">{total.costRate24F_usd.toFixed(1)}%</span>
+                <span className="text-gray-500">
+                  {csvInsights?.prevUsdCostRate ? csvInsights.prevUsdCostRate.toFixed(1) : total.costRate24F_usd.toFixed(1)}%
+                </span>
                 {' → '}
                 <span className="text-green-600">{total.costRate25F_usd.toFixed(1)}%</span>
               </div>
