@@ -43,7 +43,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         ? `▼ ${Math.abs(krwChange).toFixed(1)}%p 개선`
         : `➡️ 0.0%p 동일`;
       
-      setKrwTexts(prev => ({
+      setKrwTexts((prev: any) => ({
         ...prev,
         mainChange: krwChangeText,
       }));
