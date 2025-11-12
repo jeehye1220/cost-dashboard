@@ -33,13 +33,42 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
     });
   }, [seasonType]);
 
+  // csvInsights가 로드되면 krwTexts.mainChange 업데이트
+  useEffect(() => {
+    if (csvInsights || true) { // 항상 업데이트
+      const krwChange = total.costRate25F_krw - total.costRate25F_usd;
+      const krwChangeText = krwChange > 0 
+        ? `▲ ${krwChange.toFixed(1)}%p 악화`
+        : krwChange < 0 
+        ? `▼ ${Math.abs(krwChange).toFixed(1)}%p 개선`
+        : `➡️ 0.0%p 동일`;
+      
+      setKrwTexts(prev => ({
+        ...prev,
+        mainChange: krwChangeText,
+      }));
+    }
+  }, [csvInsights, total.costRate25F_krw, total.costRate25F_usd]);
+
   // 25FW와 NON, KIDS, DISCOVERY 시즌별 초기 텍스트 설정
   const getInitialTexts = () => {
+    // KRW mainChange 동적 계산 (당년 KRW - 당년 USD = 환율 효과) - 모든 경우에 적용
+    const krwChange = total.costRate25F_krw - total.costRate25F_usd;
+    const krwChangeText = krwChange > 0 
+      ? `▲ ${krwChange.toFixed(1)}%p 악화`
+      : krwChange < 0 
+      ? `▼ ${Math.abs(krwChange).toFixed(1)}%p 개선`
+      : `➡️ 0.0%p 동일`;
+    
     // CSV 데이터가 있으면 CSV 데이터 사용
     if (csvInsights) {
       return {
         usd: csvInsights.usd,
-        krw: csvInsights.krw,
+        krw: {
+          ...csvInsights.krw,
+          // mainChange는 당년 KRW - 당년 USD (환율 효과)로 동적 계산
+          mainChange: krwChangeText,
+        },
       };
     }
     
@@ -68,13 +97,16 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         },
         krw: {
           title: '환율·제조원가 동반 상승으로 악화 ⚠️',
-          mainChange: `▲ 1.6%p 악화`,
+          mainChange: (() => {
+            const change = total.costRate25F_krw - total.costRate25F_usd;
+            return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
+          })(),
           items: [
             {
               icon: '💱',
               title: '환율 효과',
-              change: `+2.2%p`,
-              description: `환율 상승(+9.4%, 1,321원→1,446원)으로 USD 기준 효과 상쇄 상실. 절감 성과가 실손익 반영되지 못함.`
+              change: `+${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p`,
+              description: `환율 상승(+9.4%, 1,321원→1,446원)으로 USD 기준 효과 상쇄 상실. 당년 USD 원가율 ${total.costRate25F_usd.toFixed(1)}%에서 당년 KRW 원가율 ${total.costRate25F_krw.toFixed(1)}%로 환율 효과 ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화.`
             },
             {
               icon: '🍊',
@@ -116,13 +148,16 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         },
         krw: {
           title: 'KRW 기준: 환율로 추가 악화 ⚠️',
-          mainChange: `▲ 1.4%p 악화`,
+          mainChange: (() => {
+            const change = total.costRate25F_krw - total.costRate25F_usd;
+            return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
+          })(),
           items: [
             {
               icon: '💱',
               title: '환율 효과',
-              change: `+0.9%p`,
-              description: `환율 1,350 → 1,400원(+3.7%) 상승으로 KRW 기준 추가 부담. USD 기준 +0.5%p 악화에 환율 효과 +0.9%p가 더해져 총 1.4%p 악화.`
+              change: `+${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p`,
+              description: `환율 1,350 → 1,400원(+3.7%) 상승으로 KRW 기준 추가 부담. 당년 USD 원가율 ${total.costRate25F_usd.toFixed(1)}%에서 당년 KRW 원가율 ${total.costRate25F_krw.toFixed(1)}%로 환율 효과 ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화.`
             },
             {
               icon: '🔥',
@@ -164,13 +199,16 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         },
         krw: {
           title: 'KRW 기준: 환율에 상쇄',
-          mainChange: `▲ 1.0%p 악화`,
+          mainChange: (() => {
+            const change = total.costRate25F_krw - total.costRate25F_usd;
+            return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
+          })(),
           items: [
             {
               icon: '💱',
               title: '환율 효과',
-              change: `+1.8%p`,
-              description: `환율 상승(+11%)으로 USD 개선 효과 완전 상쇄. 절감 성과가 실손익에 반영되지 못함.`
+              change: `+${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p`,
+              description: `환율 상승(+11%)으로 USD 개선 효과 완전 상쇄. 당년 USD 원가율 ${total.costRate25F_usd.toFixed(1)}%에서 당년 KRW 원가율 ${total.costRate25F_krw.toFixed(1)}%로 환율 효과 ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화.`
             },
             {
               icon: '👟',
@@ -224,13 +262,16 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         },
         krw: {
           title: 'KRW 기준: 환율에 상쇄',
-          mainChange: `▲ ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화`,
+          mainChange: (() => {
+            const change = total.costRate25F_krw - total.costRate25F_usd;
+            return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
+          })(),
           items: [
             {
               icon: '💱',
               title: '환율 효과',
-              change: `▲1.5%p`,
-              description: `환율 1,288원 → 1,420원(+10.2%)으로 USD 개선 효과 상쇄. 실질 절감 노력에도 KRW 환산 시 개선 제한`
+              change: `+${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p`,
+              description: `환율 1,288원 → 1,420원(+10.2%)으로 USD 개선 효과 상쇄. 당년 USD 원가율 ${total.costRate25F_usd.toFixed(1)}%에서 당년 KRW 원가율 ${total.costRate25F_krw.toFixed(1)}%로 환율 효과 ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화.`
             },
             {
               icon: '👟',
@@ -259,9 +300,20 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
 
   const initialTexts = getInitialTexts();
   
+  // KRW mainChange 동적 계산 (초기값 설정 시에도)
+  const initialKrwChange = total.costRate25F_krw - total.costRate25F_usd;
+  const initialKrwChangeText = initialKrwChange > 0 
+    ? `▲ ${initialKrwChange.toFixed(1)}%p 악화`
+    : initialKrwChange < 0 
+    ? `▼ ${Math.abs(initialKrwChange).toFixed(1)}%p 개선`
+    : `➡️ 0.0%p 동일`;
+  
   // 편집 가능한 텍스트 상태
   const [usdTexts, setUsdTexts] = useState(initialTexts.usd);
-  const [krwTexts, setKrwTexts] = useState(initialTexts.krw);
+  const [krwTexts, setKrwTexts] = useState({
+    ...initialTexts.krw,
+    mainChange: initialKrwChangeText, // 초기값도 동적으로 계산
+  });
   
   // CSV 데이터가 로드되면 state 업데이트
   useEffect(() => {
@@ -471,7 +523,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
               </h3>
               <div className="text-2xl font-bold text-gray-700 mt-2">
                 <span className="text-gray-500">
-                  {csvInsights?.prevUsdCostRate ? csvInsights.prevUsdCostRate.toFixed(1) : total.costRate24F_usd.toFixed(1)}%
+                  {total.costRate24F_usd.toFixed(1)}%
                 </span>
                 {' → '}
                 <span className="text-green-600">{total.costRate25F_usd.toFixed(1)}%</span>

@@ -758,6 +758,19 @@ python generate_summary.py
   - 모든 환율 표시를 소수점 둘째자리까지 통일
   - 적용 위치: 주요 지표 테이블, 워터폴 차트, 데이터 정보 박스, 하단 분석 멘트
   - 예시: 1,297 → 1297.00, 1,415 → 1415.00
+- **KRW 기준 환율 효과 동적 계산** 🆕:
+  - **계산 방식**: 당년 USD 원가율과 당년 KRW 원가율의 차이로 환율 효과 계산
+    - 환율 효과 = `total.costRate25F_krw - total.costRate25F_usd`
+    - 예시: 당년 USD 원가율 22.7% → 당년 KRW 원가율 23.6% = 환율 효과 0.9%p
+  - **적용 위치**: 모든 브랜드 탭 (MLB 25FW, MLB NON, MLB KIDS, DISCOVERY)
+    - `ExecutiveSummary.tsx`의 KRW 기준 섹션
+    - `mainChange`: 동적으로 계산된 환율 효과 표시
+    - `items[0].change`: 환율 효과 값 동적 표시
+    - `items[0].description`: 당년 USD/KRW 원가율과 환율 효과 동적 표시
+  - **이점**:
+    - ✅ 데이터 업데이트 시 자동으로 환율 효과 재계산
+    - ✅ 하드코딩된 값 제거로 유지보수 용이
+    - ✅ summary JSON 기반으로 항상 정확한 값 표시
 - **CSV 기반 인사이트 관리 시스템** 🆕📝:
   - **구조**: 각 탭별로 독립된 CSV 파일로 인사이트 관리
     - `public/insights_25fw.csv` - MLB 25FW 시즌 멘트
@@ -803,6 +816,25 @@ python generate_summary.py
   - **작동 방식**:
     - 시즌 자동 감지 → 해당 CSV 파일 로드 → UI 자동 업데이트
     - Excel에서 CSV 파일 수정 → 저장 → 브라우저 새로고침 → 즉시 반영 🚀
+  - **⚠️ 편집 기능 저장 방식 및 주의사항**:
+    - **현재 상태**: 편집 기능으로 수정한 내용은 **브라우저 메모리에만 저장**됨
+      - React `useState`로만 관리 (localStorage, 서버 저장 없음)
+      - 페이지 새로고침 시 **편집 내용이 사라짐**
+      - 새로운 배포 시 **편집 내용이 초기화됨**
+    - **영구 저장 방법**:
+      1. **CSV 파일 직접 수정** (권장):
+         - `public/insights_*.csv` 파일을 Excel에서 열기
+         - 편집한 내용을 CSV 파일에 직접 입력
+         - CSV 저장 → Git 커밋 → 배포
+         - ✅ 영구 저장, 버전 관리 가능
+      2. **편집 기능 사용 시 주의**:
+         - 편집 기능은 **임시 수정용**으로만 사용
+         - 중요한 수정은 반드시 CSV 파일에 직접 저장
+         - 배포 전에 CSV 파일 확인 필수
+    - **향후 개선 계획**:
+      - localStorage에 자동 저장 기능 추가
+      - CSV 파일 자동 업데이트 기능 추가
+      - 편집 내용을 서버에 저장하는 기능 추가
   - **적용 범위**:
     - USD/KRW 기준 원가율 비교 분석 (`ExecutiveSummary.tsx`)
     - 즉시 액션 / 리스크 관리 / 성공 포인트(시사점) (`WaterfallChart.tsx`)
@@ -811,6 +843,166 @@ python generate_summary.py
     - `generate_all_insights.py` - 25FW, NON CSV 생성
     - `generate_kids_discovery.py` - KIDS, DISCOVERY CSV 생성
     - UTF-8 BOM 인코딩으로 Excel 한글 깨짐 방지
+  - **현재 상태** ⚠️:
+    - 일부 인사이트는 컴포넌트 코드에 하드코딩된 기본값 사용 중
+    - CSV 파일이 없거나 로드 실패 시 하드코딩된 기본값으로 폴백
+    - 향후 모든 하드코딩 제거 예정
+  - **하드코딩 제거 계획** 🔧 (향후 구현 예정):
+    - **현재 하드코딩된 위치**:
+      1. **`components/ExecutiveSummary.tsx`** - `getInitialTexts()` 함수
+         - MLB 25FW, MLB NON, MLB KIDS, DISCOVERY 각 탭별 USD/KRW 비교 분석 텍스트
+         - `usd.title`, `usd.mainChange`, `usd.items[]`, `krw.title`, `krw.mainChange`, `krw.items[]` 등
+      2. **`components/WaterfallChart.tsx`** - `defaultInsights` 객체
+         - DISCOVERY, MLB KIDS, MLB 25FW, MLB NON 각 탭별 인사이트
+         - `action[]`, `risk[]`, `success[]`, `message` 등
+      3. **`components/KeyMetricsTable.tsx`** - `getDefaultInsights()` 함수
+         - MLB KIDS, DISCOVERY, MLB 25FW, MLB NON 각 탭별 분석 멘트
+         - `title`, `volume`, `tag`, `fx`, `conclusion` 등
+    - **제거 방법**:
+      1. **CSV 파일 확장**:
+         - 현재 `insights_*.csv` 파일에 모든 하드코딩된 텍스트 추가
+         - 각 탭별로 필요한 모든 필드 정의:
+           - `usd_title`, `usd_main_change`, `usd_item_1_icon`, `usd_item_1_title`, `usd_item_1_change`, `usd_item_1_description`, ...
+           - `krw_title`, `krw_main_change`, `krw_item_1_icon`, `krw_item_1_title`, `krw_item_1_change`, `krw_item_1_description`, ...
+           - `action_1`, `action_2`, `action_3`, `action_4`, ...
+           - `risk_1`, `risk_2`, `risk_3`, `risk_4`, ...
+           - `success_1`, `success_2`, `success_3`, `success_4`, ...
+           - `message`
+           - `title`, `volume`, `tag`, `fx`, `conclusion` (KeyMetricsTable용)
+      2. **컴포넌트 코드 수정**:
+         - `getInitialTexts()` 함수 제거 또는 빈 객체 반환
+         - CSV 로드 실패 시에도 하드코딩된 기본값 사용하지 않음
+         - 대신 에러 메시지 표시 또는 빈 상태 유지
+         - `defaultInsights` 객체 제거
+         - `getDefaultInsights()` 함수 제거
+         - 모든 텍스트는 `loadInsightsFromCSV()` 함수로만 로드
+      3. **Python 스크립트 확장**:
+         - `generate_insights_auto.py` 스크립트 생성
+         - CSV/JSON 데이터 읽기 → 분석 → 모든 인사이트 텍스트 자동 생성
+         - 동적 계산된 값들을 템플릿에 삽입하여 완성된 텍스트 생성
+         - 예: `"생산수량 ${qty24F/10000}만개 → ${qty25F/10000}만개 (${qtyYoY}%) 감소"`
+      4. **에러 처리 강화**:
+         - CSV 파일이 없거나 로드 실패 시:
+           - 하드코딩된 기본값 대신 "데이터 로딩 중..." 또는 "인사이트 데이터를 불러올 수 없습니다" 메시지 표시
+           - 사용자에게 CSV 파일 확인 요청
+    - **구현 단계**:
+      ```
+      Step 1: CSV 파일 구조 확장
+      - insights_25fw.csv, insights_non.csv, insights_kids.csv, insights_discovery.csv
+      - 모든 하드코딩된 텍스트를 CSV 필드로 추가
+      
+      Step 2: Python 스크립트로 기본값 생성
+      - generate_insights_auto.py 작성
+      - CSV/JSON 데이터 읽기 → 분석 → 텍스트 생성 → CSV 파일 업데이트
+      
+      Step 3: 컴포넌트 코드 수정
+      - getInitialTexts() 함수 제거 또는 수정
+      - defaultInsights 객체 제거
+      - getDefaultInsights() 함수 제거
+      - CSV 로드 실패 시 에러 처리만 추가
+      
+      Step 4: 테스트
+      - 각 탭별로 CSV 파일 로드 확인
+      - CSV 파일 삭제 시 에러 메시지 확인
+      - Excel에서 CSV 수정 후 반영 확인
+      ```
+    - **⚠️ 주의사항: 데이터 변경 가능성**:
+      - **현재 상태**: CSV 파일이 있으면 CSV 내용 표시, 없으면 하드코딩된 기본값 표시
+      - **하드코딩 제거 후**: CSV 파일이 있으면 CSV 내용 표시, 없으면 에러 메시지만 표시
+      - **데이터 변경 시나리오**:
+        1. **CSV 파일이 이미 있고 내용이 있는 경우**:
+           - ✅ CSV 내용이 표시됨 (하드코딩된 기본값과 다를 수 있음)
+           - ⚠️ CSV 내용이 하드코딩된 내용과 다르면 표시되는 데이터가 바뀜
+        2. **CSV 파일이 없거나 로드 실패하는 경우**:
+           - ❌ 현재: 하드코딩된 기본값이 표시됨
+           - ❌ 하드코딩 제거 후: 에러 메시지만 표시됨 (데이터가 안 보임)
+      - **안전한 구현 방법**:
+        1. **사전 확인**:
+           - 모든 탭별 CSV 파일 존재 확인 (`insights_25fw.csv`, `insights_non.csv`, `insights_kids.csv`, `insights_discovery.csv`)
+           - 각 CSV 파일에 모든 필수 필드가 채워져 있는지 확인
+           - CSV 내용과 현재 하드코딩된 내용을 비교하여 차이점 확인
+        2. **점진적 전환**:
+           - 먼저 CSV 파일에 모든 하드코딩된 내용을 복사하여 추가
+           - CSV 파일이 완전히 채워진 후 하드코딩 제거
+           - 또는 하드코딩을 주석 처리하여 백업으로 유지
+        3. **테스트 전략**:
+           - 개발 환경에서 먼저 테스트
+           - 각 탭별로 CSV 로드 확인
+           - CSV 파일 삭제 시나리오 테스트
+           - CSV 내용 수정 후 반영 확인
+    - **예상 효과**:
+      - ✅ 코드에서 모든 하드코딩 제거
+      - ✅ CSV 파일만 수정하면 모든 인사이트 업데이트 가능
+      - ✅ Python 스크립트로 자동 기본값 생성
+      - ✅ Excel에서 직관적으로 텍스트 관리
+      - ✅ Git으로 버전 관리 용이
+      - ✅ 코드 수정 없이 콘텐츠만 관리
+  - **자동 분석 및 동적 업데이트 계획** 🚀 (향후 구현 예정):
+    - **목적**: CSV 파일의 숫자가 업데이트되면 자동으로 분석하여 기본 인사이트 생성
+    - **대상 항목**:
+      - ✅ USD 기준 vs KRW 기준 원가율 비교 분석 (`ExecutiveSummary.tsx`)
+      - ✅ 즉시 액션 (`WaterfallChart.tsx` - InsightSection)
+      - ✅ 리스크 관리 (`WaterfallChart.tsx` - InsightSection)
+      - ✅ 시사점/성공 포인트 (`WaterfallChart.tsx` - InsightSection)
+      - ✅ 경영진 핵심 메시지 (`WaterfallChart.tsx` - InsightSection)
+      - ✅ 글로벌기준 주요지표 비교 하단 분석 멘트 (`KeyMetricsTable.tsx`)
+    - **작동 방식**:
+      1. CSV 파일(예: `MLB FW.csv`, `MLB non 251111.csv`) 및 Summary JSON 파일 읽기
+      2. 데이터 분석 및 계산:
+         - 생산수량, TAG, 원가, 원가율 변화율 계산
+         - 카테고리별 원가 구성 변화 분석
+         - 환율 효과 계산
+         - 원부자재/아트웍/공임/마진/경비 변동 분석
+      3. Python 스크립트로 자동 인사이트 생성:
+         - `generate_insights_auto.py` - CSV/JSON 데이터 기반 자동 분석
+         - 각 탭별로 `insights_*.csv` 파일 자동 업데이트
+      4. 프론트엔드에서 CSV 파일 로드하여 UI에 반영
+    - **사용자 수정 관리 방식** (하드코딩 없이) ✅ **이미 가능**:
+      - ✅ **CSV 파일 기반 저장**: 사용자가 수정한 내용은 `insights_*.csv` 파일에 저장
+        - 현재 시스템이 이미 CSV 기반으로 작동 중
+        - 컴포넌트에서 `loadInsightsFromCSV()` 함수로 CSV 파일 읽기
+        - 사용자가 Excel에서 CSV 수정 → 저장 → 브라우저 새로고침 → 즉시 반영
+      - ✅ **Excel 편집 지원**: CSV 파일을 Excel에서 열어 직접 수정 가능
+        - UTF-8 BOM 인코딩으로 한글 깨짐 없이 Excel에서 편집 가능
+        - 수정 후 저장하면 바로 적용됨 (코드 수정 불필요)
+      - ✅ **버전 관리**: Git으로 CSV 파일 버전 관리 (수정 이력 추적)
+        - CSV 파일만 Git에 커밋하면 수정 이력 자동 추적
+        - 코드 변경 없이 콘텐츠만 관리 가능
+      - ✅ **자동 생성 vs 수동 수정 구분**:
+        - 자동 생성: Python 스크립트 실행 시 기본값 생성
+        - 수동 수정: Excel에서 CSV 파일 직접 수정 → 브라우저 새로고침 → 즉시 반영
+      - ✅ **하드코딩 제거**: 모든 인사이트 텍스트는 CSV 파일에서 로드
+        - 컴포넌트 코드에는 하드코딩된 텍스트 없음
+        - `loadInsightsFromCSV()` 함수로 동적 로드
+        - **현재**: `getDefaultInsights()`, `getInitialTexts()` 등 하드코딩된 함수 존재
+        - **향후**: 모든 기본값도 CSV에서 로드하도록 변경
+        - **이점**: 코드 수정 없이 Excel에서만 텍스트 관리 가능
+      - ✅ **워크플로우** (현재 가능한 방식):
+        ```
+        [데이터 업데이트 시]
+        1. 원본 CSV 파일 업데이트 (예: MLB FW.csv)
+        2. Summary JSON 재생성 (python generate_summary_25fw.py)
+        3. Python 스크립트 실행 → insights_25fw.csv 자동 생성 (기본값)
+           - 예: python generate_all_insights.py
+        4. Excel에서 insights_25fw.csv 열기
+        5. 사용자가 원하는 대로 텍스트 수정 (하드코딩 없이!)
+        6. CSV 저장 (UTF-8 BOM 형식 유지)
+        7. Git 커밋 (선택사항, 버전 관리용)
+        8. 브라우저 새로고침 → 수정된 내용 즉시 반영
+        ```
+      - ✅ **실제 사용 예시**:
+        - 시나리오: MLB 25FW 탭의 "즉시 액션" 멘트 수정
+        1. `public/insights_25fw.csv` 파일을 Excel에서 열기
+        2. `action_1`, `action_2`, `action_3` 행의 `value` 컬럼 수정
+        3. 저장 (UTF-8 BOM 형식으로 저장)
+        4. 브라우저에서 대시보드 새로고침
+        5. ✅ 수정된 내용이 즉시 반영됨 (코드 수정 불필요!)
+    - **장점**:
+      - 📊 데이터 변경 시 자동으로 기본 인사이트 재생성
+      - ✏️ Excel에서 직관적으로 텍스트 수정 가능
+      - 🔄 하드코딩 없이 유연한 콘텐츠 관리
+      - 📝 Git으로 수정 이력 추적 가능
+      - 🚀 코드 수정 없이 인사이트 업데이트 가능
 
 ### v1.3.0 (2025-01-07)
 - **환율 적용 로직 변경**: 25F TAG USD 변환 시 24F 환율(1288) 적용

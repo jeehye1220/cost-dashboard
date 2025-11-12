@@ -13,6 +13,9 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
     action: string[];
     risk: string[];
     success: string[];
+    actionSummary?: string;
+    riskSummary?: string;
+    successSummary?: string;
     message: string;
   } | null>(null);
   
@@ -38,6 +41,9 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
           action: data.actions,
           risk: data.risks,
           success: data.success,
+          actionSummary: data.actionSummary,
+          riskSummary: data.riskSummary,
+          successSummary: data.successSummary,
           message: data.message,
         });
       }
@@ -146,7 +152,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
               }}
             >
               <div className="text-2xl mb-1">
-                {csvInsights?.prevUsdCostRate ? csvInsights.prevUsdCostRate.toFixed(1) : total.costRate24F_usd.toFixed(1)}%
+                {total.costRate24F_usd.toFixed(1)}%
               </div>
               <div className="text-xs opacity-90">전년 시작</div>
               <div className="text-xs opacity-75 mt-1">USD/KRW</div>
@@ -302,7 +308,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
             <h4 className="font-semibold text-gray-700 text-sm">환율효과 (FX)</h4>
           </div>
           <p className="text-xs text-gray-600 mb-1">
-            전년 USD원가율 ({csvInsights?.prevUsdCostRate ? csvInsights.prevUsdCostRate.toFixed(1) : total.costRate24F_usd.toFixed(1)}) × 환율 ({fxPrev.toFixed(2)}→{fxCurr.toFixed(2)})
+            전년 USD원가율 ({total.costRate24F_usd.toFixed(1)}) × 환율 ({fxPrev.toFixed(2)}→{fxCurr.toFixed(2)})
           </p>
           <p className="text-xl font-bold text-red-600">
             +{exchangeRateEffect.toFixed(1)}%p
@@ -342,6 +348,9 @@ interface InsightSectionProps {
     action: string[];
     risk: string[];
     success: string[];
+    actionSummary?: string;
+    riskSummary?: string;
+    successSummary?: string;
     message: string;
   } | null;
 }
@@ -373,7 +382,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
       '공급망 구조: 고가 소재 의존도 축소, 소싱 다변화·장기계약화로 원가 안정성 확보.',
       '생산 효율: 공임 효율화 성공사례(BOTTOM/INNER) 타군 확산 필요.'
     ],
-    message: '25F 시즌은 원부자재 단가 상승과 원화 약세가 동시에 작용하며 원가율이 USD 기준 +0.5%p, KRW 기준 +0.8%p 악화되었습니다. TAG가 원화로 고정된 구조상, 환율 상승분이 직접 제조원가에 반영되어 수익성 부담이 확대되었습니다. 단기적으로는 소재비 절감·환헤지 강화, 중기적으로는 소싱 다변화와 공임 효율화를 통한 구조적 원가 방어가 필요합니다.'
+    message: '25F 시즌은 원부자재 단가 상승과 원화 약세가 동시에 작용하며 원가율이 USD 기준 +0.5%p, KRW 기준 +0.9%p 악화되었습니다. TAG가 원화로 고정된 구조상, 환율 상승분이 직접 제조원가에 반영되어 수익성 부담이 확대되었습니다. 단기적으로는 소재비 절감·환헤지 강화, 중기적으로는 소싱 다변화와 공임 효율화를 통한 구조적 원가 방어가 필요합니다.'
   } : isKIDS ? {
     // MLB KIDS 시즌 인사이트
     action: [
@@ -481,6 +490,11 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
               + 추가
             </button>
           </div>
+          {aiInsights?.actionSummary && (
+            <div className="mb-3 p-2 bg-blue-100 rounded text-sm text-blue-900 font-medium">
+              {aiInsights.actionSummary}
+            </div>
+          )}
           <ul className="space-y-2">
             {insights.action.map((item, idx) => (
               <li key={idx} className="flex items-start gap-2 text-sm">
@@ -536,6 +550,11 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
               + 추가
             </button>
           </div>
+          {aiInsights?.riskSummary && (
+            <div className="mb-3 p-2 bg-orange-100 rounded text-sm text-orange-900 font-medium">
+              {aiInsights.riskSummary}
+            </div>
+          )}
           <ul className="space-y-2">
             {insights.risk.map((item, idx) => (
               <li key={idx} className="flex items-start gap-2 text-sm">
@@ -591,6 +610,11 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
               + 추가
             </button>
           </div>
+          {aiInsights?.successSummary && (
+            <div className="mb-3 p-2 bg-green-100 rounded text-sm text-green-900 font-medium">
+              {aiInsights.successSummary}
+            </div>
+          )}
           <ul className="space-y-2">
             {insights.success.map((item, idx) => (
               <li key={idx} className="flex items-start gap-2 text-sm">

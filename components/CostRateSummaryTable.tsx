@@ -46,9 +46,9 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
           </h3>
         </div>
         {isNON && (
-          <span className="text-[10px] text-gray-500 whitespace-nowrap">
-            전년: 24.06.01~24.10.31 | 당년: 25.06.01~25.10.31
-          </span>
+        <span className="text-[10px] text-gray-500 whitespace-nowrap">
+          전년: 24.06.01~24.10.31 | 당년: 25.06.01~25.10.31
+        </span>
         )}
       </button>
 

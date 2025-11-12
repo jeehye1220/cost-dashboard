@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
 
 interface KeyMetricsTableProps {
   summary: any;
@@ -77,11 +78,26 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
     }
   };
   
-  // 초기 멘트 설정
+  // CSV에서 인사이트 로드
   React.useEffect(() => {
-    const defaultInsights = getDefaultInsights();
-    setInsights(defaultInsights);
-  }, [tabName]);
+    const seasonType = detectSeasonType(total.qty24F);
+    loadInsightsFromCSV(seasonType).then(data => {
+      if (data && (data.metricsTitle || data.metricsVolume || data.metricsTag || data.metricsFx || data.metricsConclusion)) {
+        // CSV에 metrics 필드가 있으면 사용
+        setInsights({
+          title: data.metricsTitle || '',
+          volume: data.metricsVolume || '',
+          tag: data.metricsTag || '',
+          fx: data.metricsFx || '',
+          conclusion: data.metricsConclusion || '',
+        });
+      } else {
+        // CSV에 없으면 기본값 사용 (하드코딩된 값)
+        const defaultInsights = getDefaultInsights();
+        setInsights(defaultInsights);
+      }
+    });
+  }, [tabName, total.qty24F]);
   
   // 편집 가능한 텍스트 컴포넌트
   const EditableText = ({ id, value, className, onSave }: any) => {

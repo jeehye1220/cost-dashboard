@@ -27,7 +27,16 @@ interface InsightsData {
   actions: string[];
   risks: string[];
   success: string[];
+  actionSummary?: string;
+  riskSummary?: string;
+  successSummary?: string;
   message: string;
+  // KeyMetricsTable용 필드
+  metricsTitle?: string;
+  metricsVolume?: string;
+  metricsTag?: string;
+  metricsFx?: string;
+  metricsConclusion?: string;
 }
 
 /**
@@ -72,7 +81,12 @@ export async function loadInsightsFromCSV(season: string): Promise<InsightsData 
       
       const section = line.substring(0, firstComma).trim();
       const key = line.substring(firstComma + 1, secondComma).trim();
-      const value = line.substring(secondComma + 1).trim();
+      let value = line.substring(secondComma + 1).trim();
+      
+      // 따옴표 제거 (CSV에서 따옴표로 감싸진 값 처리)
+      if (value.startsWith('"') && value.endsWith('"')) {
+        value = value.substring(1, value.length - 1);
+      }
       
       data[section] = value;
     });
@@ -137,14 +151,23 @@ export async function loadInsightsFromCSV(season: string): Promise<InsightsData 
       },
       krw: {
         title: data['krw_title'] || '',
-        mainChange: data['krw_main_change'] || '',
+        mainChange: '', // 동적으로 계산되므로 CSV에서 로드하지 않음
         items: krwItems,
         summary: data['krw_summary'] || '',
       },
       actions,
       risks,
       success,
+      actionSummary: data['action summary'] || data['action_summary'] || undefined,
+      riskSummary: data['risk summary'] || data['risk_summary'] || undefined,
+      successSummary: data['success summary'] || data['success_summary'] || data['success sumamry'] || undefined,
       message: data['message'] || '',
+      // KeyMetricsTable용 필드
+      metricsTitle: data['metrics_title'] || undefined,
+      metricsVolume: data['metrics_volume'] || undefined,
+      metricsTag: data['metrics_tag'] || undefined,
+      metricsFx: data['metrics_fx'] || undefined,
+      metricsConclusion: data['metrics_conclusion'] || undefined,
     };
   } catch (error) {
     console.error('Error loading insights CSV:', error);
