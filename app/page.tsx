@@ -105,9 +105,9 @@ export default function Home() {
         <ExecutiveSummary summary={summary} />
 
         {/* 워터폴 차트 & 주요 지표 비교 */}
-        <div className="grid grid-cols-1 xl:grid-cols-[2fr_1fr] gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-6 mb-8">
           <WaterfallChart summary={summary} />
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <KeyMetricsTable summary={summary} />
             <CostRateSummaryTable summary={summary} />
           </div>
