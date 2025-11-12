@@ -348,7 +348,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
   // 항목 삭제 함수
   const deleteItem = (section: 'usd' | 'krw', index: number) => {
     if (section === 'usd') {
-      const newItems = usdTexts.items.filter((_, idx) => idx !== index);
+      const newItems = usdTexts.items.filter((_item: any, idx: number) => idx !== index);
       setUsdTexts({
         ...usdTexts,
         items: newItems
@@ -360,7 +360,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         return newSet;
       });
     } else {
-      const newItems = krwTexts.items.filter((_, idx) => idx !== index);
+      const newItems = krwTexts.items.filter((_item: any, idx: number) => idx !== index);
       setKrwTexts({
         ...krwTexts,
         items: newItems
@@ -489,7 +489,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
 
           {/* USD 개선 항목들 */}
           <div className="space-y-2.5 mb-3">
-            {usdTexts.items.map((item, idx) => {
+            {usdTexts.items.map((item: any, idx: number) => {
               const itemId = `usd-${idx}`;
               const isCollapsed = collapsedItems.has(itemId);
               
@@ -607,7 +607,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
 
           {/* KRW 리스크 항목들 */}
           <div className="space-y-2.5 mb-3">
-            {krwTexts.items.map((item, idx) => {
+            {krwTexts.items.map((item: any, idx: number) => {
               const itemId = `krw-${idx}`;
               const isCollapsed = collapsedItems.has(itemId);
               
