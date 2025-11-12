@@ -15,14 +15,32 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
 
   const { total, categories } = summary;
 
-  // 실제 데이터가 있는 카테고리만 필터링
-  const categoryData = CATEGORIES.map(cat => {
-    const data = categories.find((c: any) => c.category === cat.id);
-    return {
-      ...cat,
-      data: data || null,
-    };
-  }).filter(cat => cat.data !== null);
+  // FW/SS 시즌용 카테고리 선택 로직
+  // 규칙: Outer, Inner, Bottom 무조건 표시 + (Wear_etc 있으면 Wear_etc, 없으면 Acc_etc)
+  const categoryData = (() => {
+    const allCategoryData = CATEGORIES.map(cat => {
+      const data = categories.find((c: any) => c.category === cat.id);
+      return {
+        ...cat,
+        data: data || null,
+      };
+    }).filter(cat => cat.data !== null);
+
+    // 필수 카테고리: Outer, Inner, Bottom
+    const requiredCategories = ['Outer', 'Inner', 'Bottom'];
+    const selected = allCategoryData.filter(cat => requiredCategories.includes(cat.id));
+
+    // 4번째 카드: Wear_etc 있으면 Wear_etc, 없으면 Acc_etc
+    const wearEtc = allCategoryData.find(cat => cat.id === 'Wear_etc');
+    const accEtc = allCategoryData.find(cat => cat.id === 'Acc_etc');
+    const etcCategory = wearEtc || accEtc;
+    
+    if (etcCategory) {
+      selected.push(etcCategory);
+    }
+
+    return selected;
+  })();
 
   // 변동 표시 컴포넌트
   const ChangeIndicator = ({ value, suffix = '%p' }: { value: number; suffix?: string }) => {

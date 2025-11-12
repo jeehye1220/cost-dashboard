@@ -35,9 +35,13 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
   const exchangeRateEffect = total.costRate25F_krw - total.costRate25F_usd;
   const realCostChange = total.costRate25F_usd - total.costRate24F_usd;
 
-  // 그래프 높이 계산 (비례 스케일: 1%p = 100px)
-  const heightScale = 100; // 1%p당 100px (차이를 명확하게 표시)
-  const minHeight = 50; // 최소 높이
+  // MLB KIDS 시즌 여부 판별
+  const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
+  
+  // 그래프 높이 계산 (시즌별 스케일 조정)
+  // MLB KIDS는 변화량 막대를 작게 표시하되, 작은 차이도 구분되도록 최소 높이 낮춤
+  const heightScale = isKIDS ? 100 : 100; // KIDS: 1%p당 100px
+  const minHeight = isKIDS ? 30 : 50; // KIDS: 최소 30px (작은 차이도 구분), 기타: 50px
   
   const getBarHeight = (value: number) => {
     return Math.max(minHeight, Math.abs(value) * heightScale);
@@ -258,7 +262,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
             <h4 className="font-semibold text-gray-700 text-sm">환율효과 (FX)</h4>
           </div>
           <p className="text-xs text-gray-600 mb-1">
-            전년 USD원가율 ({total.costRate25F_usd.toFixed(1)}) × 환율 ({fxPrev.toLocaleString()}→{fxCurr.toLocaleString()})
+            전년 USD원가율 ({total.costRate25F_usd.toFixed(1)}) × 환율 ({fxPrev.toFixed(2)}→{fxCurr.toFixed(2)})
           </p>
           <p className="text-xl font-bold text-red-600">
             +{exchangeRateEffect.toFixed(1)}%p
@@ -307,7 +311,46 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
   
   const { total } = summary || {};
   
-  const defaultInsights = {
+  // MLB KIDS 시즌 여부 판별 (qty24F가 60만~70만 정도면 KIDS)
+  const isKIDS = total?.qty24F > 600000 && total?.qty24F < 700000;
+  // DISCOVERY 시즌 여부 판별 (qty24F가 120만~140만 정도면 DISCOVERY)
+  const isDISCOVERY = total?.qty24F > 1200000 && total?.qty24F < 1400000;
+  
+  const defaultInsights = isDISCOVERY ? {
+    // DISCOVERY 시즌 인사이트
+    action: [
+      '소재비 절감: 고가 소재(다운, 기능성 원단 등) 사양 재검토 및 대체소재 전환.',
+      '공임 효율화: 봉제 자동화·작업공정 단순화로 공임 단가 하락 추진.',
+      '원가 모니터링: USD/KRW 원가율을 분리 관리해 환율 영향 실시간 추적.'
+    ],
+    risk: [
+      '환율 리스크: 1,350→1,400(+3.7%) 상승으로 원가율 +0.8%p 악화. → 환헤지 커버 비율 확대, 기준환율 관리 필요.',
+      '원자재 리스크: 글로벌 소재 단가 상승, 고가 소재 비중 확대(+0.8%p).',
+      '마진 리스크: 협력사 정상마진 확대(2.26→2.34%)로 납품단가 상승 압박 지속.'
+    ],
+    success: [
+      '환율 구조: TAG 원화 고정이므로, 환율 1% 상승 시 원가율 약 +0.25%p 상승. → 헤지·선환계약 등 FX 안정장치 확대 필수.',
+      '공급망 구조: 고가 소재 의존도 축소, 소싱 다변화·장기계약화로 원가 안정성 확보.',
+      '생산 효율: 공임 효율화 성공사례(BOTTOM/INNER) 타군 확산 필요.'
+    ],
+    message: '25F 시즌은 원부자재 단가 상승과 원화 약세가 동시에 작용하며 원가율이 USD 기준 +0.5%p, KRW 기준 +0.8%p 악화되었습니다. TAG가 원화로 고정된 구조상, 환율 상승분이 직접 제조원가에 반영되어 수익성 부담이 확대되었습니다. 단기적으로는 소재비 절감·환헤지 강화, 중기적으로는 소싱 다변화와 공임 효율화를 통한 구조적 원가 방어가 필요합니다.'
+  } : isKIDS ? {
+    // MLB KIDS 시즌 인사이트
+    action: [
+      '공임 효율화 강화 → 봉제공정 단순화, 효율 공장 물량 축소. 26F 시즌부터 공임단가 상승분(5.34 USD/pcs)을 최소화해야 환율 리스크 완충 가능',
+      '소재 사양 및 디자인 단순화 → 복잡 아트웍·트리밍·부자재 구조를 단순화하여 실제 단가 절감형 원가절감효과 창출 필요'
+    ],
+    risk: [
+      'TAG 의존 구조의 취약성 → 원가율 개선이 TAG 인상(+7.3%) 효과에 의존하고 있어, 환율 상승·할인율 확대 시 즉각적인 원가율 악화 리스크 존재',
+      '카테고리별 가격 전가력 차이 → 특히 Inner / Bottom류는 소비자 가격 민감도가 높아 원가 상승분을 TAG에 전가하기 어려워 세밀한 원가관리 필요'
+    ],
+    success: [
+      '원가율 개선 배경 (USD 기준): 평균단가 상승(19.90 → 20.91, +5.1%)에도 불구하고 원가율 23.9% → 23.4%(–0.5%p) 개선. 이는 TAG 인상(91.8 → 98.5, +7.3%)과 고TAG 제품 믹스 확대로 인한 비율상 개선효과이며, 실질적인 원가 절감은 제한적임.',
+      '실질 원가 상승 압력: 공임·아트웍 단가 상승 압력 지속 (공임 +13.4%, 아트웍 +31.7%)으로, 단위당 원가 자체는 오히려 상승. 단, Outer·다운류 등 고TAG군 비중 확대(28% → 29%)로 전체 원가율 방어에 성공.'
+    ],
+    message: '25F 시즌은 TAG 상승(+7.3%)과 Outer 비중 28%→29%(고가제품)을 통해 원가율을 개선한 시즌입니다. 그러나 실질 제조원가는 +5.1% 상승했으며, 특히 공임단가 (4.71→5.34, +13.4%), 아트웍(1.04→1.37, +31.7%)이 급등했습니다. USD 기준 23.9% → 23.4%로 개선되었으나, 환율 상승(+9.4%)으로 KRW 기준은 25.5%로 상승했습니다. 다음 시즌은 가격 효과 의존도를 줄이고, 공임·아트웍 등 실질 제조원가 절감에 집중하여 지속 가능한 수익성을 확보해야 합니다.'
+  } : (total?.qty24F > 3000000 && total?.qty24F < 4000000) ? {
+    // MLB 25FW 시즌 인사이트
     action: [
       'Inner 공정개선 모델을 Outer·Bottom으로 확대 적용 (Inner 공임 14.76 → 12.69 USD, △2.07 USD 감소)',
       '팬츠·우븐류 봉제 난이도 단순화 및 스티칭 축소 → 원부자재 단가 하락에도 공임비 상승으로 평균원가 개선 폭이 제한된 만큼, 공임 0.5~1.0%p 절감 목표로 설계 단순화 추진',
@@ -326,6 +369,27 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
       'USD 기준 전사 원가율 –0.8%p 개선 (18.2% → 17.4%), 협상력 강화 + 공정 효율화 효과가 병행된 구조적 개선 시즌'
     ],
     message: '25F 시즌은 구스→덕(80/20) 충전재 믹스 조정과 봉제 공정 단순화를 통해 실질 원가 효율이 개선된 시즌입니다. 벤더 마진을 0.2%p 회수하며 협상력이 강화되었으나, 환율 상승(1,288→1,420원)과 공임 부담이 수익성을 압박하였습니다. 다음 시즌은 Outer·Bottom 중심으로 공정 슬리밍과 생산지 효율화를 확대하여 원가율을 안정적으로 관리할 필요가 있습니다.'
+  } : {
+    // MLB NON 시즌 인사이트
+    action: [
+      '대량생산 체제 유지 및 확대 → 758만개 생산 규모를 기반으로 협상력 강화. 차기 시즌도 최소 700만개 이상 물량 확보로 고정비 분산 및 단가 협상 우위 유지',
+      '고가 믹스 전략 지속 → TAG +23.2% 상승 효과를 활용한 고마진 제품군 확대. 평균 TAG $60 이상 제품 비중을 현재 수준 이상으로 유지하여 원가율 방어',
+      '벤더 마진율 관리 체계화 → 정상마진 1.5%→1.3% 절감 성과를 토대로 벤더별 마진 KPI 설정. 대량 발주 시즌 협상력을 활용한 추가 0.2~0.3%p 절감 목표',
+      '경비율 최적화 지속 → 물량 증가 시 고정비(물류, 검품, 관리비) 분산 효과로 경비율 1.0%→0.4% 달성. 차기 시즌 목표 0.3% 이하로 설정'
+    ],
+    risk: [
+      '생산단가 급등 리스크 → 평균원가 +15.5% 상승($8.00→$9.24)으로 원가 압박 지속. TAG 상승률(+23.2%)이 둔화될 경우 원가율 즉각 악화 가능',
+      '환율 변동성 확대 → 환율 +9.1% 상승(1,297→1,415원)으로 KRW 기준 원가율 +0.4%p 악화. USD 개선분(-1.1%p) 대부분이 환율로 상쇄됨. 추가 환율 상승 시 실손익 급격 악화 우려',
+      'TAG 의존 구조 취약성 → 원가율 개선이 TAG 상승에 전적으로 의존. 시장 경쟁 심화 또는 소비 둔화 시 TAG 인상 여력 상실하면 즉시 원가율 악화 전환',
+      '카테고리 불균형 심화 → 특정 카테고리(Headwear, Bag 등) 고성장하나 일부는 정체. 믹스 변동 시 전체 원가율 불안정성 증가'
+    ],
+    success: [
+      '대량생산 스케일 메리트 극대화 → 생산수량 +170.8% 증가(444만→759만개)로 규모의 경제 달성. 고정비 분산으로 경비율 1.0%→0.4%(-0.6%p) 개선',
+      'TAG 전략적 상승 성공 → 평균TAG +23.2% 증가($51.56→$63.53)로 생산단가 상승(+15.5%) 압력 완전 흡수. 고가 제품 믹스로 평균 판가 구조 개선',
+      '벤더 협상력 강화 → 정상마진 1.5%→1.3%(-0.2%p) 절감으로 대량 발주 시즌 협상 우위 입증. 물량 기반 단가 협상 체계 구축',
+      'USD 원가율 구조적 개선 → 17.1%→16.0%(-1.1%p)로 원가율 방어 성공. 원가 M/U 5.85→6.25(+0.40) 개선으로 수익성 강화 구조 확립'
+    ],
+    message: 'NON 시즌은 대량생산(+170.8%)과 TAG 전략적 상승(+23.2%)으로 생산단가 급등(+15.5%)에도 USD 원가율 -1.1%p 개선을 달성한 시즌입니다. 규모의 경제와 고가 믹스 전략이 성공적으로 작용했으나, 환율 상승(+9.1%)으로 KRW 기준 실손익 개선폭은 제한되었습니다. 차기 시즌은 TAG 의존도를 낮추고 실질 제조원가 절감(소재비, 공임비)에 집중하여 환율 변동에도 안정적인 수익 구조를 확보해야 합니다.'
   };
 
   const [insights, setInsights] = useState(defaultInsights);
@@ -368,7 +432,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
         <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-bold text-blue-800 flex items-center gap-2">
-              🎯 즉시 액션
+              🎯 즉시 액션 (Immediate Actions)
             </h4>
             <button
               onClick={() => handleAdd('action')}
@@ -423,7 +487,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
         <div className="bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-bold text-orange-800 flex items-center gap-2">
-              ⚠️ 리스크 관리
+              ⚠️ 리스크 관리 (Risk Management)
             </h4>
             <button
               onClick={() => handleAdd('risk')}
@@ -474,11 +538,11 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
           </ul>
         </div>
 
-        {/* 성공 포인트 */}
+        {/* 성공 포인트 / 시사점 (KIDS는 시사점) */}
         <div className="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
           <div className="flex items-center justify-between mb-3">
             <h4 className="font-bold text-green-800 flex items-center gap-2">
-              ✅ 성공 포인트
+              💡 {(isKIDS || isDISCOVERY) ? '시사점 (Insights)' : '성공 포인트'}
             </h4>
             <button
               onClick={() => handleAdd('success')}

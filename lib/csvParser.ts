@@ -12,6 +12,7 @@ export const CATEGORIES: CategoryInfo[] = [
   { id: 'Bag', name: 'BAG', color: '#ec4899', order: 5 },
   { id: 'Headwear', name: 'HEADWEAR', color: '#06b6d4', order: 6 },
   { id: 'Acc_etc', name: 'ACC', color: '#ef4444', order: 7 },
+  { id: 'Wear_etc', name: 'WEAR', color: '#f97316', order: 8 },
 ];
 
 /**

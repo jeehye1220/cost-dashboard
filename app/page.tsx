@@ -12,7 +12,7 @@ import { loadCostData, loadSummaryData, loadExchangeRates } from '@/lib/csvParse
 import { CostDataItem } from '@/lib/types';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'25FW' | 'NON'>('25FW');
+  const [activeTab, setActiveTab] = useState<'25FW' | 'NON' | 'KIDS' | 'DISCOVERY'>('25FW');
   const [items, setItems] = useState<CostDataItem[]>([]);
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -24,9 +24,36 @@ export default function Home() {
         setLoading(true);
         
         // 탭에 따라 다른 CSV 파일 로드
-        const csvFileName = activeTab === '25FW' ? 'MLB FW.csv' : 'MLB non  251111.csv';
-        const fxFileName = activeTab === '25FW' ? 'FX FW.csv' : 'FX 251111.csv';
-        const summaryFileName = activeTab === '25FW' ? 'summary_25fw.json' : 'summary.json';
+        let csvFileName: string;
+        let fxFileName: string;
+        let summaryFileName: string;
+        
+        switch (activeTab) {
+          case '25FW':
+            csvFileName = 'MLB FW.csv';
+            fxFileName = 'FX FW.csv';
+            summaryFileName = 'summary_25fw.json';
+            break;
+          case 'NON':
+            csvFileName = 'MLB non  251111.csv';
+            fxFileName = 'FX 251111.csv';
+            summaryFileName = 'summary.json';
+            break;
+          case 'KIDS':
+            csvFileName = 'MLB KIDS FW.csv';
+            fxFileName = 'MLB KIDS FX FW.csv';
+            summaryFileName = 'summary_kids.json';
+            break;
+          case 'DISCOVERY':
+            csvFileName = 'DX FW.csv';
+            fxFileName = 'DX FX FW.csv';
+            summaryFileName = 'summary_discovery.json';
+            break;
+          default:
+            csvFileName = 'MLB FW.csv';
+            fxFileName = 'FX FW.csv';
+            summaryFileName = 'summary_25fw.json';
+        }
         
         // CSV 파일에서 아이템별 데이터 로드
         const costData = await loadCostData(csvFileName, fxFileName);
@@ -140,6 +167,26 @@ export default function Home() {
               >
                 MLB NON
               </button>
+              <button
+                onClick={() => setActiveTab('KIDS')}
+                className={`px-6 py-3 font-semibold text-sm transition-all ${
+                  activeTab === 'KIDS'
+                    ? 'bg-white text-slate-800 border-t-4 border-blue-500'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                MLB KIDS
+              </button>
+              <button
+                onClick={() => setActiveTab('DISCOVERY')}
+                className={`px-6 py-3 font-semibold text-sm transition-all ${
+                  activeTab === 'DISCOVERY'
+                    ? 'bg-white text-slate-800 border-t-4 border-blue-500'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                }`}
+              >
+                DISCOVERY
+              </button>
             </div>
           </div>
         </div>
@@ -174,7 +221,7 @@ export default function Home() {
           <div className="text-sm text-blue-700 space-y-1">
             <p>• 원부자재 = 원자재 + 부자재 + 본사공급자재 + 택/라벨</p>
             <p>• 원가율 = (평균원가 ÷ (평균TAG / 1.1)) × 100</p>
-            <p>• USD 환율: 전년 {summary?.fx?.prev?.toLocaleString() || '1,297'} KRW / 당년 {summary?.fx?.curr?.toLocaleString() || '1,415'} KRW</p>
+            <p>• USD 환율: 전년 {summary?.fx?.prev?.toFixed(2) || '1297.00'} KRW / 당년 {summary?.fx?.curr?.toFixed(2) || '1415.00'} KRW</p>
           </div>
         </div>
 
