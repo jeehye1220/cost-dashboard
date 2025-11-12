@@ -131,6 +131,9 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                 원가율<br/>변동
               </th>
               <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+                총원가차이<br/>(USD)
+              </th>
+              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
                 원부자재
               </th>
               <th className="border px-3 py-2 text-center font-semibold text-gray-700">
@@ -161,7 +164,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                   {/* 카테고리 헤더 */}
                   <tr className="bg-gray-50">
                     <td
-                      colSpan={13}
+                      colSpan={14}
                       className="border px-3 py-2 font-bold text-gray-800"
                       style={{ color: category.color }}
                     >
@@ -241,6 +244,18 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           >
                             {item.costRateChange > 0 ? '+' : ''}
                             {item.costRateChange?.toFixed(1) || '0.0'}%p
+                          </td>
+                          
+                          {/* 총원가차이 (USD) */}
+                          <td
+                            className="border px-3 py-2 text-center font-semibold"
+                            style={{
+                              backgroundColor: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#d1fae5' : '#fee2e2',
+                              color: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#065f46' : '#991b1b'
+                            }}
+                          >
+                            {(materialChange + artworkChange + laborChange + marginChange + expenseChange) >= 0 ? '+' : ''}
+                            ${(materialChange + artworkChange + laborChange + marginChange + expenseChange).toFixed(2)}
                           </td>
                           
                           {/* 원부자재 */}
