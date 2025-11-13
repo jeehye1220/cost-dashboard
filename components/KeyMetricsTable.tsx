@@ -32,7 +32,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
   // 환율 정보 (FX CSV 파일에서 로드)
   const fxPrev = fx?.prev || 1297.0; // 전년 환율
   const fxCurr = fx?.curr || 1415.0; // 당년 환율
-  const fxYoY = ((fxCurr / fxPrev - 1) * 100);
+  const fxYoY = (fxCurr / fxPrev) * 100; // 비율 (예: 110.2%)
 
   // 원가 MU 계산 (1 / 원가율)
   const mu24F = total.costRate24F_usd > 0 ? (1 / (total.costRate24F_usd / 100)) : 0;
@@ -42,12 +42,12 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
   // 총판매가 계산 (TAG 금액)
   const totalTagPrev_KRW = total.avgTag24F_usd * total.qty24F * fxPrev;
   const totalTagCurr_KRW = total.avgTag25F_usd * total.qty25F * fxPrev; // 당년도 전년 환율 사용
-  const tagAmountYoY = totalTagPrev_KRW > 0 ? ((totalTagCurr_KRW / totalTagPrev_KRW - 1) * 100) : 0;
+  const tagAmountYoY = totalTagPrev_KRW > 0 ? ((totalTagCurr_KRW / totalTagPrev_KRW) * 100) : 0; // 비율 (예: 108.7%)
 
   // 총생산액 계산 (원가 총액)
   const totalCost24F_USD = total.avgCost24F_usd * total.qty24F;
   const totalCost25F_USD = total.avgCost25F_usd * total.qty25F;
-  const costAmountYoY = totalCost24F_USD > 0 ? ((totalCost25F_USD / totalCost24F_USD - 1) * 100) : 0;
+  const costAmountYoY = totalCost24F_USD > 0 ? ((totalCost25F_USD / totalCost24F_USD) * 100) : 0; // 비율 (예: 103.5%)
   
   // 탭별 초기 분석 멘트
   const getDefaultInsights = () => {
@@ -186,7 +186,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
       value25F: total.qty25F?.toLocaleString() || '0',
       yoy: total.qtyYoY || 0,
       unit: '',
-      isPercentYoY: true
+      displayType: 'percent' // 백분율 표시
     },
     {
       label: '총판매가(백만원)',
@@ -194,7 +194,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
       value25F: (totalTagCurr_KRW / 1000000).toLocaleString(undefined, { maximumFractionDigits: 1 }),
       yoy: tagAmountYoY,
       unit: '',
-      isPercentYoY: true
+      displayType: 'percent' // 백분율 표시
     },
     {
       label: '총생산액(USD)',
@@ -202,15 +202,15 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
       value25F: `$${(totalCost25F_USD / 1000000).toFixed(1)}M`,
       yoy: costAmountYoY,
       unit: '',
-      isPercentYoY: true
+      displayType: 'percent' // 백분율 표시
     },
     {
       label: '생산단가(USD)',
       value24F: `$${total.avgCost24F_usd?.toFixed(2) || '0'}`,
       value25F: `$${total.avgCost25F_usd?.toFixed(2) || '0'}`,
-      yoy: total.costYoY_usd - 100,
+      yoy: total.costYoY_usd || 0, // 이미 백분율 (예: 108.7%)
       unit: '',
-      isPercentYoY: true,
+      displayType: 'percent', // 백분율 표시
       highlight: true
     },
     {
@@ -219,16 +219,16 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
       value25F: `${total.costRate25F_usd?.toFixed(2) || '0'}%`,
       yoy: total.costRate25F_usd - total.costRate24F_usd,
       unit: '%p',
-      isPercentYoY: false,
+      displayType: 'costRate', // 원가율 형식 (당년-전년, 감소=초록, 증가=빨강)
       highlight: true
     },
     {
       label: '원가M/U',
       value24F: mu24F.toFixed(2),
       value25F: mu25F.toFixed(2),
-      yoy: muYoY,
+      yoy: mu25F - mu24F, // 당년 - 전년 (차이값)
       unit: '',
-      isPercentYoY: true
+      displayType: 'mu', // 원가M/U 형식 (당년-전년, 감소=빨강, 증가=초록)
     },
     {
       label: '환율',
@@ -236,23 +236,36 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
       value25F: fxCurr.toFixed(2),
       yoy: fxYoY,
       unit: '',
-      isPercentYoY: true
+      displayType: 'percent' // 백분율 표시
     }
   ];
 
-  const getYoYColor = (yoy: number, isPositiveGood: boolean = true) => {
-    if (yoy > 0) {
-      return isPositiveGood ? 'text-green-600' : 'text-red-600';
-    } else if (yoy < 0) {
-      return isPositiveGood ? 'text-red-600' : 'text-green-600';
+  // YOY 표시 형식 함수
+  const formatYoY = (metric: any) => {
+    const { yoy, displayType } = metric;
+    
+    if (displayType === 'costRate') {
+      // 원가율: 당년 - 전년, 감소=초록(△), 증가=빨강(+)
+      if (yoy < 0) {
+        return { text: `△${Math.abs(yoy).toFixed(2)}%p`, color: 'text-green-600' };
+      } else if (yoy > 0) {
+        return { text: `+${yoy.toFixed(2)}%p`, color: 'text-red-600' };
+      } else {
+        return { text: `0.00%p`, color: 'text-gray-600' };
+      }
+    } else if (displayType === 'mu') {
+      // 원가M/U: 당년 - 전년, 감소=빨강(△), 증가=초록(+)
+      if (yoy < 0) {
+        return { text: `△${Math.abs(yoy).toFixed(2)}`, color: 'text-red-600' };
+      } else if (yoy > 0) {
+        return { text: `+${yoy.toFixed(2)}`, color: 'text-green-600' };
+      } else {
+        return { text: `0.00`, color: 'text-gray-600' };
+      }
+    } else {
+      // 백분율: xxx.x% 형식
+      return { text: `${yoy.toFixed(1)}%`, color: yoy > 0 ? 'text-green-600' : yoy < 0 ? 'text-red-600' : 'text-gray-600' };
     }
-    return 'text-gray-600';
-  };
-
-  const getYoYIcon = (yoy: number) => {
-    if (yoy > 0) return '▲';
-    if (yoy < 0) return '▼';
-    return '─';
   };
 
   return (
@@ -281,9 +294,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
           </thead>
           <tbody>
             {metrics.map((metric, idx) => {
-              const isPositiveGood = metric.label !== '원가율(USD기준)';
-              const yoyColor = getYoYColor(metric.yoy, isPositiveGood);
-              const yoyIcon = getYoYIcon(metric.yoy);
+              const yoyDisplay = formatYoY(metric);
               
               return (
                 <tr 
@@ -299,9 +310,8 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
                   <td className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-gray-800">
                     {metric.value25F}
                   </td>
-                  <td className={`border border-gray-300 px-2 py-1.5 text-center font-bold whitespace-nowrap ${yoyColor}`}>
-                    {yoyIcon} {Math.abs(metric.yoy).toFixed(metric.isPercentYoY ? 1 : 2)}
-                    {metric.isPercentYoY ? '%' : metric.unit}
+                  <td className={`border border-gray-300 px-2 py-1.5 text-center font-bold whitespace-nowrap ${yoyDisplay.color}`}>
+                    {yoyDisplay.text}
                   </td>
                 </tr>
               );
