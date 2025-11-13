@@ -328,19 +328,11 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
         환율효과 +{exchangeRateEffect.toFixed(1)}%p = 
         KRW 기준 {(total.costRate25F_krw - total.costRate24F_usd).toFixed(1)}%p 악화"
       </div>
-
-      {/* Insight Section */}
-      <InsightSection
-        summary={summary}
-        onGenerateAI={generateAIComment}
-        loadingAi={loadingAi}
-        aiInsights={aiInsights}
-      />
     </div>
   );
 };
 
-// InsightSection 컴포넌트 (기존 코드 유지)
+// InsightSection 컴포넌트
 interface InsightSectionProps {
   summary: any;
   onGenerateAI: () => void;
@@ -731,3 +723,6 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
 };
 
 export default WaterfallChart;
+
+// InsightSection을 별도로 export
+export { InsightSection };

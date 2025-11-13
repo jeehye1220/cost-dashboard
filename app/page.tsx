@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import EnhancedStoryCards from '@/components/EnhancedStoryCards';
 import Dashboard from '@/components/Dashboard';
 import CategoryComparison from '@/components/CategoryComparison';
-import WaterfallChart from '@/components/WaterfallChart';
+import WaterfallChart, { InsightSection } from '@/components/WaterfallChart';
 import ExecutiveSummary from '@/components/ExecutiveSummary';
 import KeyMetricsTable from '@/components/KeyMetricsTable';
 import CostRateSummaryTable from '@/components/CostRateSummaryTable';
@@ -17,6 +17,16 @@ export default function Home() {
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadingAi, setLoadingAi] = useState(false);
+  const [aiInsights, setAiInsights] = useState<{
+    action: string[];
+    risk: string[];
+    success: string[];
+    actionSummary?: string;
+    riskSummary?: string;
+    successSummary?: string;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -197,13 +207,74 @@ export default function Home() {
         {/* 경영진 요약 */}
         <ExecutiveSummary summary={summary} />
 
-        {/* 워터폴 차트 & 주요 지표 비교 */}
-        <div className="grid grid-cols-1 gap-4 mb-4">
-          <WaterfallChart summary={summary} />
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <KeyMetricsTable summary={summary} />
-            <CostRateSummaryTable summary={summary} />
+        {/* 인사이트 요약 */}
+        {summary && (
+          <div className="mb-4">
+            <InsightSection
+              summary={summary}
+              onGenerateAI={async () => {
+                setLoadingAi(true);
+                try {
+                  const { total } = summary || {};
+                  const materialArtworkChange = (total?.materialRate25F_usd || 0) - (total?.materialRate24F_usd || 0) + 
+                    (total?.artworkRate25F_usd || 0) - (total?.artworkRate24F_usd || 0);
+                  const laborChange = (total?.laborRate25F_usd || 0) - (total?.laborRate24F_usd || 0);
+                  const marginChange = (total?.marginRate25F_usd || 0) - (total?.marginRate24F_usd || 0);
+                  const expenseChange = (total?.expenseRate25F_usd || 0) - (total?.expenseRate24F_usd || 0);
+                  const exchangeRateEffect = (total?.costRate25F_krw || 0) - (total?.costRate25F_usd || 0);
+
+                  const response = await fetch('/api/generate-comment', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      section: 'waterfall',
+                      data: {
+                        costRate24F_usd: total?.costRate24F_usd || 0,
+                        costRate25F_usd: total?.costRate25F_usd || 0,
+                        costRate25F_krw: total?.costRate25F_krw || 0,
+                        materialArtworkChange: materialArtworkChange,
+                        laborChange: laborChange,
+                        marginChange: marginChange,
+                        expenseChange: expenseChange,
+                        exchangeRateEffect: exchangeRateEffect,
+                      },
+                    }),
+                  });
+
+                  if (response.ok) {
+                    const result = await response.json();
+                    try {
+                      const insights = JSON.parse(result.comment);
+                      setAiInsights(insights);
+                    } catch (e) {
+                      console.error('AI 응답 파싱 오류:', e);
+                      alert('AI 응답을 처리할 수 없습니다.');
+                    }
+                  } else {
+                    alert('AI 인사이트 생성에 실패했습니다.');
+                  }
+                } catch (error) {
+                  console.error('AI 인사이트 생성 오류:', error);
+                  alert('AI 인사이트 생성 중 오류가 발생했습니다.');
+                } finally {
+                  setLoadingAi(false);
+                }
+              }}
+              loadingAi={loadingAi}
+              aiInsights={aiInsights}
+            />
           </div>
+        )}
+
+        {/* 워터폴 차트 */}
+        <div className="mb-4">
+          <WaterfallChart summary={summary} />
+        </div>
+
+        {/* 주요 지표 비교 & 원가율 변동 요약 */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          <KeyMetricsTable summary={summary} />
+          <CostRateSummaryTable summary={summary} />
         </div>
 
         {/* 원가율 카드 - 새로운 디자인 */}

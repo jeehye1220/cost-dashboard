@@ -112,10 +112,10 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
               <th className="border px-3 py-2 text-center font-semibold text-gray-700 w-12">
                 
               </th>
-              <th className="border px-3 py-2 text-left font-semibold text-gray-700">
+              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
                 카테고리
               </th>
-              <th className="border px-3 py-2 text-left font-semibold text-gray-700">
+              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
                 아이템
               </th>
               <th className="border px-3 py-2 text-center font-semibold text-gray-700">
@@ -165,7 +165,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                   <tr className="bg-gray-50">
                     <td
                       colSpan={14}
-                      className="border px-3 py-2 font-bold text-gray-800"
+                      className="border px-3 py-2 text-left font-bold text-gray-800"
                       style={{ color: category.color }}
                     >
                       {category.name} ({categoryItems.length}개 아이템)
@@ -201,7 +201,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           </td>
                           
                           {/* 카테고리 */}
-                          <td className="border px-3 py-2">
+                          <td className="border px-3 py-2 text-center">
                             <span 
                               className="inline-block px-2 py-1 rounded text-xs font-semibold text-white"
                               style={{ backgroundColor: category.color }}
@@ -211,24 +211,24 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           </td>
                           
                           {/* 아이템 */}
-                          <td className="border px-3 py-2 font-medium text-gray-800">
+                          <td className="border px-3 py-2 text-center font-medium text-gray-800">
                             {item.item_name}
                           </td>
                           
                           {/* 평균 KRW TAG */}
-                          <td className="border px-3 py-2 text-center">
+                          <td className="border px-3 py-2 text-right">
                             {avgTagKRW.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                           </td>
                           
                           {/* TAG YOY */}
-                          <td className={`border px-3 py-2 text-center font-semibold ${
+                          <td className={`border px-3 py-2 text-right font-semibold ${
                             item.tagYoY < 100 ? 'text-red-600' : 'text-green-600'
                           }`}>
                             {item.tagYoY?.toFixed(0) || '0'}%
                           </td>
                           
                           {/* 원가 YOY */}
-                          <td className={`border px-3 py-2 text-center font-semibold ${
+                          <td className={`border px-3 py-2 text-right font-semibold ${
                             item.costYoY < 100 ? 'text-green-600' : 'text-red-600'
                           }`}>
                             {item.costYoY?.toFixed(0) || '0'}%
@@ -236,7 +236,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 원가율 변동 */}
                           <td
-                            className="border px-3 py-2 text-center font-bold"
+                            className="border px-3 py-2 text-right font-bold"
                             style={{
                               backgroundColor: item.costRateChange < 0 ? '#d1fae5' : '#fee2e2',
                               color: item.costRateChange < 0 ? '#065f46' : '#991b1b'
@@ -248,7 +248,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 총원가차이 (USD) */}
                           <td
-                            className="border px-3 py-2 text-center font-semibold"
+                            className="border px-3 py-2 text-right font-semibold"
                             style={{
                               backgroundColor: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#d1fae5' : '#fee2e2',
                               color: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#065f46' : '#991b1b'
@@ -260,7 +260,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 원부자재 */}
                           <td
-                            className="border px-3 py-2 text-center"
+                            className="border px-3 py-2 text-right"
                             style={{ backgroundColor: getHeatmapColor(materialChange) }}
                           >
                             {materialChange >= 0 ? '+' : '-'}${Math.abs(materialChange)?.toFixed(2) || '0.00'}
@@ -268,7 +268,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 아트웍 */}
                           <td
-                            className="border px-3 py-2 text-center"
+                            className="border px-3 py-2 text-right"
                             style={{ backgroundColor: getHeatmapColor(artworkChange) }}
                           >
                             {artworkChange >= 0 ? '+' : '-'}${Math.abs(artworkChange)?.toFixed(2) || '0.00'}
@@ -276,7 +276,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 공임 */}
                           <td
-                            className="border px-3 py-2 text-center"
+                            className="border px-3 py-2 text-right"
                             style={{ backgroundColor: getHeatmapColor(laborChange) }}
                           >
                             {laborChange >= 0 ? '+' : '-'}${Math.abs(laborChange)?.toFixed(2) || '0.00'}
@@ -284,7 +284,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 마진 */}
                           <td
-                            className="border px-3 py-2 text-center"
+                            className="border px-3 py-2 text-right"
                             style={{ backgroundColor: getHeatmapColor(marginChange) }}
                           >
                             {marginChange >= 0 ? '+' : '-'}${Math.abs(marginChange)?.toFixed(2) || '0.00'}
@@ -292,14 +292,14 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 기타경비 */}
                           <td
-                            className="border px-3 py-2 text-center"
+                            className="border px-3 py-2 text-right"
                             style={{ backgroundColor: getHeatmapColor(expenseChange) }}
                           >
                             {expenseChange >= 0 ? '+' : '-'}${Math.abs(expenseChange)?.toFixed(2) || '0.00'}
                           </td>
                           
                           {/* 수량 */}
-                          <td className="border px-3 py-2 text-center">
+                          <td className="border px-3 py-2 text-right">
                             {item.qty25F?.toLocaleString() || '0'}
                           </td>
                         </tr>

@@ -278,7 +278,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
         <table className="w-full border-collapse text-xs">
           <thead>
             <tr className="bg-slate-600 text-white">
-              <th className="border border-gray-300 px-2 py-1.5 text-left font-semibold">
+              <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold">
                 구분
               </th>
               <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold">
@@ -304,13 +304,13 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
                   <td className="border border-gray-300 px-2 py-1.5 font-medium text-gray-700">
                     {metric.label}
                   </td>
-                  <td className="border border-gray-300 px-2 py-1.5 text-center text-gray-700">
+                  <td className="border border-gray-300 px-2 py-1.5 text-right text-gray-700">
                     {metric.value24F}
                   </td>
-                  <td className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-gray-800">
+                  <td className="border border-gray-300 px-2 py-1.5 text-right font-semibold text-gray-800">
                     {metric.value25F}
                   </td>
-                  <td className={`border border-gray-300 px-2 py-1.5 text-center font-bold whitespace-nowrap ${yoyDisplay.color}`}>
+                  <td className={`border border-gray-300 px-2 py-1.5 text-right font-bold whitespace-nowrap ${yoyDisplay.color}`}>
                     {yoyDisplay.text}
                   </td>
                 </tr>
