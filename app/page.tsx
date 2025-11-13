@@ -127,7 +127,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       {/* 헤더 */}
       <header className="bg-gradient-to-r from-slate-700 to-slate-600 text-white shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="w-full max-w-[98%] mx-auto px-2 sm:px-4 lg:px-6 py-4">
           <h1 className="text-2xl font-bold mb-1">F&F 원가 대시보드</h1>
           <p className="text-slate-200 text-sm">
             시즌별 원가 분석 및 인사이트 (v1.4.0)
@@ -145,7 +145,7 @@ export default function Home() {
 
         {/* 탭 메뉴 */}
         <div className="bg-slate-800/50 border-t border-slate-600">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full max-w-[98%] mx-auto px-2 sm:px-4 lg:px-6">
             <div className="flex gap-1">
               <button
                 onClick={() => setActiveTab('25FW')}
@@ -193,12 +193,12 @@ export default function Home() {
       </header>
 
       {/* 메인 컨텐츠 */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="w-full max-w-[98%] mx-auto px-2 sm:px-4 lg:px-6 py-4">
         {/* 경영진 요약 */}
         <ExecutiveSummary summary={summary} />
 
         {/* 워터폴 차트 & 주요 지표 비교 */}
-        <div className="grid grid-cols-1 gap-6 mb-8">
+        <div className="grid grid-cols-1 gap-4 mb-4">
           <WaterfallChart summary={summary} />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <KeyMetricsTable summary={summary} />
@@ -216,7 +216,7 @@ export default function Home() {
         <Dashboard items={items} />
 
         {/* 데이터 정보 */}
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-8">
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg mb-4">
           <h3 className="font-bold text-blue-800 mb-2">📊 데이터 정보</h3>
           <div className="text-sm text-blue-700 space-y-1">
             <p>• 원부자재 = 원자재 + 부자재 + 본사공급자재 + 택/라벨</p>
@@ -226,7 +226,7 @@ export default function Home() {
         </div>
 
         {/* 범례 - 실제 존재하는 카테고리만 표시 */}
-        <div className="bg-gray-100 rounded-lg p-6 mb-8">
+        <div className="bg-gray-100 rounded-lg p-4 mb-4">
           <h3 className="font-bold text-gray-800 mb-4">📖 카테고리 색상 범례</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {availableCategories.map(cat => (
@@ -240,8 +240,8 @@ export default function Home() {
       </main>
 
       {/* 푸터 */}
-      <footer className="bg-gray-800 text-white py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <footer className="bg-gray-800 text-white py-4">
+        <div className="w-full max-w-[98%] mx-auto px-2 sm:px-4 lg:px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h4 className="font-bold mb-3">F&F 원가 대시보드</h4>

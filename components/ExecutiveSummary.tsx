@@ -34,22 +34,6 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
     });
   }, [seasonType]);
 
-  // csvInsights가 로드되면 krwTexts.mainChange 업데이트
-  useEffect(() => {
-    if (csvInsights || true) { // 항상 업데이트
-      const krwChange = total.costRate25F_krw - total.costRate25F_usd;
-      const krwChangeText = krwChange > 0 
-        ? `▲ ${krwChange.toFixed(1)}%p 악화`
-        : krwChange < 0 
-        ? `▼ ${Math.abs(krwChange).toFixed(1)}%p 개선`
-        : `➡️ 0.0%p 동일`;
-      
-      setKrwTexts((prev: any) => ({
-        ...prev,
-        mainChange: krwChangeText,
-      }));
-    }
-  }, [csvInsights, total.costRate25F_krw, total.costRate25F_usd]);
 
   // 25FW와 NON, KIDS, DISCOVERY 시즌별 초기 텍스트 설정
   const getInitialTexts = () => {
@@ -320,9 +304,22 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
   useEffect(() => {
     if (csvInsights) {
       setUsdTexts(csvInsights.usd);
-      setKrwTexts(csvInsights.krw);
+      // KRW mainChange는 항상 동적으로 계산 (당년 KRW - 당년 USD)
+      const krwChange = total.costRate25F_krw != null && total.costRate25F_usd != null
+        ? total.costRate25F_krw - total.costRate25F_usd
+        : 0;
+      const krwChangeText = krwChange > 0 
+        ? `▲ ${krwChange.toFixed(1)}%p 악화`
+        : krwChange < 0 
+        ? `▼ ${Math.abs(krwChange).toFixed(1)}%p 개선`
+        : `➡️ 0.0%p 동일`;
+      
+      setKrwTexts({
+        ...csvInsights.krw,
+        mainChange: krwChangeText, // 항상 동적으로 계산된 값 사용
+      });
     }
-  }, [csvInsights]);
+  }, [csvInsights, total.costRate25F_krw, total.costRate25F_usd]);
 
   const [editMode, setEditMode] = useState<string | null>(null);
   const [showManageButtons, setShowManageButtons] = useState(false);

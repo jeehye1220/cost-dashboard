@@ -100,11 +100,11 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
   };
 
   return (
-    <div className="mb-8">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">원가율 카드 대시보드</h2>
+    <div className="mb-4">
+      <h2 className="text-2xl font-bold text-gray-800 mb-4">원가율 카드 대시보드</h2>
       
       {/* 섹션 1: 전체 및 카테고리별 원가율 (USD) */}
-      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg border border-gray-200 p-8 mb-6">
+      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg border border-gray-200 p-4 mb-4">
         <h3 className="text-lg font-bold text-gray-700 mb-6">원가율 (USD 기준)</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {/* 전체 카드 */}
@@ -179,7 +179,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
       </div>
 
       {/* 섹션 2: 전체 및 카테고리별 평균단가 증감 (USD) */}
-      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg border border-gray-200 p-8 mb-6">
+      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg border border-gray-200 p-4 mb-4">
         <h3 className="text-lg font-bold text-gray-700 mb-6">평균단가 (USD 기준)</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {/* 전체 평균단가 */}
@@ -352,7 +352,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
       </div>
 
       {/* 섹션 3: 전체 및 카테고리별 원가율 (KRW) */}
-      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg border border-gray-200 p-8 mb-6">
+      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg border border-gray-200 p-4 mb-4">
         <h3 className="text-lg font-bold text-gray-700 mb-6">원가율 (KRW 기준)</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
           {/* 전체 KRW 카드 */}

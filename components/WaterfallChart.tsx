@@ -134,13 +134,13 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-      <h2 className="text-lg font-bold text-gray-700 mb-4">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
+      <h2 className="text-lg font-bold text-gray-700 mb-3">
         원가율 변동 폭포수 차트
       </h2>
 
       {/* 워터폴 박스 차트 */}
-      <div className="mb-6">
+      <div className="mb-4">
         <div className="flex items-end justify-center gap-2 min-h-[350px] px-2">
           {/* 전년 시작 */}
           <div className="flex flex-col items-center">

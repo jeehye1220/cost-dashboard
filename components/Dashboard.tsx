@@ -73,7 +73,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
   }, {} as Record<string, CostDataItem[]>);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+    <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-800">
           아이템별 원가 구성 히트맵
