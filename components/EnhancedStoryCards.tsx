@@ -22,6 +22,37 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
   const isNON = !is25FW && !isKIDS && !isDISCOVERY; // MLB NON 시즌
   const isFWSS = is25FW || isKIDS || isDISCOVERY; // FW/SS 시즌
 
+  // 발주비중 계산 함수
+  const calculateOrderShare = (catData: any) => {
+    // 전체 발주TAG금액 계산
+    const totalTagAmount25F = total.avgTag25F_usd * total.qty25F;
+    const totalTagAmount24F = total.avgTag24F_usd * total.qty24F;
+    
+    // 카테고리별 발주TAG금액 계산
+    const catTagAmount25F = catData.avgTag25F_usd * catData.qty25F;
+    const catTagAmount24F = catData.avgTag24F_usd * catData.qty24F;
+    
+    // 발주비중 계산 (%)
+    const orderShare25F = totalTagAmount25F > 0 ? (catTagAmount25F / totalTagAmount25F) * 100 : 0;
+    const orderShare24F = totalTagAmount24F > 0 ? (catTagAmount24F / totalTagAmount24F) * 100 : 0;
+    
+    // 전년비 계산 (%)
+    const orderShareYoY = orderShare24F > 0 ? (orderShare25F / orderShare24F) * 100 : 0;
+    
+    return {
+      orderShare25F,
+      orderShare24F,
+      orderShareYoY
+    };
+  };
+
+  // 전체 발주비중 계산 (100%)
+  const totalOrderShare = {
+    orderShare25F: 100,
+    orderShare24F: 100,
+    orderShareYoY: 100
+  };
+
   // 카테고리 선택 로직
   const categoryData = (() => {
     const allCategoryData = CATEGORIES.map(cat => {
@@ -118,7 +149,11 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center">
                 <span className="opacity-80">생산수량</span>
-                <span className="font-bold">{(total.qty25F / 1000000).toFixed(1)}M ({total.qtyYoY?.toFixed(1) || '0'}%)</span>
+                <span className="font-bold">{Math.round(total.qty25F / 1000).toLocaleString()}K ({total.qtyYoY?.toFixed(0) || '0'}%)</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="opacity-80">발주비중</span>
+                <span className="font-bold">{totalOrderShare.orderShare25F.toFixed(0)}% ({totalOrderShare.orderShareYoY.toFixed(0)}%)</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="opacity-80">TAG YOY</span>
@@ -133,6 +168,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
 
           {/* 카테고리별 카드 */}
           {categoryData.map((cat) => {
+            const orderShare = calculateOrderShare(cat.data);
             return (
               <div
                 key={cat.id}
@@ -156,7 +192,13 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">생산수량</span>
                     <span className="font-bold text-gray-800">
-                      {cat.data.qty25F ? `${(cat.data.qty25F / 1000000).toFixed(1)}M (${cat.data.qtyYoY?.toFixed(1) || '0'}%)` : '-'}
+                      {cat.data.qty25F ? `${Math.round(cat.data.qty25F / 1000).toLocaleString()}K (${cat.data.qtyYoY?.toFixed(0) || '0'}%)` : '-'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">발주비중</span>
+                    <span className="font-bold text-gray-800">
+                      {orderShare.orderShare25F.toFixed(0)}% ({orderShare.orderShareYoY.toFixed(0)}%)
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
@@ -375,7 +417,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between items-center">
                 <span className="opacity-80">생산수량</span>
-                <span className="font-bold">{(total.qty25F / 1000000).toFixed(1)}M ({total.qtyYoY?.toFixed(1) || '0'}%)</span>
+                <span className="font-bold">{Math.round(total.qty25F / 1000).toLocaleString()}K ({total.qtyYoY?.toFixed(0) || '0'}%)</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="opacity-80">TAG YOY</span>
