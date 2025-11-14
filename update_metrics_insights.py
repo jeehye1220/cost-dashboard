@@ -75,7 +75,7 @@ def generate_metrics_insights(summary_data, fx_rates, tab_name):
         metrics_volume = f"생산수량 {(qty24F/10000):.1f}만개 → {(qty25F/10000):.1f}만개 ({qtyYoY:.1f}%) 감소. 시장 축소 또는 전략적 물량 조정으로 추정됨."
         metrics_tag = f"평균TAG ${(avgTag25F_usd - avgTag24F_usd):.2f} 상승(+{(tagYoY_usd-100):.1f}%)으로 원가율 방어. TAG 상승 전략이 원가 인상 압력을 상쇄하여 USD 원가율 {abs(costRateChange_usd):.1f}%p 개선 달성. 원가M/U {mu24F:.2f}→{mu25F:.2f} (+{muChange:.2f})로 수익성 개선됨."
         metrics_fx = f"환율 +{fxYoY:.1f}% 상승({fxPrev:.2f}→{fxCurr:.2f}원)으로 KRW 기준 생산단가 +{(costYoY_krw-100):.1f}% 급증. USD 기준 원가율 개선 효과가 환율 악화로 상쇄되어 KRW 원가율 +{costRateChange_krw:.1f}%p 악화."
-        metrics_conclusion = f"KIDS는 물량 감소(-{(100-qtyYoY):.1f}%)에도 TAG 인상 전략(+{(tagYoY_usd-100):.1f}%)으로 USD 기준 원가율을 개선했으나, 환율 급등(+{fxYoY:.1f}%)으로 KRW 실손익은 압박받는 구조. 물량 회복과 환헤지 전략이 핵심 과제."
+        metrics_conclusion = f"KIDS는 물량 감소(-{(100-qtyYoY):.1f}%)에도 TAG 인상 전략(+{(tagYoY_usd-100):.1f}%)으로 USD 기준 원가율을 개선했으나, 환율 급등(+{fxYoY:.1f}%)으로 KRW 실손익은 압박받는 구조. 물량 회복이 핵심 과제."
     
     elif tab_name == 'DISCOVERY':
         # DISCOVERY 데이터 분석
@@ -170,7 +170,7 @@ def generate_metrics_insights(summary_data, fx_rates, tab_name):
         
         # 환율 효과 설명
         fx_effect = costRateChange_krw - costRateChange_usd
-        metrics_fx = f"환율 효과: 환율 {fxPrev:.2f} → {fxCurr:.2f}(+{fxYoY:.1f}%) 상승으로 KRW 기준 원가율에 +{fx_effect:.1f}%p 추가 악화. USD 기준 {costRate25F_usd:.1f}% 원가율이 KRW 기준 {costRate25F_krw:.1f}%로 상승. 환헤지 커버 비율 확대 및 기준환율 관리 필요."
+        metrics_fx = f"환율 효과: 환율 {fxPrev:.2f} → {fxCurr:.2f}(+{fxYoY:.1f}%) 상승으로 KRW 기준 원가율에 +{fx_effect:.1f}%p 추가 악화. USD 기준 {costRate25F_usd:.1f}% 원가율이 KRW 기준 {costRate25F_krw:.1f}%로 상승. 기준환율 관리 필요."
         
         # 결론: Outer 비중과 환율 영향
         if outer_data:
@@ -183,7 +183,7 @@ def generate_metrics_insights(summary_data, fx_rates, tab_name):
         metrics_volume = f"생산수량 {(qty24F/10000):.1f}만개 → {(qty25F/10000):.1f}만개 (+{qtyYoY:.1f}%) 증가로 스케일 메리트 확보. 총판매가는 {tagAmountYoY:.1f}% 증가하여 고가 제품 믹스 확대 전략 확인됨."
         metrics_tag = f"평균TAG ${(avgTag25F_usd - avgTag24F_usd):.2f} 상승(+{(tagYoY_usd-100):.1f}%)으로 원가율 {abs(costRateChange_usd):.1f}%p 개선 달성. 원가M/U {mu24F:.2f}→{mu25F:.2f} (+{muChange:.2f})로 수익성 개선됨."
         metrics_fx = f"환율 +{fxYoY:.1f}% 상승({fxPrev:.2f}→{fxCurr:.2f}원)으로 KRW 기준 생산단가 +{(costYoY_krw-100):.1f}% 급증. USD 기준 원가율 개선 효과가 환율 악화로 상쇄되어 KRW 원가율 +{costRateChange_krw:.1f}%p 악화."
-        metrics_conclusion = f"{tab_name}은 대량생산(+{qtyYoY:.1f}%)과 고가 믹스 전략으로 USD 기준 원가율을 방어했으나, 생산단가 인상(+{(costYoY_usd-100):.1f}%)과 환율 급등(+{fxYoY:.1f}%)으로 KRW 실손익은 압박받는 구조. 향후 생산단가 절감과 환헤지 전략이 핵심 과제."
+        metrics_conclusion = f"{tab_name}은 대량생산(+{qtyYoY:.1f}%)과 고가 믹스 전략으로 USD 기준 원가율을 방어했으나, 생산단가 인상(+{(costYoY_usd-100):.1f}%)과 환율 급등(+{fxYoY:.1f}%)으로 KRW 실손익은 압박받는 구조. 향후 생산단가 절감이 핵심 과제."
     
     return {
         'metrics_title': metrics_title,
