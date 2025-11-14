@@ -231,14 +231,11 @@ export default function Home() {
             <p className="text-gray-600 text-sm">분석할 브랜드를 클릭하여 상세 대시보드로 이동합니다</p>
           </div>
 
-          {/* 날짜 선택 및 브랜드 개수 */}
+          {/* 날짜 선택 */}
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 px-4 py-2 border border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">
               <Calendar className="w-4 h-4" />
-              <span>{selectedDate}</span>
-            </button>
-            <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
-              {brands.length}개 브랜드
+              <span className="text-sm">{selectedDate}</span>
             </button>
           </div>
         </div>
@@ -325,13 +322,16 @@ export default function Home() {
                           <div className="flex-1">
                             <div className="text-xs text-gray-500 mb-1">평균원가(USD)</div>
                             <div className="text-base font-bold text-gray-800">
-                              {formatCurrency(brandSummaries[brand.id]!.avgCost25F_usd)}
+                              ${formatNumber(brandSummaries[brand.id]!.avgCost25F_usd, 2)}
                             </div>
                           </div>
                           <div className="flex-1">
                             <div className="text-xs text-gray-500 mb-1">환율</div>
                             <div className="text-base font-bold text-gray-800">
                               {brandSummaries[brand.id]!.fxPrev.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} → {brandSummaries[brand.id]!.fxCurr.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                              <span className="ml-2 text-sm text-gray-600">
+                                ({Math.round((brandSummaries[brand.id]!.fxCurr / brandSummaries[brand.id]!.fxPrev) * 100)}%)
+                              </span>
                             </div>
                           </div>
                         </div>
