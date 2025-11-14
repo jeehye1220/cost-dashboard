@@ -81,10 +81,10 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
   // 전년/당년 원가율 박스: 고정 180px
   // 변동 바: 최대 120px (시작/끝의 2/3), 최소 40px (작은 차이 구분 가능)
   const baseBoxHeight = 180; // 시작/끝 박스 고정 높이
-  const maxChangeBarHeight = 120; // 변동 바 최대 높이 (시작/끝의 2/3)
-  const minChangeBarHeight = 40; // 변동 바 최소 높이
   
   // 변동 바 높이 계산: 값에 비례하되 최소/최대 범위 내
+  const maxChangeBarHeight = 120; // 변동 바 최대 높이
+  const minChangeBarHeight = 40; // 변동 바 최소 높이
   const getBarHeight = (value: number) => {
     const absValue = Math.abs(value);
     // 0.1%p = 40px, 1.0%p = 120px로 선형 스케일
@@ -163,13 +163,13 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
 
           {/* 소재감 (원부자재 포함) */}
           <div className="flex flex-col items-center">
-            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${materialArtworkChange < 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${materialArtworkChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
               {materialArtworkChange > 0 ? '+' : ''}{materialArtworkChange.toFixed(1)}%p
             </div>
             <div
               className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
               style={{
-                backgroundColor: materialArtworkChange < 0 ? '#10b981' : '#ef4444',
+                backgroundColor: materialArtworkChange < 0 ? '#3b82f6' : '#ef4444',
                 width: '80px',
                 height: `${getBarHeight(materialArtworkChange)}px`
               }}
@@ -180,13 +180,13 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
 
           {/* 마진 */}
           <div className="flex flex-col items-center">
-            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${marginChange < 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${marginChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
               {marginChange > 0 ? '+' : ''}{marginChange.toFixed(1)}%p
             </div>
             <div
               className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
               style={{
-                backgroundColor: marginChange < 0 ? '#10b981' : '#ef4444',
+                backgroundColor: marginChange < 0 ? '#3b82f6' : '#ef4444',
                 width: '80px',
                 height: `${getBarHeight(marginChange)}px`
               }}
@@ -197,13 +197,13 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
 
           {/* 공임 */}
           <div className="flex flex-col items-center">
-            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${laborChange < 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${laborChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
               {laborChange > 0 ? '+' : ''}{laborChange.toFixed(1)}%p
             </div>
             <div
               className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
               style={{
-                backgroundColor: laborChange < 0 ? '#10b981' : '#ef4444',
+                backgroundColor: laborChange < 0 ? '#3b82f6' : '#ef4444',
                 width: '80px',
                 height: `${getBarHeight(laborChange)}px`
               }}
@@ -214,13 +214,13 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
 
           {/* 경비 */}
           <div className="flex flex-col items-center">
-            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${expenseChange < 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${expenseChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
               {expenseChange > 0 ? '+' : ''}{expenseChange.toFixed(1)}%p
             </div>
             <div
               className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
               style={{
-                backgroundColor: expenseChange < 0 ? '#10b981' : '#ef4444',
+                backgroundColor: expenseChange < 0 ? '#3b82f6' : '#ef4444',
                 width: '80px',
                 height: `${getBarHeight(expenseChange)}px`
               }}
@@ -294,8 +294,8 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
           <p className="text-xs text-gray-600 mb-1">
             소재/아트웍 공임 마진 경비
           </p>
-          <p className="text-xl font-bold text-green-600">
-            {realCostChange.toFixed(1)}%p
+          <p className={`text-xl font-bold ${realCostChange > 0 ? 'text-red-600' : 'text-blue-600'}`}>
+            {realCostChange > 0 ? '+' : ''}{realCostChange.toFixed(1)}%p
           </p>
           <p className="text-xs text-gray-500 mt-1">
             소재/아트웍/마진 절감, 공임/경비 증가

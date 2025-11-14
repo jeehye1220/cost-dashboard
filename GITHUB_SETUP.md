@@ -69,3 +69,10 @@ GITHUB_REPO_NAME=COST2
 - GitHub 저장소의 기본 브랜치가 `main`인지 확인
 - 다른 브랜치를 사용하는 경우 코드에서 `branch` 파라미터 수정 필요
 
+
+
+
+
+
+
+

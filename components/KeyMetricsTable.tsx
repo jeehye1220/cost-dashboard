@@ -242,29 +242,42 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
 
   // YOY 표시 형식 함수
   const formatYoY = (metric: any) => {
-    const { yoy, displayType } = metric;
+    const { yoy, displayType, label } = metric;
+    
+    // 생산단가(USD): 올라가면 빨간색, 떨어지면 파란색
+    if (label === '생산단가(USD)') {
+      if (yoy > 100) {
+        return { text: `${yoy.toFixed(1)}%`, color: 'text-red-600' };
+      } else if (yoy < 100) {
+        return { text: `${yoy.toFixed(1)}%`, color: 'text-blue-600' };
+      } else {
+        return { text: `${yoy.toFixed(1)}%`, color: 'text-gray-900' };
+      }
+    }
+    
+    // 원가M/U: 올라가면 파란색, 떨어지면 빨간색
+    if (label === '원가M/U') {
+      if (yoy > 0) {
+        return { text: `+${yoy.toFixed(2)}`, color: 'text-blue-600' };
+      } else if (yoy < 0) {
+        return { text: `△${Math.abs(yoy).toFixed(2)}`, color: 'text-red-600' };
+      } else {
+        return { text: `0.00`, color: 'text-gray-900' };
+      }
+    }
     
     if (displayType === 'costRate') {
-      // 원가율: 당년 - 전년, 감소=초록(△), 증가=빨강(+)
+      // 원가율(USD기준): 당년 - 전년, 감소=파랑(-), 증가=빨강(+)
       if (yoy < 0) {
-        return { text: `△${Math.abs(yoy).toFixed(2)}%p`, color: 'text-green-600' };
+        return { text: `${yoy.toFixed(2)}%p`, color: 'text-blue-600' };
       } else if (yoy > 0) {
         return { text: `+${yoy.toFixed(2)}%p`, color: 'text-red-600' };
       } else {
-        return { text: `0.00%p`, color: 'text-gray-600' };
-      }
-    } else if (displayType === 'mu') {
-      // 원가M/U: 당년 - 전년, 감소=빨강(△), 증가=초록(+)
-      if (yoy < 0) {
-        return { text: `△${Math.abs(yoy).toFixed(2)}`, color: 'text-red-600' };
-      } else if (yoy > 0) {
-        return { text: `+${yoy.toFixed(2)}`, color: 'text-green-600' };
-      } else {
-        return { text: `0.00`, color: 'text-gray-600' };
+        return { text: `0.00%p`, color: 'text-gray-900' };
       }
     } else {
-      // 백분율: xxx.x% 형식
-      return { text: `${yoy.toFixed(1)}%`, color: yoy > 0 ? 'text-green-600' : yoy < 0 ? 'text-red-600' : 'text-gray-600' };
+      // 나머지: 모두 검정색
+      return { text: `${yoy.toFixed(1)}%`, color: 'text-gray-900' };
     }
   };
 

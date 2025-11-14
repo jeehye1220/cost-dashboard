@@ -68,7 +68,7 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
                 <td className="border border-gray-300 px-2 py-1.5 text-[11px]">원부자재+아트웍 원가율</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{materialArtwork24F.toFixed(1)}%</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{materialArtwork25F.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${materialArtworkChange < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${materialArtworkChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {materialArtworkChange > 0 ? '+' : ''}{materialArtworkChange.toFixed(1)}%p
                 </td>
               </tr>
@@ -76,7 +76,7 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
                 <td className="border border-gray-300 px-2 py-1.5 text-[11px]">공임 원가율</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.laborRate24F_usd.toFixed(1)}%</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.laborRate25F_usd.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${laborChange < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${laborChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {laborChange > 0 ? '+' : ''}{laborChange.toFixed(1)}%p
                 </td>
               </tr>
@@ -84,7 +84,7 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
                 <td className="border border-gray-300 px-2 py-1.5 text-[11px]">마진 원가율</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.marginRate24F_usd.toFixed(1)}%</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.marginRate25F_usd.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${marginChange < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${marginChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {marginChange > 0 ? '+' : ''}{marginChange.toFixed(1)}%p
                 </td>
               </tr>
@@ -92,7 +92,7 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
                 <td className="border border-gray-300 px-2 py-1.5 text-[11px]">경비 원가율</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.expenseRate24F_usd.toFixed(1)}%</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.expenseRate25F_usd.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${expenseChange < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${expenseChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {expenseChange > 0 ? '+' : ''}{expenseChange.toFixed(1)}%p
                 </td>
               </tr>
@@ -100,7 +100,7 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
                 <td className="border border-gray-300 px-2 py-1.5 font-bold text-[11px]">USD 원가율 (합계)</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right font-bold text-[11px]">{total.costRate24F_usd.toFixed(1)}%</td>
                 <td className="border border-gray-300 px-2 py-1.5 text-right font-bold text-[11px]">{total.costRate25F_usd.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-bold text-[11px] ${realCostChange < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                <td className={`border border-gray-300 px-2 py-1.5 text-right font-bold text-[11px] ${realCostChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {realCostChange > 0 ? '+' : ''}{realCostChange.toFixed(1)}%p
                 </td>
               </tr>

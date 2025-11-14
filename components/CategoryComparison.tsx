@@ -113,66 +113,66 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
           {/* 헤더 */}
           <div className="font-bold text-gray-700 text-center bg-gray-50 py-1.5 rounded text-[11px]">구분</div>
           <div className="font-bold text-gray-700 text-center bg-gray-50 py-1.5 rounded text-[11px]">전년</div>
-          <div className="font-bold text-center bg-gray-50 py-1.5 rounded text-[11px]" style={{ color: color || '#333' }}>당년</div>
+          <div className="font-bold text-center bg-gray-50 py-1.5 rounded text-[11px] text-gray-900">당년</div>
           <div className="font-bold text-gray-700 text-center bg-gray-50 py-1.5 rounded text-[11px]">차이</div>
           
           {/* 전체 원가율 */}
           <div className="text-gray-700 font-semibold text-center py-1.5 text-[11px]">원가율</div>
           <div className="text-gray-600 text-center py-1.5 font-medium text-[11px]">{stats.costRate24F.toFixed(1)}%</div>
-          <div className="font-bold text-center py-1.5 text-[11px]" style={{ color: color || '#333' }}>
+          <div className="font-bold text-center py-1.5 text-[11px] text-gray-900">
             {stats.costRate25F.toFixed(1)}%
           </div>
-          <div className={`font-bold text-center py-1.5 text-[11px] ${(stats.costRate25F - stats.costRate24F) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`font-bold text-center py-1.5 text-[11px] ${(stats.costRate25F - stats.costRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
             {(stats.costRate25F - stats.costRate24F) > 0 ? '+' : ''}{(stats.costRate25F - stats.costRate24F).toFixed(1)}%p
           </div>
           
           {/* 원부자재 */}
           <div className="text-gray-700 text-center py-1.5 text-[10px]">원부자재</div>
           <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.materialRate24F.toFixed(1)}%</div>
-          <div className={`text-center py-1.5 font-bold text-[10px] ${stats.materialRate25F < stats.materialRate24F ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
             {stats.materialRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.materialRate25F - stats.materialRate24F) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.materialRate25F - stats.materialRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
             {(stats.materialRate25F - stats.materialRate24F) > 0 ? '+' : ''}{(stats.materialRate25F - stats.materialRate24F).toFixed(1)}%p
           </div>
           
           {/* 아트웍 */}
           <div className="text-gray-700 text-center py-1.5 text-[10px]">아트웍</div>
           <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.artworkRate24F.toFixed(1)}%</div>
-          <div className={`text-center py-1.5 font-bold text-[10px] ${stats.artworkRate25F < stats.artworkRate24F ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
             {stats.artworkRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.artworkRate25F - stats.artworkRate24F) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.artworkRate25F - stats.artworkRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
             {(stats.artworkRate25F - stats.artworkRate24F) > 0 ? '+' : ''}{(stats.artworkRate25F - stats.artworkRate24F).toFixed(1)}%p
           </div>
           
           {/* 공임 */}
           <div className="text-gray-700 text-center py-1.5 text-[10px]">공임</div>
           <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.laborRate24F.toFixed(1)}%</div>
-          <div className={`text-center py-1.5 font-bold text-[10px] ${stats.laborRate25F < stats.laborRate24F ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
             {stats.laborRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.laborRate25F - stats.laborRate24F) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.laborRate25F - stats.laborRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
             {(stats.laborRate25F - stats.laborRate24F) > 0 ? '+' : ''}{(stats.laborRate25F - stats.laborRate24F).toFixed(1)}%p
           </div>
           
           {/* 마진 */}
           <div className="text-gray-700 text-center py-1.5 text-[10px]">마진</div>
           <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.marginRate24F.toFixed(1)}%</div>
-          <div className={`text-center py-1.5 font-bold text-[10px] ${stats.marginRate25F < stats.marginRate24F ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
             {stats.marginRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.marginRate25F - stats.marginRate24F) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.marginRate25F - stats.marginRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
             {(stats.marginRate25F - stats.marginRate24F) > 0 ? '+' : ''}{(stats.marginRate25F - stats.marginRate24F).toFixed(1)}%p
           </div>
           
           {/* 경비 */}
           <div className="text-gray-700 text-center py-1.5 text-[10px]">경비</div>
           <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.expenseRate24F.toFixed(1)}%</div>
-          <div className={`text-center py-1.5 font-bold text-[10px] ${stats.expenseRate25F < stats.expenseRate24F ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
             {stats.expenseRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.expenseRate25F - stats.expenseRate24F) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.expenseRate25F - stats.expenseRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
             {(stats.expenseRate25F - stats.expenseRate24F) > 0 ? '+' : ''}{(stats.expenseRate25F - stats.expenseRate24F).toFixed(1)}%p
           </div>
         </div>

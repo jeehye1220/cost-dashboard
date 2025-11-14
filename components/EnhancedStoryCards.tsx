@@ -112,18 +112,18 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
     }
   })();
 
-  // 변동 표시 컴포넌트
+  // 변동 표시 컴포넌트 (원가율용: 상승=빨강, 하락=파랑)
   const ChangeIndicator = ({ value, suffix = '%p' }: { value: number; suffix?: string }) => {
     const isNegative = value < 0;
     
     return (
       <div className="flex items-center gap-0.5">
         {isNegative ? (
-          <ArrowDown className="w-3.5 h-3.5 text-green-600" />
+          <ArrowDown className="w-3.5 h-3.5 text-blue-600" />
         ) : (
           <ArrowUp className="w-3.5 h-3.5 text-red-600" />
         )}
-        <span className={`text-sm font-bold ${isNegative ? 'text-green-600' : 'text-red-600'}`}>
+        <span className={`text-sm font-bold ${isNegative ? 'text-blue-600' : 'text-red-600'}`}>
           {value > 0 ? '+' : ''}{value.toFixed(1)}{suffix}
         </span>
       </div>
@@ -232,11 +232,11 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
               <span className="text-[10px] opacity-80">전년 대비</span>
               <div className="flex items-center gap-1">
                 {(total.avgCost25F_usd - total.avgCost24F_usd) < 0 ? (
-                  <ArrowDown className="w-3 h-3 text-green-300" />
+                  <ArrowDown className="w-3 h-3 text-blue-300" />
                 ) : (
                   <ArrowUp className="w-3 h-3 text-red-300" />
                 )}
-                <span className={`text-[10px] font-bold ${(total.avgCost25F_usd - total.avgCost24F_usd) < 0 ? 'text-green-300' : 'text-red-300'}`}>
+                <span className={`text-[10px] font-bold ${(total.avgCost25F_usd - total.avgCost24F_usd) < 0 ? 'text-blue-300' : 'text-red-300'}`}>
                   {(total.avgCost25F_usd - total.avgCost24F_usd) > 0 ? '+' : ''}${(total.avgCost25F_usd - total.avgCost24F_usd).toFixed(2)}
                 </span>
               </div>
@@ -248,7 +248,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                 <div className="opacity-80 mb-0.5">원부자재</div>
                 <div className="flex justify-between items-center text-[9px] opacity-90">
                   <span>${total.material24F_usd.toFixed(2)} → ${total.material25F_usd.toFixed(2)}</span>
-                  <span className={`font-bold ${(total.material25F_usd - total.material24F_usd) < 0 ? 'text-green-300' : 'text-red-300'}`}>
+                  <span className={`font-bold ${(total.material25F_usd - total.material24F_usd) < 0 ? 'text-blue-300' : 'text-red-300'}`}>
                     {(total.material25F_usd - total.material24F_usd) > 0 ? '+' : ''}${(total.material25F_usd - total.material24F_usd).toFixed(2)}
                   </span>
                 </div>
@@ -259,7 +259,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                 <div className="opacity-80 mb-0.5">아트웍</div>
                 <div className="flex justify-between items-center text-[9px] opacity-90">
                   <span>${total.artwork24F_usd.toFixed(2)} → ${total.artwork25F_usd.toFixed(2)}</span>
-                  <span className={`font-bold ${(total.artwork25F_usd - total.artwork24F_usd) < 0 ? 'text-green-300' : 'text-red-300'}`}>
+                  <span className={`font-bold ${(total.artwork25F_usd - total.artwork24F_usd) < 0 ? 'text-blue-300' : 'text-red-300'}`}>
                     {(total.artwork25F_usd - total.artwork24F_usd) > 0 ? '+' : ''}${(total.artwork25F_usd - total.artwork24F_usd).toFixed(2)}
                   </span>
                 </div>
@@ -270,7 +270,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                 <div className="opacity-80 mb-0.5">공임</div>
                 <div className="flex justify-between items-center text-[9px] opacity-90">
                   <span>${total.labor24F_usd.toFixed(2)} → ${total.labor25F_usd.toFixed(2)}</span>
-                  <span className={`font-bold ${(total.labor25F_usd - total.labor24F_usd) < 0 ? 'text-green-300' : 'text-red-300'}`}>
+                  <span className={`font-bold ${(total.labor25F_usd - total.labor24F_usd) < 0 ? 'text-blue-300' : 'text-red-300'}`}>
                     {(total.labor25F_usd - total.labor24F_usd) > 0 ? '+' : ''}${(total.labor25F_usd - total.labor24F_usd).toFixed(2)}
                   </span>
                 </div>
@@ -281,7 +281,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                 <div className="opacity-80 mb-0.5">마진</div>
                 <div className="flex justify-between items-center text-[9px] opacity-90">
                   <span>${total.margin24F_usd.toFixed(2)} → ${total.margin25F_usd.toFixed(2)}</span>
-                  <span className={`font-bold ${(total.margin25F_usd - total.margin24F_usd) < 0 ? 'text-green-300' : 'text-red-300'}`}>
+                  <span className={`font-bold ${(total.margin25F_usd - total.margin24F_usd) < 0 ? 'text-blue-300' : 'text-red-300'}`}>
                     {(total.margin25F_usd - total.margin24F_usd) > 0 ? '+' : ''}${(total.margin25F_usd - total.margin24F_usd).toFixed(2)}
                   </span>
                 </div>
@@ -292,7 +292,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                 <div className="opacity-80 mb-0.5">경비</div>
                 <div className="flex justify-between items-center text-[9px] opacity-90">
                   <span>${total.expense24F_usd.toFixed(2)} → ${total.expense25F_usd.toFixed(2)}</span>
-                  <span className={`font-bold ${(total.expense25F_usd - total.expense24F_usd) < 0 ? 'text-green-300' : 'text-red-300'}`}>
+                  <span className={`font-bold ${(total.expense25F_usd - total.expense24F_usd) < 0 ? 'text-blue-300' : 'text-red-300'}`}>
                     {(total.expense25F_usd - total.expense24F_usd) > 0 ? '+' : ''}${(total.expense25F_usd - total.expense24F_usd).toFixed(2)}
                   </span>
                 </div>
@@ -321,11 +321,11 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                   <span className="text-[10px] text-gray-500">전년 대비</span>
                   <div className="flex items-center gap-1">
                     {(cat.data.avgCost25F_usd - cat.data.avgCost24F_usd) < 0 ? (
-                      <ArrowDown className="w-3 h-3 text-green-600" />
+                      <ArrowDown className="w-3 h-3 text-blue-600" />
                     ) : (
                       <ArrowUp className="w-3 h-3 text-red-600" />
                     )}
-                    <span className={`text-[10px] font-bold ${(cat.data.avgCost25F_usd - cat.data.avgCost24F_usd) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-[10px] font-bold ${(cat.data.avgCost25F_usd - cat.data.avgCost24F_usd) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                       {(cat.data.avgCost25F_usd - cat.data.avgCost24F_usd) > 0 ? '+' : ''}${(cat.data.avgCost25F_usd - cat.data.avgCost24F_usd).toFixed(2)}
                     </span>
                   </div>
@@ -337,7 +337,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                     <div className="text-gray-600 mb-0.5">원부자재</div>
                     <div className="flex justify-between items-center text-[9px] text-gray-500">
                       <span>${cat.data.material24F_usd.toFixed(2)} → ${cat.data.material25F_usd.toFixed(2)}</span>
-                      <span className={`font-bold ${(cat.data.material25F_usd - cat.data.material24F_usd) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`font-bold ${(cat.data.material25F_usd - cat.data.material24F_usd) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                         {(cat.data.material25F_usd - cat.data.material24F_usd) > 0 ? '+' : ''}${(cat.data.material25F_usd - cat.data.material24F_usd).toFixed(2)}
                       </span>
                     </div>
@@ -348,7 +348,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                     <div className="text-gray-600 mb-0.5">아트웍</div>
                     <div className="flex justify-between items-center text-[9px] text-gray-500">
                       <span>${cat.data.artwork24F_usd.toFixed(2)} → ${cat.data.artwork25F_usd.toFixed(2)}</span>
-                      <span className={`font-bold ${(cat.data.artwork25F_usd - cat.data.artwork24F_usd) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`font-bold ${(cat.data.artwork25F_usd - cat.data.artwork24F_usd) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                         {(cat.data.artwork25F_usd - cat.data.artwork24F_usd) > 0 ? '+' : ''}${(cat.data.artwork25F_usd - cat.data.artwork24F_usd).toFixed(2)}
                       </span>
                     </div>
@@ -359,7 +359,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                     <div className="text-gray-600 mb-0.5">공임</div>
                     <div className="flex justify-between items-center text-[9px] text-gray-500">
                       <span>${cat.data.labor24F_usd.toFixed(2)} → ${cat.data.labor25F_usd.toFixed(2)}</span>
-                      <span className={`font-bold ${(cat.data.labor25F_usd - cat.data.labor24F_usd) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`font-bold ${(cat.data.labor25F_usd - cat.data.labor24F_usd) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                         {(cat.data.labor25F_usd - cat.data.labor24F_usd) > 0 ? '+' : ''}${(cat.data.labor25F_usd - cat.data.labor24F_usd).toFixed(2)}
                       </span>
                     </div>
@@ -370,7 +370,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                     <div className="text-gray-600 mb-0.5">마진</div>
                     <div className="flex justify-between items-center text-[9px] text-gray-500">
                       <span>${cat.data.margin24F_usd.toFixed(2)} → ${cat.data.margin25F_usd.toFixed(2)}</span>
-                      <span className={`font-bold ${(cat.data.margin25F_usd - cat.data.margin24F_usd) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`font-bold ${(cat.data.margin25F_usd - cat.data.margin24F_usd) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                         {(cat.data.margin25F_usd - cat.data.margin24F_usd) > 0 ? '+' : ''}${(cat.data.margin25F_usd - cat.data.margin24F_usd).toFixed(2)}
                       </span>
                     </div>
@@ -381,7 +381,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                     <div className="text-gray-600 mb-0.5">경비</div>
                     <div className="flex justify-between items-center text-[9px] text-gray-500">
                       <span>${cat.data.expense24F_usd.toFixed(2)} → ${cat.data.expense25F_usd.toFixed(2)}</span>
-                      <span className={`font-bold ${(cat.data.expense25F_usd - cat.data.expense24F_usd) < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      <span className={`font-bold ${(cat.data.expense25F_usd - cat.data.expense24F_usd) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                         {(cat.data.expense25F_usd - cat.data.expense24F_usd) > 0 ? '+' : ''}${(cat.data.expense25F_usd - cat.data.expense24F_usd).toFixed(2)}
                       </span>
                     </div>
@@ -451,11 +451,11 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
                   <span className="text-xs text-gray-500">전년 대비</span>
                   <div className="flex items-center gap-0.5">
                     {cat.data.costRateChange_krw < 0 ? (
-                      <ArrowDown className="w-3.5 h-3.5 text-green-600" />
+                      <ArrowDown className="w-3.5 h-3.5 text-blue-600" />
                     ) : (
                       <ArrowUp className="w-3.5 h-3.5 text-red-600" />
                     )}
-                    <span className={`text-sm font-bold ${cat.data.costRateChange_krw < 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <span className={`text-sm font-bold ${cat.data.costRateChange_krw < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                       {cat.data.costRateChange_krw > 0 ? '+' : ''}{cat.data.costRateChange_krw.toFixed(1)}%p
                     </span>
                   </div>

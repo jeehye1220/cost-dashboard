@@ -222,14 +222,14 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* TAG YOY */}
                           <td className={`border px-3 py-2 text-right font-semibold ${
-                            item.tagYoY < 100 ? 'text-red-600' : 'text-green-600'
+                            item.tagYoY > 100 ? 'text-blue-600' : 'text-red-600'
                           }`}>
                             {item.tagYoY?.toFixed(0) || '0'}%
                           </td>
                           
                           {/* 원가 YOY */}
                           <td className={`border px-3 py-2 text-right font-semibold ${
-                            item.costYoY < 100 ? 'text-green-600' : 'text-red-600'
+                            item.costYoY > 100 ? 'text-red-600' : 'text-blue-600'
                           }`}>
                             {item.costYoY?.toFixed(0) || '0'}%
                           </td>
@@ -238,8 +238,8 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           <td
                             className="border px-3 py-2 text-right font-bold"
                             style={{
-                              backgroundColor: item.costRateChange < 0 ? '#d1fae5' : '#fee2e2',
-                              color: item.costRateChange < 0 ? '#065f46' : '#991b1b'
+                              backgroundColor: item.costRateChange < 0 ? '#dbeafe' : '#fee2e2',
+                              color: item.costRateChange < 0 ? '#1e40af' : '#991b1b'
                             }}
                           >
                             {item.costRateChange > 0 ? '+' : ''}
@@ -250,8 +250,8 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           <td
                             className="border px-3 py-2 text-right font-semibold"
                             style={{
-                              backgroundColor: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#d1fae5' : '#fee2e2',
-                              color: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#065f46' : '#991b1b'
+                              backgroundColor: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#dbeafe' : '#fee2e2',
+                              color: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#1e40af' : '#991b1b'
                             }}
                           >
                             {(materialChange + artworkChange + laborChange + marginChange + expenseChange) >= 0 ? '+' : '-'}
@@ -402,7 +402,11 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                       <span className="text-gray-600">평균 TAG:</span>
                                       <span className="font-medium">
                                         {(item.avgTag25F * 1297)?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '0'}
-                                        <span className="ml-2 text-xs text-gray-500">
+                                        <span className={`ml-2 text-xs ${
+                                          (item.tagYoY || 0) > 100
+                                            ? 'text-blue-600'
+                                            : 'text-red-600'
+                                        }`}>
                                           (YOY: {item.tagYoY?.toFixed(1) || '0'}%)
                                         </span>
                                       </span>
@@ -414,7 +418,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                         <span
                                           className={`ml-2 text-xs ${
                                             materialChange < 0
-                                              ? 'text-green-600'
+                                              ? 'text-blue-600'
                                               : 'text-red-600'
                                           }`}
                                         >
@@ -430,7 +434,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                         <span
                                           className={`ml-2 text-xs ${
                                             artworkChange < 0
-                                              ? 'text-green-600'
+                                              ? 'text-blue-600'
                                               : 'text-red-600'
                                           }`}
                                         >
@@ -446,7 +450,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                         <span
                                           className={`ml-2 text-xs ${
                                             laborChange < 0
-                                              ? 'text-green-600'
+                                              ? 'text-blue-600'
                                               : 'text-red-600'
                                           }`}
                                         >
@@ -462,7 +466,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                         <span
                                           className={`ml-2 text-xs ${
                                             marginChange < 0
-                                              ? 'text-green-600'
+                                              ? 'text-blue-600'
                                               : 'text-red-600'
                                           }`}
                                         >
@@ -478,7 +482,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                         <span
                                           className={`ml-2 text-xs ${
                                             expenseChange < 0
-                                              ? 'text-green-600'
+                                              ? 'text-blue-600'
                                               : 'text-red-600'
                                           }`}
                                         >
@@ -496,7 +500,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                         <span
                                           className={`ml-2 text-xs ${
                                             (item.avgCost25F - item.avgCost24F) < 0
-                                              ? 'text-green-600'
+                                              ? 'text-blue-600'
                                               : 'text-red-600'
                                           }`}
                                         >
@@ -514,7 +518,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                         <span
                                           className={`ml-2 text-xs ${
                                             item.costRateChange < 0
-                                              ? 'text-green-600'
+                                              ? 'text-blue-600'
                                               : 'text-red-600'
                                           }`}
                                         >
