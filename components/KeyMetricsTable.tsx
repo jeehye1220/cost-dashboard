@@ -9,6 +9,8 @@ interface KeyMetricsTableProps {
 }
 
 const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
+  const [showTable, setShowTable] = React.useState(false);
+
   if (!summary || !summary.total) {
     return <div>데이터를 불러오는 중...</div>;
   }
@@ -282,27 +284,31 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-50/50 via-white to-pink-50/50 rounded-xl shadow-md border border-blue-100 p-6">
-      <h3 className="text-xl font-bold text-gray-800 mb-5 bg-gradient-to-r from-slate-600 to-slate-700 text-white px-4 py-3 rounded-lg shadow-sm">
-        {tabName}(글로벌기준) 주요 지표 비교
-      </h3>
+    <div className="bg-gradient-to-br from-blue-50/50 via-white to-pink-50/50 rounded-xl shadow-md border border-blue-100 p-5">
+      <button
+        onClick={() => setShowTable(!showTable)}
+        className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-lg transition-all border border-blue-200 shadow-sm mb-0"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-base text-blue-600 font-bold">
+            {showTable ? '▼' : '▶'}
+          </span>
+          <h3 className="text-sm font-bold text-gray-800 whitespace-nowrap">
+            {tabName}(글로벌기준) 주요 지표 비교
+          </h3>
+        </div>
+      </button>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
-        <table className="w-full border-collapse text-sm">
+      {showTable && (
+        <>
+      <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table className="min-w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-gradient-to-r from-slate-600 to-slate-700 text-white">
-              <th className="border-r border-slate-500 px-4 py-3 text-center font-semibold">
-                구분
-              </th>
-              <th className="border-r border-slate-500 px-4 py-3 text-center font-semibold">
-                전년
-              </th>
-              <th className="border-r border-slate-500 px-4 py-3 text-center font-semibold">
-                당년
-              </th>
-              <th className="px-4 py-3 text-center font-semibold">
-                YOY
-              </th>
+            <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+              <th className="border-r border-gray-200 px-4 py-3 text-left font-semibold text-gray-800">구분</th>
+              <th className="border-r border-gray-200 px-4 py-3 text-center font-semibold text-gray-800">전년</th>
+              <th className="border-r border-gray-200 px-4 py-3 text-center font-semibold text-gray-800">당년</th>
+              <th className="px-4 py-3 text-center font-semibold text-gray-800">YOY</th>
             </tr>
           </thead>
           <tbody>
@@ -314,16 +320,16 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
                   key={idx}
                   className={`${metric.highlight ? 'bg-blue-50/70 font-semibold' : 'hover:bg-gray-50/50'} border-b border-gray-200 transition-colors`}
                 >
-                  <td className="border-r border-gray-200 px-4 py-3 font-medium text-gray-800">
+                  <td className="border-r border-gray-200 px-4 py-2.5 text-gray-700">
                     {metric.label}
                   </td>
-                  <td className="border-r border-gray-200 px-4 py-3 text-right text-gray-700">
+                  <td className="border-r border-gray-200 px-4 py-2.5 text-right text-gray-700">
                     {metric.value24F}
                   </td>
-                  <td className="border-r border-gray-200 px-4 py-3 text-right font-semibold text-gray-900">
+                  <td className="border-r border-gray-200 px-4 py-2.5 text-right font-semibold text-gray-900">
                     {metric.value25F}
                   </td>
-                  <td className={`px-4 py-3 text-right font-bold whitespace-nowrap ${yoyDisplay.color}`}>
+                  <td className={`px-4 py-2.5 text-right font-semibold whitespace-nowrap ${yoyDisplay.color}`}>
                     {yoyDisplay.text}
                   </td>
                 </tr>
@@ -420,6 +426,8 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

@@ -518,9 +518,9 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-bold text-gray-700">
+    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg border border-gray-200 p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">
           USD 기준 vs KRW 기준 원가율 비교 분석
         </h2>
         {!showManageButtons && (
@@ -535,13 +535,13 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 왼쪽: USD 기준 (전년 → 당년) */}
-        <div className="border-l-4 border-green-400 bg-blue-50/50 rounded-r-lg p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-base font-bold text-green-600 flex items-center gap-2">
-                <CheckCircle className="w-4 h-4" />
+        <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-xl p-6 shadow-md border-2 border-green-200 hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-green-700 flex items-center gap-2 mb-3">
+                <CheckCircle className="w-5 h-5" />
                 <EditableText
                   id="usd-title"
                   value={usdTexts.title}
@@ -549,20 +549,22 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                   onSave={(val: string) => handleTextEdit('usd', 'title', val)}
                 />
               </h3>
-              <div className="text-2xl font-bold text-gray-700 mt-2">
-                <span className="text-gray-500">
-                  {total.costRate24F_usd.toFixed(1)}%
-                </span>
-                {' → '}
-                <span className="text-green-600">{total.costRate25F_usd.toFixed(1)}%</span>
-              </div>
-              <div className="text-sm text-green-600 font-bold mt-2">
-                <EditableText
-                  id="usd-main-change"
-                  value={usdTexts.mainChange}
-                  className=""
-                  onSave={(val: string) => handleTextEdit('usd', 'mainChange', val)}
-                />
+              <div className="bg-white rounded-lg p-4 shadow-sm border border-green-200 mb-3">
+                <div className="text-3xl font-bold text-gray-800 mb-1">
+                  <span className="text-gray-500">
+                    {total.costRate24F_usd.toFixed(1)}%
+                  </span>
+                  <span className="mx-2 text-gray-400">→</span>
+                  <span className="text-green-600">{total.costRate25F_usd.toFixed(1)}%</span>
+                </div>
+                <div className="text-sm text-green-600 font-bold">
+                  <EditableText
+                    id="usd-main-change"
+                    value={usdTexts.mainChange}
+                    className=""
+                    onSave={(val: string) => handleTextEdit('usd', 'mainChange', val)}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -574,11 +576,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
               const isCollapsed = collapsedItems.has(itemId);
               
               return (
-                <div key={idx} className="bg-white rounded p-3 shadow-sm border border-gray-100 group/item">
+                <div key={idx} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all group/item">
                   <div className="flex items-start gap-3 mb-1">
                     <button
                       onClick={() => toggleItem(itemId)}
-                      className="text-base w-5 flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
+                      className="text-xl w-6 flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
                       title={isCollapsed ? '펼치기' : '접기'}
                     >
                       {item.icon}
@@ -588,15 +590,17 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                         <EditableText
                           id={`usd-title-${idx}`}
                           value={item.title}
-                          className="font-semibold text-gray-700 text-sm"
+                          className="font-semibold text-gray-800 text-sm"
                           onSave={(val: string) => handleTextEdit('usd', 'title', val, idx)}
                         />
-                        <EditableText
-                          id={`usd-change-${idx}`}
-                          value={item.change}
-                          className="text-xs font-bold text-green-600"
-                          onSave={(val: string) => handleTextEdit('usd', 'change', val, idx)}
-                        />
+                        {item.change && (
+                          <EditableText
+                            id={`usd-change-${idx}`}
+                            value={item.change}
+                            className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full"
+                            onSave={(val: string) => handleTextEdit('usd', 'change', val, idx)}
+                          />
+                        )}
                       </div>
                     </div>
                     {showManageButtons && (
@@ -610,15 +614,15 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                     )}
                   </div>
                   {!isCollapsed && (
-                    <div className="ml-8">
+                    <div className="ml-9 mt-2">
                       <EditableText
                         id={`usd-desc-${idx}`}
                         value={item.description}
                         multiline
-                        className="text-xs text-gray-600"
+                        className="text-xs text-gray-600 leading-relaxed"
                         onSave={(val: string) => handleTextEdit('usd', 'description', val, idx)}
                       />
-                      <div className="h-0.5 bg-green-400 rounded-full mt-2" style={{ width: '60%' }}></div>
+                      <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full mt-3" style={{ width: '60%' }}></div>
                     </div>
                   )}
                 </div>
@@ -637,11 +641,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
           </div>
 
           {/* USD 핵심 메시지 */}
-          <div className="bg-blue-500/90 text-white rounded p-3 min-h-[80px]">
+          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg p-4 min-h-[80px] shadow-md">
             <div className="flex items-start gap-3">
-              <span className="text-base w-5 flex-shrink-0">💡</span>
+              <span className="text-xl w-6 flex-shrink-0">💡</span>
               <div className="flex-1">
-                <div className="font-bold text-sm mb-1">핵심 메시지</div>
+                <div className="font-bold text-sm mb-2">핵심 메시지</div>
                 <div className="text-xs leading-relaxed">
                   <EditableText
                     id="usd-summary"
@@ -657,11 +661,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         </div>
 
         {/* 오른쪽: KRW 기준 (당년 USD → 당년 KRW) */}
-        <div className="border-l-4 border-orange-400 bg-orange-50/50 rounded-r-lg p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-base font-bold text-orange-600 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
+        <div className="bg-gradient-to-br from-orange-50 via-amber-50 to-red-50 rounded-xl p-6 shadow-md border-2 border-orange-200 hover:shadow-lg transition-shadow">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-orange-700 flex items-center gap-2 mb-3">
+                <AlertTriangle className="w-5 h-5" />
                 <EditableText
                   id="krw-title"
                   value={krwTexts.title}
@@ -669,18 +673,20 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                   onSave={(val: string) => handleTextEdit('krw', 'title', val)}
                 />
               </h3>
-              <div className="text-2xl font-bold text-gray-700 mt-2">
-                <span className="text-gray-500">{total.costRate25F_usd.toFixed(1)}%</span>
-                {' → '}
-                <span className="text-red-600">{total.costRate25F_krw.toFixed(1)}%</span>
-              </div>
-              <div className="text-sm text-red-600 font-bold mt-2">
-                <EditableText
-                  id="krw-main-change"
-                  value={krwTexts.mainChange}
-                  className=""
-                  onSave={(val: string) => handleTextEdit('krw', 'mainChange', val)}
-                />
+              <div className="bg-white rounded-lg p-4 shadow-sm border border-orange-200 mb-3">
+                <div className="text-3xl font-bold text-gray-800 mb-1">
+                  <span className="text-gray-500">{total.costRate25F_usd.toFixed(1)}%</span>
+                  <span className="mx-2 text-gray-400">→</span>
+                  <span className="text-red-600">{total.costRate25F_krw.toFixed(1)}%</span>
+                </div>
+                <div className="text-sm text-red-600 font-bold">
+                  <EditableText
+                    id="krw-main-change"
+                    value={krwTexts.mainChange}
+                    className=""
+                    onSave={(val: string) => handleTextEdit('krw', 'mainChange', val)}
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -692,11 +698,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
               const isCollapsed = collapsedItems.has(itemId);
               
               return (
-                <div key={idx} className="bg-white rounded p-3 shadow-sm border border-gray-100 group/item">
+                <div key={idx} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all group/item">
                   <div className="flex items-start gap-3 mb-1">
                     <button
                       onClick={() => toggleItem(itemId)}
-                      className="text-base w-5 flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
+                      className="text-xl w-6 flex-shrink-0 cursor-pointer hover:scale-110 transition-transform"
                       title={isCollapsed ? '펼치기' : '접기'}
                     >
                       {item.icon}
@@ -706,15 +712,17 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                         <EditableText
                           id={`krw-title-${idx}`}
                           value={item.title}
-                          className="font-semibold text-gray-700 text-sm"
+                          className="font-semibold text-gray-800 text-sm"
                           onSave={(val: string) => handleTextEdit('krw', 'title', val, idx)}
                         />
-                        <EditableText
-                          id={`krw-change-${idx}`}
-                          value={item.change}
-                          className="text-xs font-bold text-red-600"
-                          onSave={(val: string) => handleTextEdit('krw', 'change', val, idx)}
-                        />
+                        {item.change && (
+                          <EditableText
+                            id={`krw-change-${idx}`}
+                            value={item.change}
+                            className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full"
+                            onSave={(val: string) => handleTextEdit('krw', 'change', val, idx)}
+                          />
+                        )}
                       </div>
                     </div>
                     {showManageButtons && (
@@ -728,15 +736,15 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                     )}
                   </div>
                   {!isCollapsed && (
-                    <div className="ml-8">
+                    <div className="ml-9 mt-2">
                       <EditableText
                         id={`krw-desc-${idx}`}
                         value={item.description}
                         multiline
-                        className="text-xs text-gray-600"
+                        className="text-xs text-gray-600 leading-relaxed"
                         onSave={(val: string) => handleTextEdit('krw', 'description', val, idx)}
                       />
-                      <div className="h-0.5 bg-orange-400 rounded-full mt-2" style={{ width: '60%' }}></div>
+                      <div className="h-1 bg-gradient-to-r from-orange-400 to-red-500 rounded-full mt-3" style={{ width: '60%' }}></div>
                     </div>
                   )}
                 </div>
@@ -755,11 +763,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
           </div>
 
           {/* KRW 핵심 메시지 */}
-          <div className="bg-orange-500/90 text-white rounded p-3 min-h-[80px]">
+          <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg p-4 min-h-[80px] shadow-md">
             <div className="flex items-start gap-3">
-              <span className="text-base w-5 flex-shrink-0">⚠️</span>
+              <span className="text-xl w-6 flex-shrink-0">⚠️</span>
               <div className="flex-1">
-                <div className="font-bold text-sm mb-1">핵심 메시지</div>
+                <div className="font-bold text-sm mb-2">핵심 메시지</div>
                 <div className="text-xs leading-relaxed">
                   <EditableText
                     id="krw-summary"

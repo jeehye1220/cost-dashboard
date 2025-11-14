@@ -357,7 +357,7 @@ interface InsightSectionProps {
 }
 
 const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, loadingAi, aiInsights }) => {
-  const [editMode, setEditMode] = useState<string | null>(null);
+  const [insightEditMode, setInsightEditMode] = useState<string | null>(null);
   
   const { total } = summary || {};
   
@@ -445,12 +445,37 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
   };
 
   const [insights, setInsights] = useState(defaultInsights);
+  const [editMode, setEditMode] = useState<string | null>(null);
+  const [showManageButtons, setShowManageButtons] = useState(false);
 
   React.useEffect(() => {
     if (aiInsights) {
       setInsights(aiInsights);
     }
   }, [aiInsights]);
+
+  // Alt 키 감지 (관리 버튼 표시/숨김)
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey) {
+        setShowManageButtons(true);
+      }
+    };
+    
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (!e.altKey) {
+        setShowManageButtons(false);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   // CSV 파일에 저장하는 함수
   const saveToCSV = async () => {
@@ -501,30 +526,33 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
   return (
     <div className="mt-8 space-y-4">
       {/* 3단 그리드 */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* 즉시 액션 */}
-        <div className="bg-blue-50 rounded-lg p-4 border-l-4 border-blue-500">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-bold text-blue-800 flex items-center gap-2">
-              🎯 즉시 액션 (Immediate Actions)
+        <div className="bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 rounded-xl p-5 shadow-md border-2 border-red-200 hover:shadow-lg transition-all">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-bold text-red-700 flex items-center gap-2 text-lg">
+              <span className="text-2xl">⏰</span>
+              즉시 액션
             </h4>
-            <button
-              onClick={() => handleAdd('action')}
-              className="text-xs bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600"
-            >
-              + 추가
-            </button>
+            {showManageButtons && (
+              <button
+                onClick={() => handleAdd('action')}
+                className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 shadow-sm transition-colors font-medium"
+              >
+                + 추가
+              </button>
+            )}
           </div>
           {aiInsights?.actionSummary && (
-            <div className="mb-3 p-2 bg-blue-100 rounded text-sm text-blue-900 font-medium">
+            <div className="mb-4 p-3 bg-red-100 rounded-lg text-sm text-red-900 font-medium border border-red-200">
               {aiInsights.actionSummary}
             </div>
           )}
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {insights.action.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm">
-                <span className="text-blue-600 mt-0.5">•</span>
-                {editMode === `action-${idx}` ? (
+              <li key={idx} className="flex items-start gap-3 text-sm bg-white rounded-lg p-3 shadow-sm border border-red-100 hover:border-red-200 transition-colors">
+                <span className="text-red-500 mt-0.5 font-bold text-base">•</span>
+                {insightEditMode === `action-${idx}` ? (
                   <div className="flex-1 flex gap-1">
                     <input
                       type="text"
@@ -536,7 +564,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                     <button
                       onClick={async () => {
                         await saveToCSV();
-                        setEditMode(null);
+                        setInsightEditMode(null);
                       }}
                       className="text-xs bg-blue-500 text-white px-2 rounded"
                     >
@@ -553,7 +581,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                   <div className="flex-1 group">
                     <span className="text-gray-700">{item}</span>
                     <button
-                      onClick={() => setEditMode(`action-${idx}`)}
+                      onClick={() => setInsightEditMode(`action-${idx}`)}
                       className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100"
                     >
                       ✏️
@@ -566,28 +594,31 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
         </div>
 
         {/* 리스크 관리 */}
-        <div className="bg-orange-50 rounded-lg p-4 border-l-4 border-orange-500">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-bold text-orange-800 flex items-center gap-2">
-              ⚠️ 리스크 관리 (Risk Management)
+        <div className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 rounded-xl p-5 shadow-md border-2 border-orange-200 hover:shadow-lg transition-all">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-bold text-orange-700 flex items-center gap-2 text-lg">
+              <span className="text-2xl">⚠️</span>
+              리스크 관리
             </h4>
-            <button
-              onClick={() => handleAdd('risk')}
-              className="text-xs bg-orange-500 text-white px-2 py-1 rounded hover:bg-orange-600"
-            >
-              + 추가
-            </button>
+            {showManageButtons && (
+              <button
+                onClick={() => handleAdd('risk')}
+                className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 shadow-sm transition-colors font-medium"
+              >
+                + 추가
+              </button>
+            )}
           </div>
           {aiInsights?.riskSummary && (
-            <div className="mb-3 p-2 bg-orange-100 rounded text-sm text-orange-900 font-medium">
+            <div className="mb-4 p-3 bg-orange-100 rounded-lg text-sm text-orange-900 font-medium border border-orange-200">
               {aiInsights.riskSummary}
             </div>
           )}
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {insights.risk.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm">
-                <span className="text-orange-600 mt-0.5">•</span>
-                {editMode === `risk-${idx}` ? (
+              <li key={idx} className="flex items-start gap-3 text-sm bg-white rounded-lg p-3 shadow-sm border border-orange-100 hover:border-orange-200 transition-colors">
+                <span className="text-orange-500 mt-0.5 font-bold text-base">•</span>
+                {insightEditMode === `risk-${idx}` ? (
                   <div className="flex-1 flex gap-1">
                     <input
                       type="text"
@@ -597,7 +628,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                       autoFocus
                     />
                     <button
-                      onClick={() => setEditMode(null)}
+                      onClick={() => setInsightEditMode(null)}
                       className="text-xs bg-orange-500 text-white px-2 rounded"
                     >
                       ✓
@@ -613,7 +644,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                   <div className="flex-1 group">
                     <span className="text-gray-700">{item}</span>
                     <button
-                      onClick={() => setEditMode(`risk-${idx}`)}
+                      onClick={() => setInsightEditMode(`risk-${idx}`)}
                       className="ml-2 text-xs text-orange-500 opacity-0 group-hover:opacity-100"
                     >
                       ✏️
@@ -626,28 +657,31 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
         </div>
 
         {/* 성공 포인트 / 시사점 (KIDS는 시사점) */}
-        <div className="bg-green-50 rounded-lg p-4 border-l-4 border-green-500">
-          <div className="flex items-center justify-between mb-3">
-            <h4 className="font-bold text-green-800 flex items-center gap-2">
-              💡 {(isKIDS || isDISCOVERY) ? '시사점 (Insights)' : '성공 포인트'}
+        <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-xl p-5 shadow-md border-2 border-green-200 hover:shadow-lg transition-all">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-bold text-green-700 flex items-center gap-2 text-lg">
+              <span className="text-2xl">💡</span>
+              {(isKIDS || isDISCOVERY) ? '시사점' : '성공 포인트'}
             </h4>
-            <button
-              onClick={() => handleAdd('success')}
-              className="text-xs bg-green-500 text-white px-2 py-1 rounded hover:bg-green-600"
-            >
-              + 추가
-            </button>
+            {showManageButtons && (
+              <button
+                onClick={() => handleAdd('success')}
+                className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 shadow-sm transition-colors font-medium"
+              >
+                + 추가
+              </button>
+            )}
           </div>
           {aiInsights?.successSummary && (
-            <div className="mb-3 p-2 bg-green-100 rounded text-sm text-green-900 font-medium">
+            <div className="mb-4 p-3 bg-green-100 rounded-lg text-sm text-green-900 font-medium border border-green-200">
               {aiInsights.successSummary}
             </div>
           )}
-          <ul className="space-y-2">
+          <ul className="space-y-3">
             {insights.success.map((item, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm">
-                <span className="text-green-600 mt-0.5">•</span>
-                {editMode === `success-${idx}` ? (
+              <li key={idx} className="flex items-start gap-3 text-sm bg-white rounded-lg p-3 shadow-sm border border-green-100 hover:border-green-200 transition-colors">
+                <span className="text-green-500 mt-0.5 font-bold text-base">•</span>
+                {insightEditMode === `success-${idx}` ? (
                   <div className="flex-1 flex gap-1">
                     <input
                       type="text"
@@ -657,7 +691,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                       autoFocus
                     />
                     <button
-                      onClick={() => setEditMode(null)}
+                      onClick={() => setInsightEditMode(null)}
                       className="text-xs bg-green-500 text-white px-2 rounded"
                     >
                       ✓
@@ -673,7 +707,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                   <div className="flex-1 group">
                     <span className="text-gray-700">{item}</span>
                     <button
-                      onClick={() => setEditMode(`success-${idx}`)}
+                      onClick={() => setInsightEditMode(`success-${idx}`)}
                       className="ml-2 text-xs text-green-500 opacity-0 group-hover:opacity-100"
                     >
                       ✏️
@@ -687,12 +721,12 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
       </div>
 
       {/* 경영진 핵심 메시지 */}
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 border-l-4 border-purple-500 shadow-md">
-        <div className="flex items-start gap-3">
-          <div className="text-2xl">📌</div>
+      <div className="bg-gradient-to-br from-purple-50 via-indigo-50 to-pink-50 rounded-xl p-6 border-2 border-purple-200 shadow-lg">
+        <div className="flex items-start gap-4">
+          <div className="text-3xl">⭐</div>
           <div className="flex-1">
-            <h4 className="font-bold text-purple-800 mb-2">경영진 핵심 메시지</h4>
-            {editMode === 'message' ? (
+            <h4 className="font-bold text-purple-800 mb-3 text-lg">경영진 핵심 메시지</h4>
+            {insightEditMode === 'message' ? (
               <div>
                 <textarea
                   value={insights.message}
@@ -704,7 +738,7 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                 <button
                   onClick={async () => {
                     await saveToCSV();
-                    setEditMode(null);
+                    setInsightEditMode(null);
                   }}
                   className="mt-2 text-sm bg-purple-500 text-white px-4 py-1 rounded"
                 >
@@ -713,10 +747,12 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
               </div>
             ) : (
               <div className="group">
-                <p className="text-gray-700 text-sm leading-relaxed">{insights.message}</p>
+                <div className="bg-white rounded-lg p-4 border border-purple-200 shadow-sm">
+                  <p className="text-gray-700 text-sm leading-relaxed">{insights.message}</p>
+                </div>
                 <button
-                  onClick={() => setEditMode('message')}
-                  className="mt-2 text-sm text-purple-500 opacity-0 group-hover:opacity-100"
+                  onClick={() => setInsightEditMode('message')}
+                  className="mt-3 text-sm text-purple-600 hover:text-purple-700 opacity-0 group-hover:opacity-100 transition-opacity font-medium"
                 >
                   ✏️ 편집
                 </button>
