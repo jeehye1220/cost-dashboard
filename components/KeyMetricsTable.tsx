@@ -57,14 +57,14 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
         volume: `생산수량 ${(total.qty24F/10000).toFixed(1)}만개 → ${(total.qty25F/10000).toFixed(1)}만개 (${total.qtyYoY?.toFixed(1)}%) 감소. 시장 축소 또는 전략적 물량 조정으로 추정됨.`,
         tag: `평균TAG $${(total.avgTag25F_usd - total.avgTag24F_usd).toFixed(2)} 상승(+${(total.tagYoY_usd-100).toFixed(1)}%)으로 원가율 방어. TAG 상승 전략이 원가 인상 압력을 상쇄하여 USD 원가율 ${Math.abs(total.costRateChange_usd).toFixed(1)}%p 개선 달성. 원가M/U ${mu24F.toFixed(2)}→${mu25F.toFixed(2)} (+${(mu25F-mu24F).toFixed(2)})로 수익성 개선됨.`,
         fx: `환율 +${fxYoY.toFixed(1)}% 상승(${fxPrev.toFixed(2)}→${fxCurr.toFixed(2)}원)으로 KRW 기준 생산단가 +${(total.costYoY_krw-100).toFixed(1)}% 급증. USD 기준 원가율 개선 효과가 환율 악화로 상쇄되어 KRW 원가율 +${total.costRateChange_krw.toFixed(1)}%p 악화.`,
-        conclusion: `KIDS는 물량 감소(-${(100-total.qtyYoY).toFixed(1)}%)에도 TAG 인상 전략(+${(total.tagYoY_usd-100).toFixed(1)}%)으로 USD 기준 원가율을 개선했으나, 환율 급등(+${fxYoY.toFixed(1)}%)으로 KRW 실손익은 압박받는 구조. 물량 회복과 환헤지 전략이 핵심 과제.`
+        conclusion: `KIDS는 물량 감소(-${(100-total.qtyYoY).toFixed(1)}%)에도 TAG 인상 전략(+${(total.tagYoY_usd-100).toFixed(1)}%)으로 USD 기준 원가율을 개선했으나, 환율 급등(+${fxYoY.toFixed(1)}%)으로 KRW 실손익은 압박받는 구조. 물량 회복이 핵심 과제.`
       };
     } else if (tabName === 'DISCOVERY') {
       return {
         title: `원자재 가격 상승과 환율 악재가 동시에 작용하며 원가 경쟁력 악화. 소재 조달 전략 및 공임비 강화 시급.`,
         volume: `원부자재 단가 상승: 고가 소재(다운, 기능성 원단 등) 사용 비중 확대로 글로벌 원자재 시세 상승이 맞물려 단가 상승. 소재비 비중 14.42% → 15.20%로 확대. 단, Outer(다운류) 공임비 효율화로 일부 기여도 감소.`,
         tag: `공임비 절감: 협동 아이템(박터, 트리밍)에서 공임비 6.90 → 6.83 USD/PCS로 감소. 단, Outer(다운류) 공임비 효율화(14.42→15.20%)로 기여도 감소.`,
-        fx: `환율 효과: 환율 ${fxPrev.toFixed(2)} → ${fxCurr.toFixed(2)}(+${fxYoY.toFixed(1)}%) 상승으로 KRW 환가율 추가 상승. 원물인조로 환가율 +${(total.costRateChange_krw - total.costRateChange_usd).toFixed(1)}%p 악화. - 환헤지 커버 비율 확대, 기준환율 관리 필요.`,
+        fx: `환율 효과: 환율 ${fxPrev.toFixed(2)} → ${fxCurr.toFixed(2)}(+${fxYoY.toFixed(1)}%) 상승으로 KRW 환가율 추가 상승. 원물인조로 환가율 +${(total.costRateChange_krw - total.costRateChange_usd).toFixed(1)}%p 악화. - 기준환율 관리 필요.`,
         conclusion: `환율의 추가 부담: USD 기준 ${total.costRate25F_usd.toFixed(1)}% 원가율에 환율 상승(+${fxYoY.toFixed(1)}%)이 물리며 KRW 기준 ${total.costRate25F_krw.toFixed(1)}%로 상승인조로 환가율 +${(total.costRateChange_krw - total.costRateChange_usd).toFixed(1)}%p 추가 악화. Outer 카테고리 환율 영향 집중(${(58).toFixed(0)}% 비중). 다운원면 등 Outer가 전체 생산의 ${(17).toFixed(0)} USD 원물 변동에 가장 민감. 추가 환율 악화 구간에서 충수지 감소 방어 계획 필수.`
       };
     } else {
@@ -74,7 +74,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
         volume: `생산수량 ${(total.qty24F/10000).toFixed(1)}만개 → ${(total.qty25F/10000).toFixed(1)}만개 (+${total.qtyYoY?.toFixed(1)}%) 증가로 스케일 메리트 확보. 총판매가는 ${tagAmountYoY.toFixed(1)}% 증가하여 고가 제품 믹스 확대 전략 확인됨.`,
         tag: `평균TAG $${(total.avgTag25F_usd - total.avgTag24F_usd).toFixed(2)} 상승(+${(total.tagYoY_usd-100).toFixed(1)}%)으로 원가율 ${Math.abs(total.costRateChange_usd).toFixed(1)}%p 개선 달성. 원가M/U ${mu24F.toFixed(2)}→${mu25F.toFixed(2)} (+${(mu25F-mu24F).toFixed(2)})로 수익성 개선됨.`,
         fx: `환율 +${fxYoY.toFixed(1)}% 상승(${fxPrev.toFixed(2)}→${fxCurr.toFixed(2)}원)으로 KRW 기준 생산단가 +${(total.costYoY_krw-100).toFixed(1)}% 급증. USD 기준 원가율 개선 효과가 환율 악화로 상쇄되어 KRW 원가율 +${total.costRateChange_krw.toFixed(1)}%p 악화.`,
-        conclusion: `${tabName}은 대량생산(+${total.qtyYoY?.toFixed(1)}%)과 고가 믹스 전략으로 USD 기준 원가율을 방어했으나, 생산단가 인상(+${(total.costYoY_usd-100).toFixed(1)}%)과 환율 급등(+${fxYoY.toFixed(1)}%)으로 KRW 실손익은 압박받는 구조. 향후 생산단가 절감과 환헤지 전략이 핵심 과제.`
+        conclusion: `${tabName}은 대량생산(+${total.qtyYoY?.toFixed(1)}%)과 고가 믹스 전략으로 USD 기준 원가율을 방어했으나, 생산단가 인상(+${(total.costYoY_usd-100).toFixed(1)}%)과 환율 급등(+${fxYoY.toFixed(1)}%)으로 KRW 실손익은 압박받는 구조. 향후 생산단가 절감이 핵심 과제.`
       };
     }
   };
