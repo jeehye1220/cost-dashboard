@@ -32,96 +32,120 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
   const realCostChange = total.costRate25F_usd - total.costRate24F_usd;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+    <div className="bg-gradient-to-br from-blue-50/50 via-white to-pink-50/50 rounded-xl shadow-md border border-blue-100 p-5">
       <button
         onClick={() => setShowTable(!showTable)}
-        className="w-full flex items-center justify-between p-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-lg transition-all border border-blue-200 shadow-sm"
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600">
+          <span className="text-base text-blue-600 font-bold">
             {showTable ? '▼' : '▶'}
           </span>
-          <h3 className="text-xs font-semibold text-gray-700 whitespace-nowrap">
+          <h3 className="text-sm font-bold text-gray-800 whitespace-nowrap">
             원가율 변동 요약 (전년 USD → 당년 KRW)
           </h3>
         </div>
         {isNON && (
-        <span className="text-[10px] text-gray-500 whitespace-nowrap">
+        <span className="text-xs text-gray-500 whitespace-nowrap">
           전년: 24.06.01~24.10.31 | 당년: 25.06.01~25.10.31
         </span>
         )}
       </button>
 
       {showTable && (
-        <div className="mt-3 overflow-x-auto">
-          <table className="min-w-full border-collapse text-xs">
+        <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+          <table className="min-w-full border-collapse text-sm">
             <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-gray-300 px-2 py-1.5 text-left font-semibold text-[11px]">항목</th>
-                <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-[11px]">전년</th>
-                <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-[11px]">당년</th>
-                <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold text-[11px]">변동</th>
+              <tr className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+                <th className="border-r border-gray-200 px-4 py-3 text-left font-semibold text-gray-800">항목</th>
+                <th className="border-r border-gray-200 px-4 py-3 text-center font-semibold text-gray-800">전년</th>
+                <th className="border-r border-gray-200 px-4 py-3 text-center font-semibold text-gray-800">당년</th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-800">변동</th>
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="border border-gray-300 px-2 py-1.5 text-[11px]">원부자재+아트웍 원가율</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{materialArtwork24F.toFixed(1)}%</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{materialArtwork25F.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${materialArtworkChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <tr className="hover:bg-gray-50/50 transition-colors border-b border-gray-200">
+                <td className="border-r border-gray-200 px-4 py-2.5 text-gray-700">원부자재+아트웍 원가율</td>
+                <td className="border-r border-gray-200 px-4 py-2.5 text-right text-gray-700">{materialArtwork24F.toFixed(1)}%</td>
+                <td className="border-r border-gray-200 px-4 py-2.5 text-right font-semibold text-gray-900">{materialArtwork25F.toFixed(1)}%</td>
+                <td className={`px-4 py-2.5 text-right font-semibold ${materialArtworkChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {materialArtworkChange > 0 ? '+' : ''}{materialArtworkChange.toFixed(1)}%p
                 </td>
               </tr>
-              <tr>
-                <td className="border border-gray-300 px-2 py-1.5 text-[11px]">공임 원가율</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.laborRate24F_usd.toFixed(1)}%</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.laborRate25F_usd.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${laborChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <tr className="hover:bg-gray-50/50 transition-colors border-b border-gray-200">
+                <td className="border-r border-gray-200 px-4 py-2.5 text-gray-700">공임 원가율</td>
+                <td className="border-r border-gray-200 px-4 py-2.5 text-right text-gray-700">{total.laborRate24F_usd.toFixed(1)}%</td>
+                <td className="border-r border-gray-200 px-4 py-2.5 text-right font-semibold text-gray-900">{total.laborRate25F_usd.toFixed(1)}%</td>
+                <td className={`px-4 py-2.5 text-right font-semibold ${laborChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {laborChange > 0 ? '+' : ''}{laborChange.toFixed(1)}%p
                 </td>
               </tr>
-              <tr>
-                <td className="border border-gray-300 px-2 py-1.5 text-[11px]">마진 원가율</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.marginRate24F_usd.toFixed(1)}%</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.marginRate25F_usd.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${marginChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <tr className="hover:bg-gray-50/50 transition-colors border-b border-gray-200">
+                <td className="border-r border-gray-200 px-4 py-2.5 text-gray-700">마진 원가율</td>
+                <td className="border-r border-gray-200 px-4 py-2.5 text-right text-gray-700">{total.marginRate24F_usd.toFixed(1)}%</td>
+                <td className="border-r border-gray-200 px-4 py-2.5 text-right font-semibold text-gray-900">{total.marginRate25F_usd.toFixed(1)}%</td>
+                <td className={`px-4 py-2.5 text-right font-semibold ${marginChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {marginChange > 0 ? '+' : ''}{marginChange.toFixed(1)}%p
                 </td>
               </tr>
-              <tr>
-                <td className="border border-gray-300 px-2 py-1.5 text-[11px]">경비 원가율</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.expenseRate24F_usd.toFixed(1)}%</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">{total.expenseRate25F_usd.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-semibold text-[11px] ${expenseChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <tr className="hover:bg-gray-50/50 transition-colors border-b border-gray-200">
+                <td className="border-r border-gray-200 px-4 py-2.5 text-gray-700">경비 원가율</td>
+                <td className="border-r border-gray-200 px-4 py-2.5 text-right text-gray-700">{total.expenseRate24F_usd.toFixed(1)}%</td>
+                <td className="border-r border-gray-200 px-4 py-2.5 text-right font-semibold text-gray-900">{total.expenseRate25F_usd.toFixed(1)}%</td>
+                <td className={`px-4 py-2.5 text-right font-semibold ${expenseChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {expenseChange > 0 ? '+' : ''}{expenseChange.toFixed(1)}%p
                 </td>
               </tr>
-              <tr className="bg-blue-50">
-                <td className="border border-gray-300 px-2 py-1.5 font-bold text-[11px]">USD 원가율 (합계)</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right font-bold text-[11px]">{total.costRate24F_usd.toFixed(1)}%</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right font-bold text-[11px]">{total.costRate25F_usd.toFixed(1)}%</td>
-                <td className={`border border-gray-300 px-2 py-1.5 text-right font-bold text-[11px] ${realCostChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+              <tr className="bg-blue-50/70 border-b-2 border-blue-200">
+                <td className="border-r border-gray-200 px-4 py-3 font-bold text-gray-900">USD 원가율 (합계)</td>
+                <td className="border-r border-gray-200 px-4 py-3 text-right font-bold text-gray-900">{total.costRate24F_usd.toFixed(1)}%</td>
+                <td className="border-r border-gray-200 px-4 py-3 text-right font-bold text-gray-900">{total.costRate25F_usd.toFixed(1)}%</td>
+                <td className={`px-4 py-3 text-right font-bold ${realCostChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   {realCostChange > 0 ? '+' : ''}{realCostChange.toFixed(1)}%p
                 </td>
               </tr>
-              <tr className="bg-orange-50">
-                <td className="border border-gray-300 px-2 py-1.5 font-bold text-[11px]">환율 효과</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">-</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right text-[11px]">-</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right font-bold text-red-600 text-[11px]">
+              <tr className="bg-orange-50/70 border-b-2 border-orange-200">
+                <td className="border-r border-gray-200 px-4 py-3 font-bold text-gray-900">환율 효과</td>
+                <td className="border-r border-gray-200 px-4 py-3 text-right text-gray-500">-</td>
+                <td className="border-r border-gray-200 px-4 py-3 text-right text-gray-500">-</td>
+                <td className="px-4 py-3 text-right font-bold text-red-600">
                   +{exchangeRateEffect.toFixed(1)}%p
                 </td>
               </tr>
-              <tr className="bg-gray-100">
-                <td className="border border-gray-300 px-2 py-1.5 font-bold text-[11px]">KRW 원가율 (최종)</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right font-bold text-[11px]">{total.costRate24F_usd.toFixed(1)}%</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right font-bold text-[11px]">{total.costRate25F_krw.toFixed(1)}%</td>
-                <td className="border border-gray-300 px-2 py-1.5 text-right font-bold text-red-600 text-[11px]">
+              <tr className="bg-gray-100 border-b-2 border-gray-300">
+                <td className="border-r border-gray-200 px-4 py-3 font-bold text-gray-900">KRW 원가율 (최종)</td>
+                <td className="border-r border-gray-200 px-4 py-3 text-right font-bold text-gray-900">{total.costRate24F_usd.toFixed(1)}%</td>
+                <td className="border-r border-gray-200 px-4 py-3 text-right font-bold text-gray-900">{total.costRate25F_krw.toFixed(1)}%</td>
+                <td className="px-4 py-3 text-right font-bold text-red-600">
                   +{(total.costRate25F_krw - total.costRate24F_usd).toFixed(1)}%p
                 </td>
               </tr>
             </tbody>
           </table>
+          
+          {/* 설명 섹션 */}
+          <div className="mt-5 pt-5 border-t border-gray-200">
+            <div className="bg-gradient-to-br from-blue-50/80 via-white to-pink-50/80 rounded-xl p-5 space-y-4 border border-blue-200 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-0.5 shadow-sm">
+                  <span className="text-blue-600 text-sm font-bold">📦</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-gray-800">원부자재 = </span>
+                  <span className="text-sm text-gray-600">원자재 + 부자재 + 본사공급자재 + 택/라벨</span>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-0.5 shadow-sm">
+                  <span className="text-blue-600 text-sm font-bold">📊</span>
+                </div>
+                <div className="flex-1">
+                  <span className="text-sm font-semibold text-gray-800">원가율 = </span>
+                  <span className="text-sm text-gray-600">(평균원가 ÷ (평균TAG / 1.1)) × 100</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -282,25 +282,25 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-      <h3 className="text-lg font-bold text-gray-700 mb-3 bg-slate-700 text-white px-3 py-2 rounded-t-lg">
+    <div className="bg-gradient-to-br from-blue-50/50 via-white to-pink-50/50 rounded-xl shadow-md border border-blue-100 p-6">
+      <h3 className="text-xl font-bold text-gray-800 mb-5 bg-gradient-to-r from-slate-600 to-slate-700 text-white px-4 py-3 rounded-lg shadow-sm">
         {tabName}(글로벌기준) 주요 지표 비교
       </h3>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-xs">
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white shadow-sm">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-slate-600 text-white">
-              <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold">
+            <tr className="bg-gradient-to-r from-slate-600 to-slate-700 text-white">
+              <th className="border-r border-slate-500 px-4 py-3 text-center font-semibold">
                 구분
               </th>
-              <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold">
+              <th className="border-r border-slate-500 px-4 py-3 text-center font-semibold">
                 전년
               </th>
-              <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold">
+              <th className="border-r border-slate-500 px-4 py-3 text-center font-semibold">
                 당년
               </th>
-              <th className="border border-gray-300 px-2 py-1.5 text-center font-semibold">
+              <th className="px-4 py-3 text-center font-semibold">
                 YOY
               </th>
             </tr>
@@ -312,18 +312,18 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
               return (
                 <tr 
                   key={idx}
-                  className={`${metric.highlight ? 'bg-blue-50/70 font-semibold' : 'hover:bg-gray-50'}`}
+                  className={`${metric.highlight ? 'bg-blue-50/70 font-semibold' : 'hover:bg-gray-50/50'} border-b border-gray-200 transition-colors`}
                 >
-                  <td className="border border-gray-300 px-2 py-1.5 font-medium text-gray-700">
+                  <td className="border-r border-gray-200 px-4 py-3 font-medium text-gray-800">
                     {metric.label}
                   </td>
-                  <td className="border border-gray-300 px-2 py-1.5 text-right text-gray-700">
+                  <td className="border-r border-gray-200 px-4 py-3 text-right text-gray-700">
                     {metric.value24F}
                   </td>
-                  <td className="border border-gray-300 px-2 py-1.5 text-right font-semibold text-gray-800">
+                  <td className="border-r border-gray-200 px-4 py-3 text-right font-semibold text-gray-900">
                     {metric.value25F}
                   </td>
-                  <td className={`border border-gray-300 px-2 py-1.5 text-right font-bold whitespace-nowrap ${yoyDisplay.color}`}>
+                  <td className={`px-4 py-3 text-right font-bold whitespace-nowrap ${yoyDisplay.color}`}>
                     {yoyDisplay.text}
                   </td>
                 </tr>
@@ -334,12 +334,12 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
       </div>
 
       {/* 핵심 성과 요약 */}
-      <div className="mt-3 p-3 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 rounded-lg border-l-4 border-blue-500 shadow-sm">
-        <div className="text-xs text-gray-700 space-y-3">
+      <div className="mt-6 p-5 bg-gradient-to-br from-blue-50/80 via-white to-indigo-50/80 rounded-xl border border-blue-200 shadow-sm">
+        <div className="text-sm text-gray-700 space-y-4">
           {/* 헤더 */}
-          <div className="font-bold text-blue-700 text-sm flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <span>✅</span>
+          <div className="font-bold text-blue-700 text-base flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">✅</span>
               <EditableText 
                 id="title" 
                 value={insights.title} 
@@ -350,18 +350,18 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
           </div>
 
           {/* 제목 */}
-          <div className="font-bold text-gray-800 flex items-center gap-2">
-            <span>📊</span>
+          <div className="font-bold text-gray-800 flex items-center gap-2 text-base">
+            <span className="text-lg">📊</span>
             <span>전년대비 주요 지표 변화 분석</span>
           </div>
 
           {/* 생산 규모 / 원부자재 단가 상승 */}
-          <div>
-            <div className="font-semibold text-gray-800 flex items-center gap-1 mb-1">
-              <span>{sectionTitles.volume.icon}</span>
+          <div className="bg-white rounded-lg p-3 border border-gray-200">
+            <div className="font-semibold text-gray-800 flex items-center gap-2 mb-2">
+              <span className="text-base">{sectionTitles.volume.icon}</span>
               <span>{sectionTitles.volume.title}</span>
             </div>
-            <div className="leading-relaxed text-gray-600 pl-5">
+            <div className="leading-relaxed text-gray-600 pl-7">
               <EditableText 
                 id="volume" 
                 value={insights.volume} 
@@ -372,12 +372,12 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
           </div>
 
           {/* TAG 효과 / 공임비 절감 */}
-          <div>
-            <div className="font-semibold text-gray-800 flex items-center gap-1 mb-1">
-              <span>{sectionTitles.tag.icon}</span>
+          <div className="bg-white rounded-lg p-3 border border-gray-200">
+            <div className="font-semibold text-gray-800 flex items-center gap-2 mb-2">
+              <span className="text-base">{sectionTitles.tag.icon}</span>
               <span>{sectionTitles.tag.title}</span>
             </div>
-            <div className="leading-relaxed text-gray-600 pl-5">
+            <div className="leading-relaxed text-gray-600 pl-7">
               <EditableText 
                 id="tag" 
                 value={insights.tag} 
@@ -388,12 +388,12 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
           </div>
 
           {/* 환율 리스크 */}
-          <div>
-            <div className="font-semibold text-orange-700 flex items-center gap-1 mb-1">
-              <span>{sectionTitles.fx.icon}</span>
+          <div className="bg-white rounded-lg p-3 border border-orange-200">
+            <div className="font-semibold text-orange-700 flex items-center gap-2 mb-2">
+              <span className="text-base">{sectionTitles.fx.icon}</span>
               <span>{sectionTitles.fx.title}</span>
             </div>
-            <div className="leading-relaxed text-gray-600 pl-5">
+            <div className="leading-relaxed text-gray-600 pl-7">
               <EditableText 
                 id="fx" 
                 value={insights.fx} 
@@ -404,12 +404,12 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
           </div>
 
           {/* 시사점 / 리스크 요약 */}
-          <div>
-            <div className={`font-semibold flex items-center gap-1 mb-1 ${tabName === 'DISCOVERY' ? 'text-orange-700' : 'text-blue-700'}`}>
-              <span>{sectionTitles.conclusion.icon}</span>
+          <div className="bg-white rounded-lg p-3 border border-blue-200">
+            <div className={`font-semibold flex items-center gap-2 mb-2 ${tabName === 'DISCOVERY' ? 'text-orange-700' : 'text-blue-700'}`}>
+              <span className="text-base">{sectionTitles.conclusion.icon}</span>
               <span>{sectionTitles.conclusion.title}</span>
             </div>
-            <div className="leading-relaxed text-gray-600 pl-5">
+            <div className="leading-relaxed text-gray-600 pl-7">
               <EditableText 
                 id="conclusion" 
                 value={insights.conclusion} 

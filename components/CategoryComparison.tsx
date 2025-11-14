@@ -66,8 +66,8 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
 
   // 개별 레이더 차트 컴포넌트
   const RadarChartCard = ({ title, data, color, stats }: any) => (
-    <div className="flex flex-col bg-white rounded-lg shadow-md border border-gray-200 p-4 hover:shadow-lg transition-shadow">
-      <h3 className="text-center font-bold text-base mb-3" style={{ color: color || '#333' }}>
+    <div className="flex flex-col bg-white rounded-xl shadow-sm border border-blue-100 p-5 hover:shadow-md hover:border-blue-200 transition-all">
+      <h3 className="text-center font-bold text-base mb-4" style={{ color: color || '#333' }}>
         {title}
       </h3>
       
@@ -75,17 +75,17 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
       <div className="flex-1">
         <ResponsiveContainer width="100%" height={300}>
           <RadarChart data={data}>
-            <PolarGrid stroke="#e5e7eb" />
-            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#6b7280', fontWeight: 600 }} />
-            <PolarRadiusAxis angle={90} domain={[0, 15]} tick={{ fontSize: 10 }} />
+            <PolarGrid stroke="#dbeafe" strokeDasharray="3 3" />
+            <PolarAngleAxis dataKey="subject" tick={{ fontSize: 11, fill: '#4b5563', fontWeight: 600 }} />
+            <PolarRadiusAxis angle={90} domain={[0, 15]} tick={{ fontSize: 10, fill: '#6b7280' }} />
             {showPrev && (
               <Radar
                 name="전년"
                 dataKey="전년"
                 stroke="#9ca3af"
                 fill="#9ca3af"
-                fillOpacity={0.2}
-                strokeWidth={3}
+                fillOpacity={0.25}
+                strokeWidth={2.5}
               />
             )}
             {showCurr && (
@@ -94,85 +94,94 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
                 dataKey="당년"
                 stroke={color || '#333'}
                 fill={color || '#333'}
-                fillOpacity={0.4}
-                strokeWidth={3}
+                fillOpacity={0.35}
+                strokeWidth={2.5}
               />
             )}
-            <Legend wrapperStyle={{ fontSize: '13px', fontWeight: '600' }} />
+            <Legend 
+              wrapperStyle={{ fontSize: '12px', fontWeight: '600', paddingTop: '10px' }}
+              iconType="circle"
+            />
             <Tooltip 
               formatter={(value: number) => `${value.toFixed(1)}%`}
-              contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px', padding: '10px' }}
+              contentStyle={{ 
+                backgroundColor: '#fff', 
+                border: '1px solid #dbeafe', 
+                borderRadius: '8px', 
+                padding: '10px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}
             />
           </RadarChart>
         </ResponsiveContainer>
       </div>
       
       {/* 하단 통계 테이블 */}
-      <div className="mt-3 border-t border-gray-200 pt-3">
-        <div className="grid grid-cols-4 gap-1.5 text-xs">
+      <div className="mt-4 border-t border-blue-100 pt-4">
+        <div className="grid grid-cols-4 gap-2 text-xs">
           {/* 헤더 */}
-          <div className="font-bold text-gray-700 text-center bg-gray-50 py-1.5 rounded text-[11px]">구분</div>
-          <div className="font-bold text-gray-700 text-center bg-gray-50 py-1.5 rounded text-[11px]">전년</div>
-          <div className="font-bold text-center bg-gray-50 py-1.5 rounded text-[11px] text-gray-900">당년</div>
-          <div className="font-bold text-gray-700 text-center bg-gray-50 py-1.5 rounded text-[11px]">차이</div>
+          <div className="font-bold text-gray-800 text-center bg-blue-50/50 py-2 rounded-lg text-xs border border-blue-100">구분</div>
+          <div className="font-bold text-gray-800 text-center bg-blue-50/50 py-2 rounded-lg text-xs border border-blue-100">전년</div>
+          <div className="font-bold text-center bg-blue-50/50 py-2 rounded-lg text-xs text-gray-900 border border-blue-100">당년</div>
+          <div className="font-bold text-gray-800 text-center bg-blue-50/50 py-2 rounded-lg text-xs border border-blue-100">차이</div>
           
           {/* 전체 원가율 */}
-          <div className="text-gray-700 font-semibold text-center py-1.5 text-[11px]">원가율</div>
-          <div className="text-gray-600 text-center py-1.5 font-medium text-[11px]">{stats.costRate24F.toFixed(1)}%</div>
-          <div className="font-bold text-center py-1.5 text-[11px] text-gray-900">
+          <div className="text-gray-800 font-semibold text-center py-2 text-xs bg-gray-50/50 rounded-md">원가율</div>
+          <div className="text-gray-600 text-center py-2 font-medium text-xs">{stats.costRate24F.toFixed(1)}%</div>
+          <div className="font-bold text-center py-2 text-xs text-gray-900 bg-white rounded-md">
             {stats.costRate25F.toFixed(1)}%
           </div>
-          <div className={`font-bold text-center py-1.5 text-[11px] ${(stats.costRate25F - stats.costRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className={`font-bold text-center py-2 text-xs rounded-md ${(stats.costRate25F - stats.costRate24F) < 0 ? 'text-blue-600 bg-blue-50/50' : (stats.costRate25F - stats.costRate24F) > 0 ? 'text-red-600 bg-red-50/50' : 'text-gray-900 bg-gray-50/50'}`}>
             {(stats.costRate25F - stats.costRate24F) > 0 ? '+' : ''}{(stats.costRate25F - stats.costRate24F).toFixed(1)}%p
           </div>
           
           {/* 원부자재 */}
-          <div className="text-gray-700 text-center py-1.5 text-[10px]">원부자재</div>
-          <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.materialRate24F.toFixed(1)}%</div>
-          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
+          <div className="text-gray-800 text-center py-2 text-xs bg-gray-50/50 rounded-md">원부자재</div>
+          <div className="text-gray-600 text-center py-2 text-xs">{stats.materialRate24F.toFixed(1)}%</div>
+          <div className="text-center py-2 font-bold text-xs text-gray-900 bg-white rounded-md">
             {stats.materialRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.materialRate25F - stats.materialRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-2 text-xs rounded-md ${(stats.materialRate25F - stats.materialRate24F) < 0 ? 'text-blue-600 bg-blue-50/50' : (stats.materialRate25F - stats.materialRate24F) > 0 ? 'text-red-600 bg-red-50/50' : 'text-gray-900 bg-gray-50/50'}`}>
             {(stats.materialRate25F - stats.materialRate24F) > 0 ? '+' : ''}{(stats.materialRate25F - stats.materialRate24F).toFixed(1)}%p
           </div>
           
           {/* 아트웍 */}
-          <div className="text-gray-700 text-center py-1.5 text-[10px]">아트웍</div>
-          <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.artworkRate24F.toFixed(1)}%</div>
-          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
+          <div className="text-gray-800 text-center py-2 text-xs bg-gray-50/50 rounded-md">아트웍</div>
+          <div className="text-gray-600 text-center py-2 text-xs">{stats.artworkRate24F.toFixed(1)}%</div>
+          <div className="text-center py-2 font-bold text-xs text-gray-900 bg-white rounded-md">
             {stats.artworkRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.artworkRate25F - stats.artworkRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-2 text-xs rounded-md ${(stats.artworkRate25F - stats.artworkRate24F) < 0 ? 'text-blue-600 bg-blue-50/50' : (stats.artworkRate25F - stats.artworkRate24F) > 0 ? 'text-red-600 bg-red-50/50' : 'text-gray-900 bg-gray-50/50'}`}>
             {(stats.artworkRate25F - stats.artworkRate24F) > 0 ? '+' : ''}{(stats.artworkRate25F - stats.artworkRate24F).toFixed(1)}%p
           </div>
           
           {/* 공임 */}
-          <div className="text-gray-700 text-center py-1.5 text-[10px]">공임</div>
-          <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.laborRate24F.toFixed(1)}%</div>
-          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
+          <div className="text-gray-800 text-center py-2 text-xs bg-gray-50/50 rounded-md">공임</div>
+          <div className="text-gray-600 text-center py-2 text-xs">{stats.laborRate24F.toFixed(1)}%</div>
+          <div className="text-center py-2 font-bold text-xs text-gray-900 bg-white rounded-md">
             {stats.laborRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.laborRate25F - stats.laborRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-2 text-xs rounded-md ${(stats.laborRate25F - stats.laborRate24F) < 0 ? 'text-blue-600 bg-blue-50/50' : (stats.laborRate25F - stats.laborRate24F) > 0 ? 'text-red-600 bg-red-50/50' : 'text-gray-900 bg-gray-50/50'}`}>
             {(stats.laborRate25F - stats.laborRate24F) > 0 ? '+' : ''}{(stats.laborRate25F - stats.laborRate24F).toFixed(1)}%p
           </div>
           
           {/* 마진 */}
-          <div className="text-gray-700 text-center py-1.5 text-[10px]">마진</div>
-          <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.marginRate24F.toFixed(1)}%</div>
-          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
+          <div className="text-gray-800 text-center py-2 text-xs bg-gray-50/50 rounded-md">마진</div>
+          <div className="text-gray-600 text-center py-2 text-xs">{stats.marginRate24F.toFixed(1)}%</div>
+          <div className="text-center py-2 font-bold text-xs text-gray-900 bg-white rounded-md">
             {stats.marginRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.marginRate25F - stats.marginRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-2 text-xs rounded-md ${(stats.marginRate25F - stats.marginRate24F) < 0 ? 'text-blue-600 bg-blue-50/50' : (stats.marginRate25F - stats.marginRate24F) > 0 ? 'text-red-600 bg-red-50/50' : 'text-gray-900 bg-gray-50/50'}`}>
             {(stats.marginRate25F - stats.marginRate24F) > 0 ? '+' : ''}{(stats.marginRate25F - stats.marginRate24F).toFixed(1)}%p
           </div>
           
           {/* 경비 */}
-          <div className="text-gray-700 text-center py-1.5 text-[10px]">경비</div>
-          <div className="text-gray-600 text-center py-1.5 text-[10px]">{stats.expenseRate24F.toFixed(1)}%</div>
-          <div className="text-center py-1.5 font-bold text-[10px] text-gray-900">
+          <div className="text-gray-800 text-center py-2 text-xs bg-gray-50/50 rounded-md">경비</div>
+          <div className="text-gray-600 text-center py-2 text-xs">{stats.expenseRate24F.toFixed(1)}%</div>
+          <div className="text-center py-2 font-bold text-xs text-gray-900 bg-white rounded-md">
             {stats.expenseRate25F.toFixed(1)}%
           </div>
-          <div className={`font-semibold text-center py-1.5 text-[10px] ${(stats.expenseRate25F - stats.expenseRate24F) < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className={`font-semibold text-center py-2 text-xs rounded-md ${(stats.expenseRate25F - stats.expenseRate24F) < 0 ? 'text-blue-600 bg-blue-50/50' : (stats.expenseRate25F - stats.expenseRate24F) > 0 ? 'text-red-600 bg-red-50/50' : 'text-gray-900 bg-gray-50/50'}`}>
             {(stats.expenseRate25F - stats.expenseRate24F) > 0 ? '+' : ''}{(stats.expenseRate25F - stats.expenseRate24F).toFixed(1)}%p
           </div>
         </div>
@@ -181,33 +190,39 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
   );
 
   return (
-    <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-lg p-8 mb-8 border border-gray-200">
+    <div className="bg-gradient-to-br from-blue-50/50 via-white to-pink-50/50 rounded-xl shadow-lg p-8 mb-8 border border-blue-100">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-2xl font-bold text-gray-800">
           카테고리별 원가 구성 비교 (USD 기준)
         </h2>
         
         {/* 시즌 토글 버튼 */}
-        <div className="flex gap-3">
+        <div className="flex gap-2 bg-white rounded-xl p-1.5 shadow-sm border border-blue-100">
           <button
             onClick={() => setShowPrev(!showPrev)}
-            className={`px-5 py-2.5 rounded-lg font-bold transition-all ${
+            className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
               showPrev
-                ? 'bg-gray-500 text-white shadow-lg scale-105'
-                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                ? 'bg-gray-600 text-white shadow-sm'
+                : 'bg-transparent text-gray-500 hover:bg-gray-50'
             }`}
           >
-            전년 {showPrev ? '✓' : ''}
+            <span className="flex items-center gap-2">
+              <span>전년</span>
+              {showPrev && <span className="text-white">✓</span>}
+            </span>
           </button>
           <button
             onClick={() => setShowCurr(!showCurr)}
-            className={`px-5 py-2.5 rounded-lg font-bold transition-all ${
+            className={`px-6 py-2.5 rounded-lg font-semibold text-sm transition-all ${
               showCurr
-                ? 'bg-blue-500 text-white shadow-lg scale-105'
-                : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                ? 'bg-blue-500 text-white shadow-sm'
+                : 'bg-transparent text-gray-500 hover:bg-gray-50'
             }`}
           >
-            당년 {showCurr ? '✓' : ''}
+            <span className="flex items-center gap-2">
+              <span>당년</span>
+              {showCurr && <span className="text-white">✓</span>}
+            </span>
           </button>
         </div>
       </div>
@@ -261,17 +276,30 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
       </div>
 
       {/* 안내 메시지 */}
-      <div className="bg-blue-50 border-l-4 border-blue-500 p-5 rounded-r-lg">
-        <p className="text-sm text-gray-800 leading-relaxed">
-          <span className="text-lg mr-2">💡</span>
-          <strong className="text-blue-900">전체 및 각 카테고리의 원가 구성 비율을 5각형 레이더 차트로 표시합니다.</strong>
-          <br />
-          <span className="text-gray-600">
-            <span className="ml-7">• 회색 영역: 24F(전년) 데이터 | 컬러 영역: 25F(당년) 데이터<br /></span>
-            <span className="ml-7">• 차트 하단 테이블에서 각 항목별 정확한 수치 확인 가능<br /></span>
-            <span className="ml-7">• 파란색 숫자는 개선(감소), 빨간색 숫자는 악화(증가)를 의미</span>
-          </span>
-        </p>
+      <div className="bg-gradient-to-br from-blue-50/80 via-white to-pink-50/80 rounded-xl p-4 shadow-sm border border-blue-200/50">
+        <div className="flex items-center gap-3 mb-3">
+          <h4 className="text-sm font-bold text-gray-800">📊 레이더 차트 가이드</h4>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="flex items-start gap-2">
+            <div className="flex-shrink-0 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+              <span className="text-blue-600 text-xs">▸</span>
+            </div>
+            <div className="text-xs text-gray-600">
+              <span className="font-semibold text-gray-700">회색 영역:</span> 24F(전년) 데이터<br />
+              <span className="font-semibold text-gray-700">컬러 영역:</span> 25F(당년) 데이터
+            </div>
+          </div>
+          <div className="flex items-start gap-2">
+            <div className="flex-shrink-0 w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center mt-0.5">
+              <span className="text-blue-600 text-xs">▸</span>
+            </div>
+            <div className="text-xs text-gray-600">
+              <span className="font-semibold text-blue-600">파란색</span> = 개선(감소)<br />
+              <span className="font-semibold text-red-600">빨간색</span> = 악화(증가)
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

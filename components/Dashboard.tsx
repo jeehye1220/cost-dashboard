@@ -73,7 +73,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
   }, {} as Record<string, CostDataItem[]>);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4 mb-4">
+    <div className="bg-white rounded-xl shadow-md p-6 mb-4 border border-gray-100">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold text-gray-800">
           아이템별 원가 구성 히트맵
@@ -85,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white text-gray-700 text-sm font-medium hover:border-gray-300 transition-all"
           >
             <option value="전체">전체</option>
             {availableCategories.map(cat => (
@@ -97,7 +97,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 bg-white text-gray-700 text-sm font-medium hover:border-gray-300 transition-all"
           >
             <option value="수량순">수량순</option>
             <option value="원가율변동순">원가율변동순</option>
@@ -105,50 +105,50 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-gray-50/30">
         <table className="min-w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700 w-12">
+            <tr className="bg-gray-50 border-b border-gray-200">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800 w-12">
                 
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 카테고리
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 아이템
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 평균<br/>KRW TAG
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 TAG<br/>YOY
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 원가<br/>YOY
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 원가율<br/>변동
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 총원가차이<br/>(USD)
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 원부자재
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 아트웍
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 공임
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 마진
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 기타경비
               </th>
-              <th className="border px-3 py-2 text-center font-semibold text-gray-700">
+              <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
                 수량
               </th>
             </tr>
@@ -162,11 +162,14 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
               return (
                 <React.Fragment key={category.id}>
                   {/* 카테고리 헤더 */}
-                  <tr className="bg-gray-50">
+                  <tr className="bg-gray-50 border-b border-gray-200">
                     <td
                       colSpan={14}
-                      className="border px-3 py-2 text-left font-bold text-gray-800"
-                      style={{ color: category.color }}
+                      className="border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-800"
+                      style={{ 
+                        color: category.color,
+                        borderLeft: `4px solid ${category.color}`
+                      }}
                     >
                       {category.name} ({categoryItems.length}개 아이템)
                     </td>
@@ -189,7 +192,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
 
                     return (
                       <React.Fragment key={itemKey}>
-                        <tr className="hover:bg-gray-50 transition-colors">
+                        <tr className="hover:bg-gray-50/50 transition-colors border-b border-gray-100 bg-white">
                           {/* 화살표 (왼쪽) */}
                           <td className="border px-2 py-2 text-center">
                             <button
@@ -201,9 +204,9 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           </td>
                           
                           {/* 카테고리 */}
-                          <td className="border px-3 py-2 text-center">
+                          <td className="border-r border-gray-200 px-3 py-2.5 text-center">
                             <span 
-                              className="inline-block px-2 py-1 rounded text-xs font-semibold text-white"
+                              className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold text-white shadow-sm"
                               style={{ backgroundColor: category.color }}
                             >
                               {category.name}
@@ -211,24 +214,24 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           </td>
                           
                           {/* 아이템 */}
-                          <td className="border px-3 py-2 text-center font-medium text-gray-800">
+                          <td className="border-r border-gray-200 px-3 py-2.5 text-center font-medium text-gray-800">
                             {item.item_name}
                           </td>
                           
                           {/* 평균 KRW TAG */}
-                          <td className="border px-3 py-2 text-right">
+                          <td className="border-r border-gray-200 px-3 py-2.5 text-right text-gray-700">
                             {avgTagKRW.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                           </td>
                           
                           {/* TAG YOY */}
-                          <td className={`border px-3 py-2 text-right font-semibold ${
+                          <td className={`border-r border-gray-200 px-3 py-2.5 text-right font-semibold ${
                             item.tagYoY > 100 ? 'text-blue-600' : 'text-red-600'
                           }`}>
                             {item.tagYoY?.toFixed(0) || '0'}%
                           </td>
                           
                           {/* 원가 YOY */}
-                          <td className={`border px-3 py-2 text-right font-semibold ${
+                          <td className={`border-r border-gray-200 px-3 py-2.5 text-right font-semibold ${
                             item.costYoY > 100 ? 'text-red-600' : 'text-blue-600'
                           }`}>
                             {item.costYoY?.toFixed(0) || '0'}%
@@ -236,7 +239,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 원가율 변동 */}
                           <td
-                            className="border px-3 py-2 text-right font-bold"
+                            className="border-r border-gray-200 px-3 py-2.5 text-right font-bold"
                             style={{
                               backgroundColor: item.costRateChange < 0 ? '#dbeafe' : '#fee2e2',
                               color: item.costRateChange < 0 ? '#1e40af' : '#991b1b'
@@ -248,7 +251,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 총원가차이 (USD) */}
                           <td
-                            className="border px-3 py-2 text-right font-semibold"
+                            className="border-r border-gray-200 px-3 py-2.5 text-right font-semibold"
                             style={{
                               backgroundColor: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#dbeafe' : '#fee2e2',
                               color: (materialChange + artworkChange + laborChange + marginChange + expenseChange) < 0 ? '#1e40af' : '#991b1b'
@@ -260,7 +263,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 원부자재 */}
                           <td
-                            className="border px-3 py-2 text-right"
+                            className="border-r border-gray-200 px-3 py-2.5 text-right"
                             style={{ backgroundColor: getHeatmapColor(materialChange) }}
                           >
                             {materialChange >= 0 ? '+' : '-'}${Math.abs(materialChange)?.toFixed(2) || '0.00'}
@@ -268,7 +271,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 아트웍 */}
                           <td
-                            className="border px-3 py-2 text-right"
+                            className="border-r border-gray-200 px-3 py-2.5 text-right"
                             style={{ backgroundColor: getHeatmapColor(artworkChange) }}
                           >
                             {artworkChange >= 0 ? '+' : '-'}${Math.abs(artworkChange)?.toFixed(2) || '0.00'}
@@ -276,7 +279,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 공임 */}
                           <td
-                            className="border px-3 py-2 text-right"
+                            className="border-r border-gray-200 px-3 py-2.5 text-right"
                             style={{ backgroundColor: getHeatmapColor(laborChange) }}
                           >
                             {laborChange >= 0 ? '+' : '-'}${Math.abs(laborChange)?.toFixed(2) || '0.00'}
@@ -284,7 +287,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 마진 */}
                           <td
-                            className="border px-3 py-2 text-right"
+                            className="border-r border-gray-200 px-3 py-2.5 text-right"
                             style={{ backgroundColor: getHeatmapColor(marginChange) }}
                           >
                             {marginChange >= 0 ? '+' : '-'}${Math.abs(marginChange)?.toFixed(2) || '0.00'}
@@ -292,14 +295,14 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 기타경비 */}
                           <td
-                            className="border px-3 py-2 text-right"
+                            className="border-r border-gray-200 px-3 py-2.5 text-right"
                             style={{ backgroundColor: getHeatmapColor(expenseChange) }}
                           >
                             {expenseChange >= 0 ? '+' : '-'}${Math.abs(expenseChange)?.toFixed(2) || '0.00'}
                           </td>
                           
                           {/* 수량 */}
-                          <td className="border px-3 py-2 text-right">
+                          <td className="border-r border-gray-200 px-3 py-2.5 text-right text-gray-700">
                             {item.qty25F?.toLocaleString() || '0'}
                           </td>
                         </tr>
@@ -307,14 +310,14 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                         {/* 확장된 상세 정보 */}
                         {isExpanded && (
                           <tr>
-                            <td colSpan={13} className="border px-6 py-4 bg-gray-50">
+                            <td colSpan={14} className="border-r border-gray-200 px-6 py-5 bg-gradient-to-br from-blue-50/30 via-white to-pink-50/30">
                               <div className="grid grid-cols-2 gap-6">
                                 {/* 24F 데이터 */}
-                                <div>
-                                  <h4 className="font-bold text-gray-700 mb-3">
+                                <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+                                  <h4 className="font-bold text-gray-800 mb-4 text-base">
                                     전년 시즌
                                   </h4>
-                                  <div className="space-y-2 text-sm">
+                                  <div className="space-y-2.5 text-sm">
                                     <div className="flex justify-between">
                                       <span className="text-gray-600">수량:</span>
                                       <span className="font-medium">
@@ -357,19 +360,19 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                         ${item.expense24F?.toFixed(2) || '0.00'}
                                       </span>
                                     </div>
-                                    <div className="flex justify-between pt-2 border-t">
-                                      <span className="text-gray-700 font-semibold">
+                                    <div className="flex justify-between pt-3 border-t border-gray-200">
+                                      <span className="text-gray-800 font-semibold">
                                         평균 원가:
                                       </span>
-                                      <span className="font-bold">
+                                      <span className="font-bold text-gray-900">
                                         ${item.avgCost24F?.toFixed(2) || '0.00'}
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-gray-700 font-semibold">
+                                      <span className="text-gray-800 font-semibold">
                                         원가율:
                                       </span>
-                                      <span className="font-bold">
+                                      <span className="font-bold text-gray-900">
                                         {item.costRate24F?.toFixed(1) || '0.0'}%
                                       </span>
                                     </div>
@@ -377,11 +380,11 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                 </div>
 
                                 {/* 당년 데이터 */}
-                                <div>
-                                  <h4 className="font-bold text-gray-700 mb-3">
+                                <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+                                  <h4 className="font-bold text-gray-800 mb-4 text-base">
                                     당년 시즌
                                   </h4>
-                                  <div className="space-y-2 text-sm">
+                                  <div className="space-y-2.5 text-sm">
                                     <div className="flex justify-between">
                                       <span className="text-gray-600">수량:</span>
                                       <span className="font-medium">
@@ -491,8 +494,8 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                         </span>
                                       </span>
                                     </div>
-                                    <div className="flex justify-between pt-2 border-t">
-                                      <span className="text-gray-700 font-semibold">
+                                    <div className="flex justify-between pt-3 border-t border-gray-200">
+                                      <span className="text-gray-800 font-semibold">
                                         평균 원가:
                                       </span>
                                       <span className="font-bold">
@@ -510,7 +513,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
-                                      <span className="text-gray-700 font-semibold">
+                                      <span className="text-gray-800 font-semibold">
                                         원가율:
                                       </span>
                                       <span className="font-bold">
@@ -543,42 +546,44 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
         </table>
       </div>
 
-      {/* 히트맵 범례 및 가이드 */}
-      <div className="mt-6 space-y-4">
-        {/* 히트맵 색상 범례 */}
-        <div className="flex items-center gap-4 justify-center flex-wrap">
-          <span className="text-sm text-gray-600 font-medium">히트맵 범례 (24F→25F 증감):</span>
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-6 rounded" style={{ backgroundColor: 'rgb(37, 99, 235)' }}></div>
-            <span className="text-xs text-gray-600">큰 감소</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-6 rounded" style={{ backgroundColor: 'rgb(96, 165, 250)' }}></div>
-            <span className="text-xs text-gray-600">감소</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-6 rounded" style={{ backgroundColor: 'rgb(191, 219, 254)' }}></div>
-            <span className="text-xs text-gray-600">약간 감소</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-6 rounded" style={{ backgroundColor: 'rgb(252, 165, 165)' }}></div>
-            <span className="text-xs text-gray-600">약간 증가</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-6 rounded" style={{ backgroundColor: 'rgb(239, 68, 68)' }}></div>
-            <span className="text-xs text-gray-600">증가</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-12 h-6 rounded" style={{ backgroundColor: 'rgb(220, 38, 38)' }}></div>
-            <span className="text-xs text-gray-600">큰 증가</span>
-          </div>
-        </div>
+       {/* 히트맵 범례 및 가이드 */}
+       <div className="mt-6 space-y-4">
+         {/* 히트맵 색상 범례 */}
+         <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+           <div className="flex items-center gap-4 justify-center flex-wrap">
+             <span className="text-sm text-gray-700 font-semibold">히트맵 범례 (24F→25F 증감):</span>
+             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-gray-200">
+               <div className="w-12 h-6 rounded" style={{ backgroundColor: getHeatmapColor(-3) }}></div>
+               <span className="text-xs text-gray-600 font-medium">큰 감소</span>
+             </div>
+             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-gray-200">
+               <div className="w-12 h-6 rounded" style={{ backgroundColor: getHeatmapColor(-1.5) }}></div>
+               <span className="text-xs text-gray-600 font-medium">감소</span>
+             </div>
+             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-gray-200">
+               <div className="w-12 h-6 rounded" style={{ backgroundColor: getHeatmapColor(-0.5) }}></div>
+               <span className="text-xs text-gray-600 font-medium">약간 감소</span>
+             </div>
+             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-gray-200">
+               <div className="w-12 h-6 rounded" style={{ backgroundColor: getHeatmapColor(0.5) }}></div>
+               <span className="text-xs text-gray-600 font-medium">약간 증가</span>
+             </div>
+             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-gray-200">
+               <div className="w-12 h-6 rounded" style={{ backgroundColor: getHeatmapColor(1.5) }}></div>
+               <span className="text-xs text-gray-600 font-medium">증가</span>
+             </div>
+             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-gray-200">
+               <div className="w-12 h-6 rounded" style={{ backgroundColor: getHeatmapColor(3) }}></div>
+               <span className="text-xs text-gray-600 font-medium">큰 증가</span>
+             </div>
+           </div>
+         </div>
 
         {/* 가이드 메시지 */}
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">
           <div className="space-y-2 text-sm text-gray-700">
             <p>
-              <strong>📊 히트맵 가이드 (USD 기준):</strong> 빨간색은 증가(+), 파란색은 감소(-)를 나타내며, 
+              <strong className="text-blue-600">📊 히트맵 가이드 (USD 기준):</strong> <span className="text-red-500">연한 핑크</span>는 증가(+), <span className="text-blue-500">연한 블루</span>는 감소(-)를 나타내며, 
               색상이 진할수록 변동폭이 큽니다. 단위는 USD 달러입니다.
             </p>
           </div>

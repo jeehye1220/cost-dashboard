@@ -134,194 +134,202 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3">
-      <h2 className="text-lg font-bold text-gray-700 mb-3">
+    <div className="bg-gradient-to-br from-blue-50/50 via-white to-pink-50/50 rounded-xl shadow-md border border-blue-100 p-6">
+      <h2 className="text-xl font-bold text-gray-800 mb-6">
         원가율 변동 폭포수 차트
       </h2>
 
       {/* 워터폴 박스 차트 */}
-      <div className="mb-4">
-        <div className="flex items-end justify-center gap-2 min-h-[350px] px-2">
+      <div className="mb-6 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-end justify-center gap-3 min-h-[350px] px-4">
           {/* 전년 시작 */}
           <div className="flex flex-col items-center">
             <div
-              className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-lg"
+              className="rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 border-white/20"
               style={{
-                backgroundColor: '#64748b',
-                width: '100px',
+                background: 'linear-gradient(135deg, #64748b 0%, #475569 100%)',
+                width: '110px',
                 height: `${baseBoxHeight}px`
               }}
             >
-              <div className="text-2xl mb-1">
+              <div className="text-3xl mb-1.5 font-extrabold">
                 {total.costRate24F_usd.toFixed(1)}%
               </div>
-              <div className="text-xs opacity-90">전년 시작</div>
-              <div className="text-xs opacity-75 mt-1">USD/KRW</div>
+              <div className="text-xs opacity-95 font-semibold">전년 시작</div>
+              <div className="text-xs opacity-80 mt-1">USD/KRW</div>
             </div>
-            <div className="text-xs text-gray-500 mt-2 text-center font-medium">전년 USD</div>
+            <div className="text-xs text-gray-600 mt-3 text-center font-semibold">전년 USD</div>
           </div>
 
           {/* 소재감 (원부자재 포함) */}
-          <div className="flex flex-col items-center">
-            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${materialArtworkChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className="flex flex-col items-center relative">
+            <div className={`absolute -translate-y-3 bg-white px-3 py-1.5 rounded-lg shadow-md border-2 text-xs font-bold z-10 ${materialArtworkChange < 0 ? 'text-blue-600 border-blue-200' : 'text-red-600 border-red-200'}`}>
               {materialArtworkChange > 0 ? '+' : ''}{materialArtworkChange.toFixed(1)}%p
             </div>
             <div
-              className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
+              className="rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 border-white/20"
               style={{
-                backgroundColor: materialArtworkChange < 0 ? '#3b82f6' : '#ef4444',
-                width: '80px',
+                background: materialArtworkChange < 0 
+                  ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' 
+                  : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                width: '90px',
                 height: `${getBarHeight(materialArtworkChange)}px`
               }}
             >
             </div>
-            <div className="text-xs text-gray-500 mt-2 text-center font-medium">원부자재변동<br/>(아트웍포함)</div>
+            <div className="text-xs text-gray-600 mt-3 text-center font-semibold leading-tight">원부자재변동<br/>(아트웍포함)</div>
           </div>
 
           {/* 마진 */}
-          <div className="flex flex-col items-center">
-            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${marginChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className="flex flex-col items-center relative">
+            <div className={`absolute -translate-y-3 bg-white px-3 py-1.5 rounded-lg shadow-md border-2 text-xs font-bold z-10 ${marginChange < 0 ? 'text-blue-600 border-blue-200' : 'text-red-600 border-red-200'}`}>
               {marginChange > 0 ? '+' : ''}{marginChange.toFixed(1)}%p
             </div>
             <div
-              className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
+              className="rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 border-white/20"
               style={{
-                backgroundColor: marginChange < 0 ? '#3b82f6' : '#ef4444',
-                width: '80px',
+                background: marginChange < 0 
+                  ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' 
+                  : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                width: '90px',
                 height: `${getBarHeight(marginChange)}px`
               }}
             >
             </div>
-            <div className="text-xs text-gray-500 mt-2 text-center font-medium">마진<br/>변동</div>
+            <div className="text-xs text-gray-600 mt-3 text-center font-semibold leading-tight">마진<br/>변동</div>
           </div>
 
           {/* 공임 */}
-          <div className="flex flex-col items-center">
-            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${laborChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className="flex flex-col items-center relative">
+            <div className={`absolute -translate-y-3 bg-white px-3 py-1.5 rounded-lg shadow-md border-2 text-xs font-bold z-10 ${laborChange < 0 ? 'text-blue-600 border-blue-200' : 'text-red-600 border-red-200'}`}>
               {laborChange > 0 ? '+' : ''}{laborChange.toFixed(1)}%p
             </div>
             <div
-              className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
+              className="rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 border-white/20"
               style={{
-                backgroundColor: laborChange < 0 ? '#3b82f6' : '#ef4444',
-                width: '80px',
+                background: laborChange < 0 
+                  ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' 
+                  : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                width: '90px',
                 height: `${getBarHeight(laborChange)}px`
               }}
             >
             </div>
-            <div className="text-xs text-gray-500 mt-2 text-center font-medium">공임<br/>변동</div>
+            <div className="text-xs text-gray-600 mt-3 text-center font-semibold leading-tight">공임<br/>변동</div>
           </div>
 
           {/* 경비 */}
-          <div className="flex flex-col items-center">
-            <div className={`absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold ${expenseChange < 0 ? 'text-blue-600' : 'text-red-600'}`}>
+          <div className="flex flex-col items-center relative">
+            <div className={`absolute -translate-y-3 bg-white px-3 py-1.5 rounded-lg shadow-md border-2 text-xs font-bold z-10 ${expenseChange < 0 ? 'text-blue-600 border-blue-200' : 'text-red-600 border-red-200'}`}>
               {expenseChange > 0 ? '+' : ''}{expenseChange.toFixed(1)}%p
             </div>
             <div
-              className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
+              className="rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 border-white/20"
               style={{
-                backgroundColor: expenseChange < 0 ? '#3b82f6' : '#ef4444',
-                width: '80px',
+                background: expenseChange < 0 
+                  ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' 
+                  : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                width: '90px',
                 height: `${getBarHeight(expenseChange)}px`
               }}
             >
             </div>
-            <div className="text-xs text-gray-500 mt-2 text-center font-medium">경비<br/>변동</div>
+            <div className="text-xs text-gray-600 mt-3 text-center font-semibold leading-tight">경비<br/>변동</div>
           </div>
 
           {/* 당년 USD */}
           <div className="flex flex-col items-center">
             <div
-              className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
+              className="rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 border-white/20"
               style={{
-                backgroundColor: '#818cf8',
-                width: '100px',
+                background: 'linear-gradient(135deg, #818cf8 0%, #6366f1 100%)',
+                width: '110px',
                 height: `${baseBoxHeight}px`
               }}
             >
-              <div className="text-2xl mb-1">{total.costRate25F_usd.toFixed(1)}%</div>
-              <div className="text-xs opacity-90">당년 USD</div>
-              <div className="text-xs opacity-75 mt-1">{usdStatusIcon} {usdStatus}</div>
+              <div className="text-3xl mb-1.5 font-extrabold">{total.costRate25F_usd.toFixed(1)}%</div>
+              <div className="text-xs opacity-95 font-semibold">당년 USD</div>
+              <div className="text-xs opacity-80 mt-1">{usdStatusIcon} {usdStatus}</div>
             </div>
-            <div className="text-xs text-gray-500 mt-2 text-center font-medium">당년 USD</div>
+            <div className="text-xs text-gray-600 mt-3 text-center font-semibold">당년 USD</div>
           </div>
 
           {/* 환율 효과 */}
-          <div className="flex flex-col items-center">
-            <div className="absolute -translate-y-2 bg-white px-2 py-1 rounded shadow text-xs font-bold text-red-600">
+          <div className="flex flex-col items-center relative">
+            <div className="absolute -translate-y-3 bg-white px-3 py-1.5 rounded-lg shadow-md border-2 border-red-200 text-xs font-bold text-red-600 z-10">
               +{exchangeRateEffect.toFixed(1)}%p
             </div>
             <div
-              className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
+              className="rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 border-white/20"
               style={{
-                backgroundColor: '#ef4444',
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                 width: '100px',
                 height: `${getBarHeight(exchangeRateEffect)}px`
               }}
             >
-              <div className="text-sm">환율효과</div>
+              <div className="text-sm font-semibold">환율효과</div>
             </div>
-            <div className="text-xs text-gray-500 mt-2 text-center font-medium">FX 영향</div>
+            <div className="text-xs text-gray-600 mt-3 text-center font-semibold">FX 영향</div>
           </div>
 
           {/* 당년 KRW */}
           <div className="flex flex-col items-center">
             <div
-              className="rounded-lg flex flex-col items-center justify-center text-white font-bold shadow-md"
+              className="rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 border-white/20"
               style={{
-                backgroundColor: '#f97316',
-                width: '100px',
+                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                width: '110px',
                 height: `${baseBoxHeight}px`
               }}
             >
-              <div className="text-2xl mb-1">{total.costRate25F_krw.toFixed(1)}%</div>
-              <div className="text-xs opacity-90">당년 KRW</div>
-              <div className="text-xs opacity-75 mt-1">{krwStatusIcon} {krwStatus}</div>
+              <div className="text-3xl mb-1.5 font-extrabold">{total.costRate25F_krw.toFixed(1)}%</div>
+              <div className="text-xs opacity-95 font-semibold">당년 KRW</div>
+              <div className="text-xs opacity-80 mt-1">{krwStatusIcon} {krwStatus}</div>
             </div>
-            <div className="text-xs text-gray-500 mt-2 text-center font-medium">당년 KRW</div>
+            <div className="text-xs text-gray-600 mt-3 text-center font-semibold">당년 KRW</div>
           </div>
         </div>
       </div>
 
       {/* 하단 설명 박스 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         {/* 실질원가효과 (Real) */}
-        <div className="bg-blue-50/70 border-l-4 border-blue-400 p-3 rounded-lg">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="text-base">📊</div>
-            <h4 className="font-semibold text-gray-700 text-sm">실질원가효과 (Real)</h4>
+        <div className="bg-gradient-to-br from-blue-50/80 via-white to-blue-50/50 border border-blue-200 rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="text-xl">📊</div>
+            <h4 className="font-bold text-gray-800 text-base">실질원가효과 (Real)</h4>
           </div>
-          <p className="text-xs text-gray-600 mb-1">
+          <p className="text-xs text-gray-600 mb-2 font-medium">
             소재/아트웍 공임 마진 경비
           </p>
-          <p className={`text-xl font-bold ${realCostChange > 0 ? 'text-red-600' : 'text-blue-600'}`}>
+          <p className={`text-2xl font-extrabold mb-2 ${realCostChange > 0 ? 'text-red-600' : 'text-blue-600'}`}>
             {realCostChange > 0 ? '+' : ''}{realCostChange.toFixed(1)}%p
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-600 leading-relaxed">
             소재/아트웍/마진 절감, 공임/경비 증가
           </p>
         </div>
 
         {/* 환율효과 (FX) */}
-        <div className="bg-orange-50/70 border-l-4 border-orange-400 p-3 rounded-lg">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="text-base">💱</div>
-            <h4 className="font-semibold text-gray-700 text-sm">환율효과 (FX)</h4>
+        <div className="bg-gradient-to-br from-orange-50/80 via-white to-orange-50/50 border border-orange-200 rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="text-xl">💱</div>
+            <h4 className="font-bold text-gray-800 text-base">환율효과 (FX)</h4>
           </div>
-          <p className="text-xs text-gray-600 mb-1">
+          <p className="text-xs text-gray-600 mb-2 font-medium">
             전년 USD원가율 ({total.costRate24F_usd.toFixed(1)}) × 환율 ({fxPrev.toFixed(2)}→{fxCurr.toFixed(2)})
           </p>
-          <p className="text-xl font-bold text-red-600">
+          <p className="text-2xl font-extrabold mb-2 text-red-600">
             +{exchangeRateEffect.toFixed(1)}%p
           </p>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-600 leading-relaxed">
             환율 악재로 공급 원가 실손익 상승
           </p>
         </div>
       </div>
 
       {/* 수식 표시 */}
-      <div className="bg-gray-50 p-2.5 rounded-lg text-center text-xs text-gray-500 mb-4 italic">
+      <div className="bg-gradient-to-br from-gray-50/80 via-white to-gray-50/50 border border-gray-200 p-4 rounded-xl text-center text-xs text-gray-600 font-medium shadow-sm">
         "USD 기준 {Math.abs(realCostChange).toFixed(1)}%p 개선 
         (소재/아트웍 {materialArtworkChange.toFixed(1)} + 마진 {marginChange.toFixed(1)} + 
         공임 +{laborChange.toFixed(1)} + 경비 +{expenseChange.toFixed(1)}) + 

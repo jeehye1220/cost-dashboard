@@ -364,16 +364,6 @@ export default function BrandDashboard() {
         {/* 히트맵 테이블 */}
         <Dashboard items={items} />
 
-        {/* 데이터 정보 */}
-        <div className={`${brandInfo.infoBg} border-l-4 ${brandInfo.infoBorder} p-4 rounded-lg mb-4`}>
-          <h3 className={`font-bold ${brandInfo.infoTitle} mb-2`}>📊 데이터 정보</h3>
-          <div className={`text-sm ${brandInfo.infoText} space-y-1`}>
-            <p>• 원부자재 = 원자재 + 부자재 + 본사공급자재 + 택/라벨</p>
-            <p>• 원가율 = (평균원가 ÷ (평균TAG / 1.1)) × 100</p>
-            <p>• USD 환율: 전년 {summary?.fx?.prev?.toFixed(2) || '1297.00'} KRW / 당년 {summary?.fx?.curr?.toFixed(2) || '1415.00'} KRW</p>
-          </div>
-        </div>
-
         {/* 범례 - 실제 존재하는 카테고리만 표시 */}
         <div className="bg-gray-100 rounded-lg p-4 mb-4">
           <h3 className="font-bold text-gray-800 mb-4">📖 카테고리 색상 범례</h3>
