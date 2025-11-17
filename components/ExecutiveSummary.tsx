@@ -285,6 +285,10 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
 
   const initialTexts = getInitialTexts();
   
+  // USD 원가율 변화 계산 (당년 - 전년)
+  const usdCostRateChange = total.costRate25F_usd - total.costRate24F_usd;
+  const isUsdCostRateIncreased = usdCostRateChange > 0;
+  
   // KRW mainChange 동적 계산 (초기값 설정 시에도)
   const initialKrwChange = total.costRate25F_krw - total.costRate25F_usd;
   const initialKrwChangeText = initialKrwChange > 0 
@@ -537,11 +541,21 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 왼쪽: USD 기준 (전년 → 당년) */}
-        <div className="bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 rounded-xl p-6 shadow-md border-2 border-green-200 hover:shadow-lg transition-shadow">
+        <div className={`rounded-xl p-6 shadow-md border-2 hover:shadow-lg transition-shadow ${
+          isUsdCostRateIncreased 
+            ? 'bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 border-red-200' 
+            : 'bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-green-200'
+        }`}>
           <div className="flex items-center justify-between mb-5">
             <div className="flex-1">
-              <h3 className="text-lg font-bold text-green-700 flex items-center gap-2 mb-3">
-                <CheckCircle className="w-5 h-5" />
+              <h3 className={`text-lg font-bold flex items-center gap-2 mb-3 ${
+                isUsdCostRateIncreased ? 'text-red-700' : 'text-green-700'
+              }`}>
+                {isUsdCostRateIncreased ? (
+                  <AlertTriangle className="w-5 h-5" />
+                ) : (
+                  <CheckCircle className="w-5 h-5" />
+                )}
                 <EditableText
                   id="usd-title"
                   value={usdTexts.title}
@@ -549,15 +563,21 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                   onSave={(val: string) => handleTextEdit('usd', 'title', val)}
                 />
               </h3>
-              <div className="bg-white rounded-lg p-4 shadow-sm border border-green-200 mb-3">
+              <div className={`bg-white rounded-lg p-4 shadow-sm border mb-3 ${
+                isUsdCostRateIncreased ? 'border-red-200' : 'border-green-200'
+              }`}>
                 <div className="text-3xl font-bold text-gray-800 mb-1">
                   <span className="text-gray-500">
                     {total.costRate24F_usd.toFixed(1)}%
                   </span>
                   <span className="mx-2 text-gray-400">→</span>
-                  <span className="text-green-600">{total.costRate25F_usd.toFixed(1)}%</span>
+                  <span className={isUsdCostRateIncreased ? 'text-red-600' : 'text-green-600'}>
+                    {total.costRate25F_usd.toFixed(1)}%
+                  </span>
                 </div>
-                <div className="text-sm text-green-600 font-bold">
+                <div className={`text-sm font-bold ${
+                  isUsdCostRateIncreased ? 'text-red-600' : 'text-green-600'
+                }`}>
                   <EditableText
                     id="usd-main-change"
                     value={usdTexts.mainChange}
@@ -574,6 +594,31 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
             {usdTexts.items.map((item: any, idx: number) => {
               const itemId = `usd-${idx}`;
               const isCollapsed = collapsedItems.has(itemId);
+              
+              // change 값 파싱하여 양수/음수 판단
+              const getChangeColor = (changeStr: string) => {
+                if (!changeStr) return 'text-gray-600 bg-gray-50';
+                
+                // "▼", "▲", "+", "-" 등의 부호 확인
+                const hasDownArrow = changeStr.includes('▼');
+                const hasUpArrow = changeStr.includes('▲');
+                const hasPlus = changeStr.startsWith('+') || changeStr.includes('+');
+                const hasMinus = changeStr.startsWith('-') || changeStr.includes('-');
+                
+                // 음수(감소/절감)인 경우 녹색
+                if (hasDownArrow || hasMinus) {
+                  return 'text-green-600 bg-green-50';
+                }
+                // 양수(증가/상승)인 경우 빨간색
+                if (hasUpArrow || hasPlus) {
+                  return 'text-red-600 bg-red-50';
+                }
+                
+                // 기본값: 전체 원가율 변화에 따라
+                return isUsdCostRateIncreased 
+                  ? 'text-red-600 bg-red-50' 
+                  : 'text-green-600 bg-green-50';
+              };
               
               return (
                 <div key={idx} className="bg-white rounded-lg p-4 shadow-sm border border-gray-200 hover:shadow-md transition-all group/item">
@@ -597,7 +642,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                           <EditableText
                             id={`usd-change-${idx}`}
                             value={item.change}
-                            className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full"
+                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${getChangeColor(item.change)}`}
                             onSave={(val: string) => handleTextEdit('usd', 'change', val, idx)}
                           />
                         )}
@@ -622,7 +667,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                         className="text-xs text-gray-600 leading-relaxed"
                         onSave={(val: string) => handleTextEdit('usd', 'description', val, idx)}
                       />
-                      <div className="h-1 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full mt-3" style={{ width: '60%' }}></div>
+                      <div className={`h-1 rounded-full mt-3 ${
+                        isUsdCostRateIncreased 
+                          ? 'bg-gradient-to-r from-red-400 to-rose-500' 
+                          : 'bg-gradient-to-r from-green-400 to-emerald-500'
+                      }`} style={{ width: '60%' }}></div>
                     </div>
                   )}
                 </div>
@@ -633,7 +682,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
             {showManageButtons && (
               <button
                 onClick={() => addItem('usd')}
-                className="w-full py-2 border-2 border-dashed border-green-300 rounded-lg text-green-600 hover:bg-green-50 hover:border-green-400 transition-colors text-sm font-medium"
+                className={`w-full py-2 border-2 border-dashed rounded-lg transition-colors text-sm font-medium ${
+                  isUsdCostRateIncreased
+                    ? 'border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400'
+                    : 'border-green-300 text-green-600 hover:bg-green-50 hover:border-green-400'
+                }`}
               >
                 + 항목 추가
               </button>
@@ -641,7 +694,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
           </div>
 
           {/* USD 핵심 메시지 */}
-          <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg p-4 min-h-[80px] shadow-md">
+          <div className={`text-white rounded-lg p-4 min-h-[80px] shadow-md ${
+            isUsdCostRateIncreased
+              ? 'bg-gradient-to-r from-red-500 to-rose-600'
+              : 'bg-gradient-to-r from-green-500 to-emerald-600'
+          }`}>
             <div className="flex items-start gap-3">
               <span className="text-xl w-6 flex-shrink-0">💡</span>
               <div className="flex-1">
