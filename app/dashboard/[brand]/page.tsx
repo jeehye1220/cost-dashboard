@@ -263,11 +263,6 @@ export default function BrandDashboard() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-              <div className="flex items-center gap-6 text-xs">
-                <div>
-                  <span className="text-gray-500">마지막 업데이트: 2025-11-11</span>
-                </div>
-              </div>
               <p className="text-gray-600 text-sm">
                 시즌별 원가 분석 및 인사이트 (v1.4.0)
               </p>
