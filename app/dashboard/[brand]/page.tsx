@@ -264,10 +264,6 @@ export default function BrandDashboard() {
             </div>
             <div className="flex flex-col items-end gap-2">
               <div className="flex items-center gap-6 text-xs">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-gray-600">실시간 데이터 연동</span>
-                </div>
                 <div>
                   <span className="text-gray-500">마지막 업데이트: 2025-11-11</span>
                 </div>
