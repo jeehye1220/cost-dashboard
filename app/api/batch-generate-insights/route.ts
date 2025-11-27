@@ -604,7 +604,7 @@ export async function POST(request: NextRequest) {
       success: true,
       period,
       total: brands.length,
-      success: successCount,
+      successCount: successCount,
       failed: failedCount,
       results,
     });

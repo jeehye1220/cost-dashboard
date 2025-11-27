@@ -83,7 +83,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
           color: info.color,
           data: categoryData,
         };
-      }).filter(cat => cat.data !== null);
+      }).filter((cat: any) => cat.data !== null);
     } else {
       // FW/SS 시즌: CATEGORIES 사용
       allCategoryData = CATEGORIES.map(cat => {
@@ -92,17 +92,17 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
           ...cat,
           data: data || null,
         };
-      }).filter(cat => cat.data !== null);
+      }).filter((cat: any) => cat.data !== null);
     }
 
     if (isFWSS) {
       // FW/SS 시즌: Outer, Inner, Bottom 무조건 표시 + (Wear_etc 있으면 Wear_etc, 없으면 Acc_etc)
       const requiredCategories = ['Outer', 'Inner', 'Bottom'];
-      const selected = allCategoryData.filter(cat => requiredCategories.includes(cat.id));
+      const selected = allCategoryData.filter((cat: any) => requiredCategories.includes(cat.id));
 
       // 4번째 카드: Wear_etc 있으면 Wear_etc, 없으면 Acc_etc
-      const wearEtc = allCategoryData.find(cat => cat.id === 'Wear_etc');
-      const accEtc = allCategoryData.find(cat => cat.id === 'Acc_etc');
+      const wearEtc = allCategoryData.find((cat: any) => cat.id === 'Wear_etc');
+      const accEtc = allCategoryData.find((cat: any) => cat.id === 'Acc_etc');
       const etcCategory = wearEtc || accEtc;
       
       if (etcCategory) {
@@ -119,16 +119,16 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
       });
 
       // ETC 카테고리 제외 (Wear_etc만 제외, Acc_etc는 포함)
-      const nonEtcCategories = sortedByQty.filter(cat => {
+      const nonEtcCategories = sortedByQty.filter((cat: any) => {
         // Wear_etc만 ETC로 간주하여 제외
         return cat.id !== 'Wear_etc';
       });
 
       // ETC 제외한 상위 4개 선택
-      const top4 = nonEtcCategories.filter(cat => cat.id !== 'Acc_etc').slice(0, 4);
+      const top4 = nonEtcCategories.filter((cat: any) => cat.id !== 'Acc_etc').slice(0, 4);
       
       // ACC_ETC 추가
-      const accEtc = allCategoryData.find(cat => cat.id === 'Acc_etc');
+      const accEtc = allCategoryData.find((cat: any) => cat.id === 'Acc_etc');
       if (accEtc) {
         top4.push(accEtc);
       }
@@ -192,7 +192,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
           </div>
 
           {/* 카테고리별 카드 */}
-          {categoryData.map((cat) => {
+          {categoryData.map((cat: any) => {
             const orderShare = calculateOrderShare(cat.data);
             return (
               <div
@@ -347,7 +347,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
           </div>
 
           {/* 카테고리별 평균단가 */}
-          {categoryData.map((cat) => {
+          {categoryData.map((cat: any) => {
             return (
               <div
                 key={`avg-${cat.id}`}
@@ -498,7 +498,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
           </div>
 
           {/* 카테고리별 KRW 카드 */}
-          {categoryData.map((cat) => {
+          {categoryData.map((cat: any) => {
             return (
               <div
                 key={`krw-${cat.id}`}
