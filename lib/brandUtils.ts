@@ -46,7 +46,14 @@ function extractPeriod(brandId: string): string {
   if (brandId.startsWith('24FW-')) return '24FW';
   
   // 기존 브랜드 ID들 (25FW 기간)
-  if (['25FW', 'NON', 'KIDS', 'DISCOVERY', 'ST', 'V'].includes(brandId)) {
+  if (['25FW', 'NON', 'KIDS', 'DISCOVERY', 'DISCOVERY-KIDS', 'ST', 'V'].includes(brandId)) {
+    return '25FW';
+  }
+  
+  // DISCOVERY-KIDS가 포함된 브랜드 ID 처리
+  if (brandId.includes('DISCOVERY-KIDS')) {
+    if (brandId.startsWith('26SS-')) return '26SS';
+    if (brandId.startsWith('25SS-')) return '25SS';
     return '25FW';
   }
   
@@ -55,10 +62,14 @@ function extractPeriod(brandId: string): string {
 
 /**
  * 브랜드 ID에서 브랜드 코드 추출
- * 예: 26SS-M → M, 25FW → 25FW, KIDS → KIDS
+ * 예: 26SS-M → M, 25FW → 25FW, KIDS → KIDS, DISCOVERY-KIDS → DISCOVERY-KIDS
  */
 function extractBrandCode(brandId: string): string {
   if (brandId.includes('-')) {
+    // DISCOVERY-KIDS는 전체를 반환
+    if (brandId.includes('DISCOVERY-KIDS')) {
+      return 'DISCOVERY-KIDS';
+    }
     return brandId.split('-')[1];
   }
   return brandId;

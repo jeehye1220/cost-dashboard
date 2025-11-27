@@ -9,11 +9,15 @@ interface EnhancedStoryCardsProps {
 }
 
 const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
-  if (!summary || !summary.total || !summary.categories) {
-    return <div>데이터를 불러오는 중...</div>;
+  // 데이터가 없어도 카드는 표시 (기본값으로 표시)
+  if (!summary || !summary.total) {
+    return null; // 또는 기본 구조를 표시할 수도 있음
   }
 
   const { total, categories } = summary;
+  
+  // categories가 없으면 빈 배열로 처리
+  const safeCategories = categories || [];
 
   // 시즌 판별
   const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
@@ -74,7 +78,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
     
     if (isNON) {
       // MLB NON 시즌: summary.categories에서 직접 가져오기
-      allCategoryData = categories.map((categoryData: any) => {
+      allCategoryData = safeCategories.map((categoryData: any) => {
         const catId = categoryData.category;
         const info = getCategoryInfo(catId);
         return {
@@ -87,7 +91,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
     } else {
       // FW/SS 시즌: CATEGORIES 사용
       allCategoryData = CATEGORIES.map(cat => {
-        const data = categories.find((c: any) => c.category === cat.id);
+        const data = safeCategories.find((c: any) => c.category === cat.id);
         return {
           ...cat,
           data: data || null,

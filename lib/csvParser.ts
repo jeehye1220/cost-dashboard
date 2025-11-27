@@ -108,8 +108,22 @@ async function aggregateByItem(
   currentSeason?: string,
   prevSeason?: string
 ): Promise<CostDataItem[]> {
-  // 브랜드 코드 추출
-  const brandCode = brandId ? extractBrandCode(brandId) : 'M';
+  // 브랜드 코드 추출 (DISCOVERY-KIDS는 먼저 체크하여 'X' 브랜드 코드 사용)
+  let brandCode: string;
+  if (brandId) {
+    // DISCOVERY-KIDS는 환율 조회 시 'X' 브랜드 코드 사용 (25SS-DISCOVERY-KIDS, 26SS-DISCOVERY-KIDS 등 포함)
+    if (brandId === 'DISCOVERY-KIDS' || brandId.includes('DISCOVERY-KIDS')) {
+      brandCode = 'X';
+    } else if (brandId === 'DISCOVERY' || (brandId.includes('DISCOVERY') && !brandId.includes('KIDS'))) {
+      // DISCOVERY도 'X' 브랜드 코드 사용
+      brandCode = 'X';
+    } else {
+      // 다른 브랜드는 extractBrandCode로 추출
+      brandCode = extractBrandCode(brandId);
+    }
+  } else {
+    brandCode = 'M';
+  }
   const prevSeasonCode = prevSeason ? convertSeasonCode(prevSeason) : '25S';
   const currentSeasonCode = currentSeason ? convertSeasonCode(currentSeason) : '26S';
   
@@ -161,8 +175,36 @@ async function aggregateByItem(
     dataCurr: RawCostData[];
   }>();
   
+  // 스타일 코드 필터링 함수 (DISCOVERY-KIDS와 DISCOVERY 분리)
+  const shouldIncludeRow = (row: RawCostData): boolean => {
+    if (!brandId) return true;
+    
+    // DISCOVERY-KIDS: dk/DK로 시작하는 스타일
+    if (brandId === 'DISCOVERY-KIDS' || brandId.includes('DISCOVERY-KIDS')) {
+      const styleUpper = (row.style || '').toUpperCase();
+      return styleUpper.startsWith('DK');
+    }
+    
+    // DISCOVERY: dx/DX로 시작하는 스타일 (기존 DISCOVERY 브랜드)
+    if (brandId === 'DISCOVERY' || (brandId.includes('DISCOVERY') && !brandId.includes('KIDS'))) {
+      const styleUpper = (row.style || '').toUpperCase();
+      return styleUpper.startsWith('DX');
+    }
+    
+    // 다른 브랜드는 모두 포함
+    return true;
+  };
+  
   // 아이템별로 그룹핑
+  let filteredCount = 0;
+  let totalCount = rawData.length;
   rawData.forEach(row => {
+    // 스타일 코드 필터링 적용
+    if (!shouldIncludeRow(row)) {
+      return;
+    }
+    filteredCount++;
+    
     const normalizedItemName = (row.item_name || '').trim();
     const normalizedCategory = (row.category || '').trim();
     const key = `${normalizedCategory}_${normalizedItemName}`;
@@ -184,6 +226,12 @@ async function aggregateByItem(
       group.dataCurr.push(row);
     }
   });
+  
+  // 디버깅: 필터링 결과 로그
+  if (brandId && brandId.includes('DISCOVERY-KIDS')) {
+    console.log(`[DISCOVERY-KIDS 필터링] 전체: ${totalCount}개, 필터링 후: ${filteredCount}개, 브랜드ID: ${brandId}, 현재시즌: ${currentSeason}, 전년시즌: ${prevSeason}`);
+    console.log(`[DISCOVERY-KIDS 필터링] 아이템 그룹 수: ${itemMap.size}`);
+  }
   
   // 환율 캐시: 카테고리별 환율을 한 번만 조회하고 재사용
   const fxRateCache = new Map<string, number>();
@@ -456,9 +504,17 @@ function convertSeasonCode(season: string): string {
 }
 
 /**
- * 브랜드 코드 추출 (26SS-M → M)
+ * 브랜드 코드 추출 (26SS-M → M, 25SS-DISCOVERY-KIDS → DISCOVERY-KIDS)
  */
 function extractBrandCode(brandId: string): string {
+  // DISCOVERY-KIDS가 포함된 경우 전체를 반환
+  if (brandId.includes('DISCOVERY-KIDS')) {
+    const parts = brandId.split('-');
+    // 25SS-DISCOVERY-KIDS → ['25SS', 'DISCOVERY', 'KIDS'] → 'DISCOVERY-KIDS'
+    if (parts.length >= 3 && parts[parts.length - 2] === 'DISCOVERY' && parts[parts.length - 1] === 'KIDS') {
+      return 'DISCOVERY-KIDS';
+    }
+  }
   const parts = brandId.split('-');
   return parts[parts.length - 1];
 }
@@ -491,7 +547,10 @@ export async function loadExchangeRates(
       // 브랜드 코드 추출
       let brandCode: string;
       if (brandId) {
-        if (isNewSeasonFormat(brandId)) {
+        // DISCOVERY-KIDS는 먼저 체크하여 'X' 브랜드 코드 사용 (25SS-DISCOVERY-KIDS, 26SS-DISCOVERY-KIDS 등 포함)
+        if (brandId === 'DISCOVERY-KIDS' || brandId.includes('DISCOVERY-KIDS')) {
+          brandCode = 'X';
+        } else if (isNewSeasonFormat(brandId)) {
           // 26SS-M, 25FW-M 같은 형식
           brandCode = extractBrandCode(brandId);
         } else if (brandId.includes('-')) {
@@ -502,6 +561,7 @@ export async function loadExchangeRates(
           const brandMap: Record<string, string> = {
             'KIDS': 'I',
             'DISCOVERY': 'X',
+            'DISCOVERY-KIDS': 'X',
             '25FW': 'M',
           };
           brandCode = brandMap[brandId] || brandId;
@@ -588,15 +648,19 @@ export async function loadCostData(
   prevSeason?: string
 ): Promise<CostDataItem[]> {
   try {
+    console.log(`[loadCostData] 시작: fileName=${fileName}, brandId=${brandId}, currentSeason=${currentSeason}, prevSeason=${prevSeason}`);
     const response = await fetch(`/${fileName}`);
     const csvText = await response.text();
     
     const rawData = parseCsv(csvText, fileName); // fileName 전달하여 MLB NON 시즌 판별
+    console.log(`[loadCostData] CSV 파싱 완료: ${rawData.length}개 행`);
+    
     const items = await aggregateByItem(rawData, fxFileName, brandId, currentSeason, prevSeason);
+    console.log(`[loadCostData] 집계 완료: ${items.length}개 아이템`);
     
     return items;
   } catch (error) {
-    console.error(`CSV 파일 로드 실패 (${fileName}):`, error);
+    console.error(`[loadCostData] CSV 파일 로드 실패 (${fileName}):`, error);
     return [];
   }
 }
@@ -606,11 +670,17 @@ export async function loadCostData(
  */
 export async function loadSummaryData(fileName: string = 'summary.json') {
   try {
+    console.log(`[loadSummaryData] 시작: fileName=${fileName}`);
     const response = await fetch(`/${fileName}`);
+    if (!response.ok) {
+      console.error(`[loadSummaryData] HTTP 오류: ${response.status} ${response.statusText}`);
+      return null;
+    }
     const data = await response.json();
+    console.log(`[loadSummaryData] 로드 완료: ${fileName}`, data?.total ? '데이터 있음' : '데이터 없음');
     return data;
   } catch (error) {
-    console.error(`${fileName} 로드 실패:`, error);
+    console.error(`[loadSummaryData] ${fileName} 로드 실패:`, error);
     return null;
   }
 }

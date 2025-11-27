@@ -347,7 +347,12 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                           
                           {/* 수량 */}
                           <td className="border-r border-gray-200 px-3 py-2.5 text-right text-gray-700">
-                            {item.qty25F?.toLocaleString() || '0'}
+                            {item.qty25F?.toLocaleString() || '0'}개
+                            {item.qty24F > 0 && item.qty25F > 0 && (
+                              <span className="text-gray-500 ml-1">
+                                ({Math.round((item.qty25F / item.qty24F) * 100)}%)
+                              </span>
+                            )}
                           </td>
                         </tr>
 

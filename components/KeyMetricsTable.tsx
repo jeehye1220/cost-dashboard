@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
+import { loadInsightsFromCSV, detectSeasonType, isSummaryDataValid } from '@/lib/insightsLoader';
 import { saveInsightsToCSV } from '@/lib/insightsSaver';
 
 interface KeyMetricsTableProps {
@@ -43,6 +43,23 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
       if (total.qty24F > 600000 && total.qty24F < 700000) return 'MLB KIDS';
       if (total.qty24F > 1200000 && total.qty24F < 1400000) return 'DISCOVERY';
       return 'MLB NON';
+    }
+    
+    // DISCOVERY-KIDS 처리 (모든 시즌 동일하게)
+    if (brandId.includes('DISCOVERY-KIDS')) {
+      const parts = brandId.split('-');
+      let season = '';
+      
+      // brandId가 'DISCOVERY-KIDS' (25FW 기간)인 경우
+      if (brandId === 'DISCOVERY-KIDS') {
+        season = '25FW';
+      } else if (parts.length >= 3 && parts[1] === 'DISCOVERY' && parts[2] === 'KIDS') {
+        // 26SS-DISCOVERY-KIDS, 26FW-DISCOVERY-KIDS 등
+        season = parts[0] || '';
+      }
+      
+      // 모든 시즌 동일하게 "DISCOVERY KIDS [시즌]" 형식으로 반환
+      return `DISCOVERY KIDS ${season}`;
     }
     
     // brandId에서 브랜드 코드와 시즌 추출
@@ -131,8 +148,13 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
     }
   };
   
-  // CSV에서 인사이트 로드
+  // CSV에서 인사이트 로드 (데이터가 유효할 때만)
   React.useEffect(() => {
+    // 데이터 유효성 검사
+    if (!isSummaryDataValid(summary)) {
+      return; // 데이터가 없으면 인사이트를 로드하지 않음
+    }
+    
     // brandId에서 기간 추출 (26SS, 25SS 등)
     let seasonType = detectSeasonType(total.qty24F);
     if (brandId?.startsWith('25SS-') || brandId?.startsWith('26SS-') || brandId?.startsWith('26FW-')) {
@@ -156,7 +178,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
         setInsights(defaultInsights);
       }
     });
-  }, [tabName, total.qty24F, brandId]);
+  }, [tabName, total.qty24F, brandId, summary]);
   
   // 편집 가능한 텍스트 컴포넌트
   const EditableText = ({ id, value, className, onSave, showAIButton = false }: any) => {

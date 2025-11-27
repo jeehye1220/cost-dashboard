@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
-import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
+import { loadInsightsFromCSV, detectSeasonType, isSummaryDataValid } from '@/lib/insightsLoader';
 import { saveStructuredInsights } from '@/lib/insightsSaver';
 
 interface ExecutiveSummaryProps {
@@ -11,11 +11,15 @@ interface ExecutiveSummaryProps {
 }
 
 const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId }) => {
+  // 데이터가 없어도 카드는 표시 (기본값으로 표시)
   if (!summary || !summary.total) {
-    return <div>데이터를 불러오는 중...</div>;
+    return null; // 또는 기본 구조를 표시할 수도 있음
   }
 
   const { total } = summary;
+  
+  // 데이터 유효성 검사 (인사이트 로드 여부 결정)
+  const hasValidData = isSummaryDataValid(summary);
 
   // 시즌 타입 확인 (brandId 우선, 없으면 qty24F 기반)
   const is25SS = brandId?.startsWith('25SS-') || false;
@@ -23,10 +27,24 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
   const is26FW = brandId?.startsWith('26FW-') || false;
   
   // brandId가 없으면 qty24F 기반으로 시즌 타입 감지
-  const seasonType = is25SS ? '25SS' : 
-                     is26SS ? '26SS' : 
-                     is26FW ? '26FW' : 
-                     detectSeasonType(total.qty24F);
+  let seasonType = is25SS ? '25SS' : 
+                   is26SS ? '26SS' : 
+                   is26FW ? '26FW' : 
+                   detectSeasonType(total.qty24F);
+  
+  // DISCOVERY-KIDS는 명시적으로 시즌 설정
+  if (brandId === 'DISCOVERY-KIDS') {
+    seasonType = '25FW';
+  } else if (brandId?.includes('DISCOVERY-KIDS')) {
+    // 25SS-DISCOVERY-KIDS, 26SS-DISCOVERY-KIDS, 26FW-DISCOVERY-KIDS
+    if (brandId.startsWith('25SS-')) {
+      seasonType = '25SS';
+    } else if (brandId.startsWith('26SS-')) {
+      seasonType = '26SS';
+    } else if (brandId.startsWith('26FW-')) {
+      seasonType = '26FW';
+    }
+  }
   
   const is25FW = seasonType === '25FW';
   const isKIDS = seasonType === 'KIDS';
@@ -36,14 +54,16 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
   const [csvInsights, setCsvInsights] = useState<any>(null);
   const [loadingAI, setLoadingAI] = useState<{[key: string]: boolean}>({});
   
-  // CSV 인사이트 로드
+  // CSV 인사이트 로드 (데이터가 유효할 때만)
   useEffect(() => {
-    loadInsightsFromCSV(seasonType, brandId).then(data => {
-      if (data) {
-        setCsvInsights(data);
-      }
-    });
-  }, [seasonType, brandId]);
+    if (hasValidData) {
+      loadInsightsFromCSV(seasonType, brandId).then(data => {
+        if (data) {
+          setCsvInsights(data);
+        }
+      });
+    }
+  }, [seasonType, brandId, hasValidData]);
 
 
   // 25FW와 NON, KIDS, DISCOVERY 시즌별 초기 텍스트 설정
@@ -70,10 +90,10 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
     const isKrwWorsened = krwChange > 0; // 상승 = 악화 (환율 불리)
     
     const krwChangeText = krwChange > 0 
-      ? `▲ ${krwChange.toFixed(1)}%p 악화`
+      ? `+${krwChange.toFixed(1)}%p 악화`
       : krwChange < 0 
-      ? `▼ ${Math.abs(krwChange).toFixed(1)}%p 개선`
-      : `➡️ 0.0%p 동일`;
+      ? `-${Math.abs(krwChange).toFixed(1)}%p 개선`
+      : `0.0%p 동일`;
     
     // KRW 타이틀 동적 생성
     const getKrwTitle = () => {
@@ -88,11 +108,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
     
     // CSV 데이터가 있으면 CSV 데이터 사용 (단, 타이틀은 동적으로 생성)
     if (csvInsights) {
-      // USD mainChange 계산 (CSV에 없으면 동적 계산)
+      // USD mainChange 계산 (CSV에 없으면 동적 계산, 상승=악화 빨간색, 하락=개선 초록색)
       const usdMainChange = csvInsights.usd?.mainChange || 
-        (isUsdImproved ? `▼ ${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
-         isUsdWorsened ? `▲ ${usdCostRateChange.toFixed(1)}%p 악화` : 
-         `➡️ 0.0%p 동일`);
+        (isUsdImproved ? `-${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
+         isUsdWorsened ? `+${usdCostRateChange.toFixed(1)}%p 악화` : 
+         `0.0%p 동일`);
       
       return {
         usd: {
@@ -115,9 +135,9 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
       return {
         usd: {
           title: getUsdTitle(),
-          mainChange: isUsdImproved ? `▼ ${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
-                     isUsdWorsened ? `▲ ${usdCostRateChange.toFixed(1)}%p 악화` : 
-                     `➡️ 0.0%p 동일`,
+          mainChange: isUsdImproved ? `-${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
+                     isUsdWorsened ? `+${usdCostRateChange.toFixed(1)}%p 악화` : 
+                     `0.0%p 동일`,
           items: [],
           summary: '',
         },
@@ -136,7 +156,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
       return {
         usd: {
           title: 'USD 기준: TAG 가격 상승으로 원가율 개선 ⚠️',
-          mainChange: `▼ 0.5%p 개선`,
+          mainChange: `-0.5%p 개선`,
           items: [
             {
               icon: '🔍',
@@ -157,7 +177,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
           title: '환율·제조원가 동반 상승으로 악화 ⚠️',
           mainChange: (() => {
             const change = total.costRate25F_krw - total.costRate25F_usd;
-            return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
+            return change > 0 ? `+${change.toFixed(1)}%p 악화` : change < 0 ? `-${Math.abs(change).toFixed(1)}%p 개선` : `0.0%p 동일`;
           })(),
           items: [
             {
@@ -181,7 +201,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
       return {
         usd: {
           title: 'USD 기준: 원가율 상승 ⚠️',
-          mainChange: `▲ 0.5%p 악화`,
+          mainChange: `+0.5%p 악화`,
           items: [
             {
               icon: '📦',
@@ -208,7 +228,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
           title: 'KRW 기준: 환율로 추가 악화 ⚠️',
           mainChange: (() => {
             const change = total.costRate25F_krw - total.costRate25F_usd;
-            return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
+            return change > 0 ? `+${change.toFixed(1)}%p 악화` : change < 0 ? `-${Math.abs(change).toFixed(1)}%p 개선` : `0.0%p 동일`;
           })(),
           items: [
             {
@@ -228,12 +248,18 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
         }
       };
     } else if (is25FW) {
-      // 25FW 시즌 텍스트
+      // 25FW 시즌 텍스트 (CSV 인사이트 우선, 없으면 동적 계산)
+      // USD mainChange 계산 (CSV에 없으면 동적 계산, 상승=악화 빨간색, 하락=개선 초록색)
+      const usdMainChange = csvInsights?.usd?.mainChange || 
+        (isUsdImproved ? `-${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
+         isUsdWorsened ? `+${usdCostRateChange.toFixed(1)}%p 악화` : 
+         `0.0%p 동일`);
+      
       return {
         usd: {
-          title: isUsdImproved ? 'USD 기준: 원가율 개선' : isUsdWorsened ? 'USD 기준: 원가율 악화' : 'USD 기준: 원가율 유지',
-          mainChange: `▼ 0.8%p 개선`,
-          items: [
+          title: csvInsights?.usd?.title || (isUsdImproved ? 'USD 기준: 원가율 개선' : isUsdWorsened ? 'USD 기준: 원가율 악화' : 'USD 기준: 원가율 유지'),
+          mainChange: usdMainChange,
+          items: csvInsights?.usd?.items || [
             {
               icon: '🎨',
               title: '소재단가 절감',
@@ -253,15 +279,15 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
               description: `봉제 단순화로 공임 –0.46 USD 절감. 효율 모델로 검증된 타 카테고리 확산 기반 확보`
             }
           ],
-          summary: `소재 믹스 개선과 공임 효율화로 절감 효과를 달성했으나, 전체 평균 품목 단가 상승이 실질 개선폭 제한`
+          summary: csvInsights?.usd?.summary || `소재 믹스 개선과 공임 효율화로 절감 효과를 달성했으나, 전체 평균 품목 단가 상승이 실질 개선폭 제한`
         },
         krw: {
-          title: isKrwImproved ? 'KRW 기준: 환율 효과로 개선' : isKrwWorsened ? 'KRW 기준: 환율 영향으로 악화' : 'KRW 기준: 환율 영향 없음',
-          mainChange: (() => {
+          title: csvInsights?.krw?.title || (isKrwImproved ? 'KRW 기준: 환율 효과로 개선' : isKrwWorsened ? 'KRW 기준: 환율 영향으로 악화' : 'KRW 기준: 환율 영향 없음'),
+          mainChange: csvInsights?.krw?.mainChange || (() => {
             const change = total.costRate25F_krw - total.costRate25F_usd;
-            return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
+            return change > 0 ? `+${change.toFixed(1)}%p 악화` : change < 0 ? `-${Math.abs(change).toFixed(1)}%p 개선` : `0.0%p 동일`;
           })(),
-          items: [
+          items: csvInsights?.krw?.items || [
             {
               icon: '💱',
               title: '환율 효과',
@@ -281,7 +307,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
               description: `Outer 공임 4.3% → 4.9% (+0.7%p). 동계 나이론-고임군 위주 병렬 투입 가더로 강화된 기대`
             }
           ],
-          summary: `소재·공임 효율 개선했으나, 환율과 믹스 구조 변화로 실손익 방어에 제한된 시즌.`
+          summary: csvInsights?.krw?.summary || `소재·공임 효율 개선했으나, 환율과 믹스 구조 변화로 실손익 방어에 제한된 시즌.`
         }
       };
     } else {
@@ -289,7 +315,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
       return {
         usd: {
           title: isUsdImproved ? 'USD 기준: 원가율 개선' : isUsdWorsened ? 'USD 기준: 원가율 악화' : 'USD 기준: 원가율 유지',
-          mainChange: `▼ ${Math.abs(total.costRate25F_usd - total.costRate24F_usd).toFixed(1)}%p 개선`,
+          mainChange: `-${Math.abs(total.costRate25F_usd - total.costRate24F_usd).toFixed(1)}%p 개선`,
           items: [
             {
               icon: '🎨',
@@ -322,7 +348,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
           title: isKrwImproved ? 'KRW 기준: 환율 효과로 개선' : isKrwWorsened ? 'KRW 기준: 환율 영향으로 악화' : 'KRW 기준: 환율 영향 없음',
           mainChange: (() => {
             const change = total.costRate25F_krw - total.costRate25F_usd;
-            return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
+            return change > 0 ? `+${change.toFixed(1)}%p 악화` : change < 0 ? `-${Math.abs(change).toFixed(1)}%p 개선` : `0.0%p 동일`;
           })(),
           items: [
             {
@@ -367,10 +393,10 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
   const isKrwImproved = initialKrwChange < 0; // 하락 = 개선 (환율 유리)
   const isKrwWorsened = initialKrwChange > 0; // 상승 = 악화 (환율 불리)
   const initialKrwChangeText = initialKrwChange > 0 
-    ? `▲ ${initialKrwChange.toFixed(1)}%p 악화`
+    ? `+${initialKrwChange.toFixed(1)}%p 악화`
     : initialKrwChange < 0 
-    ? `▼ ${Math.abs(initialKrwChange).toFixed(1)}%p 개선`
-    : `➡️ 0.0%p 동일`;
+    ? `-${Math.abs(initialKrwChange).toFixed(1)}%p 개선`
+    : `0.0%p 동일`;
   
   // 편집 가능한 텍스트 상태
   const [usdTexts, setUsdTexts] = useState(initialTexts.usd);
@@ -398,11 +424,11 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
         }
       };
       
-      // USD mainChange 계산
+      // USD mainChange 계산 (상승=악화 빨간색, 하락=개선 초록색)
       const usdMainChange = csvInsights.usd?.mainChange || 
-        (isUsdImproved ? `▼ ${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
-         isUsdWorsened ? `▲ ${usdCostRateChange.toFixed(1)}%p 악화` : 
-         `➡️ 0.0%p 동일`);
+        (isUsdImproved ? `-${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
+         isUsdWorsened ? `+${usdCostRateChange.toFixed(1)}%p 악화` : 
+         `0.0%p 동일`);
       
       // KRW mainChange는 항상 동적으로 계산 (당년 KRW - 당년 USD)
       const krwChange = total.costRate25F_krw != null && total.costRate25F_usd != null
@@ -412,10 +438,10 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
       const isKrwWorsened = krwChange > 0;
       
       const krwChangeText = krwChange > 0 
-        ? `▲ ${krwChange.toFixed(1)}%p 악화`
+        ? `+${krwChange.toFixed(1)}%p 악화`
         : krwChange < 0 
-        ? `▼ ${Math.abs(krwChange).toFixed(1)}%p 개선`
-        : `➡️ 0.0%p 동일`;
+        ? `-${Math.abs(krwChange).toFixed(1)}%p 개선`
+        : `0.0%p 동일`;
       
       // KRW 타이틀 동적 생성
       const getKrwTitle = () => {
@@ -763,59 +789,74 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* 왼쪽: USD 기준 (전년 → 당년) */}
-        <div className={`rounded-xl p-6 shadow-md border-2 hover:shadow-lg transition-shadow ${
-          isUsdCostRateIncreased 
-            ? 'bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 border-red-200' 
-            : 'bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-green-200'
-        }`}>
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex-1">
-              <h3 className={`text-lg font-bold flex items-center gap-2 mb-3 ${
-                isUsdCostRateIncreased ? 'text-red-700' : 'text-green-700'
-              }`}>
-                {isUsdCostRateIncreased ? (
-                  <AlertTriangle className="w-5 h-5" />
-                ) : (
-                  <CheckCircle className="w-5 h-5" />
-                )}
-                <EditableText
-                  id="usd-title"
-                  value={usdTexts.title}
-                  className=""
-                  onSave={(val: string) => handleTextEdit('usd', 'title', val)}
-                />
-              </h3>
-              <div className={`bg-white rounded-lg p-4 shadow-sm border mb-3 ${
-                isUsdCostRateIncreased ? 'border-red-200' : 'border-green-200'
-              }`}>
-                <div className="text-3xl font-bold text-gray-800 mb-1">
-                  <span className="text-gray-500">
-                    {total.costRate24F_usd.toFixed(1)}%
-                  </span>
-                  <span className="mx-2 text-gray-400">→</span>
-                  <span className={isUsdCostRateIncreased ? 'text-red-600' : 'text-green-600'}>
-                    {total.costRate25F_usd.toFixed(1)}%
-                  </span>
-                </div>
-                <div className={`text-sm font-bold ${
-                  isUsdCostRateIncreased ? 'text-red-600' : 'text-green-600'
-                }`}>
-                  <EditableText
-                    id="usd-main-change"
-                    value={usdTexts.mainChange}
-                    className=""
-                    onSave={(val: string) => handleTextEdit('usd', 'mainChange', val)}
-                  />
+        {(() => {
+          // mainChange 텍스트를 파싱하여 개선/악화 판단
+          const mainChangeText = usdTexts.mainChange || '';
+          const isImproved = mainChangeText.includes('개선');
+          const isWorsened = mainChangeText.includes('악화');
+          // 텍스트에 "개선" 또는 "악화"가 명시되어 있으면 그것을 우선, 없으면 수치로 판단
+          const isUsdImproved = isImproved || (!isWorsened && usdCostRateChange < 0);
+          const isUsdWorsened = isWorsened || (!isImproved && usdCostRateChange > 0);
+          
+          return (
+            <div className={`rounded-xl p-6 shadow-md border-2 hover:shadow-lg transition-shadow ${
+              isUsdWorsened 
+                ? 'bg-gradient-to-br from-red-50 via-rose-50 to-pink-50 border-red-200' 
+                : 'bg-gradient-to-br from-green-50 via-emerald-50 to-teal-50 border-green-200'
+            }`}>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex-1">
+                  <h3 className={`text-lg font-bold flex items-center gap-2 mb-3 ${
+                    isUsdWorsened ? 'text-red-700' : 'text-green-700'
+                  }`}>
+                    {isUsdWorsened ? (
+                      <AlertTriangle className="w-5 h-5" />
+                    ) : (
+                      <CheckCircle className="w-5 h-5" />
+                    )}
+                    <EditableText
+                      id="usd-title"
+                      value={usdTexts.title}
+                      className=""
+                      onSave={(val: string) => handleTextEdit('usd', 'title', val)}
+                    />
+                  </h3>
+                  <div className={`bg-white rounded-lg p-4 shadow-sm border mb-3 ${
+                    isUsdWorsened ? 'border-red-200' : 'border-green-200'
+                  }`}>
+                    <div className="text-3xl font-bold text-gray-800 mb-1">
+                      <span className="text-gray-500">
+                        {total.costRate24F_usd.toFixed(1)}%
+                      </span>
+                      <span className="mx-2 text-gray-400">→</span>
+                      <span className={isUsdWorsened ? 'text-red-600' : 'text-green-600'}>
+                        {total.costRate25F_usd.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className={`text-sm font-bold ${
+                      isUsdWorsened ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      <EditableText
+                        id="usd-main-change"
+                        value={usdTexts.mainChange}
+                        className={isUsdWorsened ? 'text-red-600' : 'text-green-600'}
+                        onSave={(val: string) => handleTextEdit('usd', 'mainChange', val)}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
 
           {/* USD 개선 항목들 */}
           <div className="space-y-2.5 mb-3">
             {usdTexts.items.map((item: any, idx: number) => {
               const itemId = `usd-${idx}`;
               const isCollapsed = collapsedItems.has(itemId);
+              
+              // mainChange 텍스트를 파싱하여 개선/악화 판단 (USD 섹션 전체)
+              const mainChangeText = usdTexts.mainChange || '';
+              const isUsdImproved = mainChangeText.includes('개선');
+              const isUsdWorsened = mainChangeText.includes('악화');
               
               // change 값 파싱하여 양수/음수 판단
               const getChangeColor = (changeStr: string) => {
@@ -836,8 +877,8 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
                   return 'text-red-600 bg-red-50';
                 }
                 
-                // 기본값: 전체 원가율 변화에 따라
-                return isUsdCostRateIncreased 
+                // 기본값: mainChange 텍스트에 따라
+                return isUsdWorsened 
                   ? 'text-red-600 bg-red-50' 
                   : 'text-green-600 bg-green-50';
               };
@@ -902,9 +943,13 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
                         aiItemIndex={idx}
                       />
                       <div className={`h-1 rounded-full mt-3 ${
-                        isUsdCostRateIncreased 
-                          ? 'bg-gradient-to-r from-red-400 to-rose-500' 
-                          : 'bg-gradient-to-r from-green-400 to-emerald-500'
+                        (() => {
+                          const mainChangeText = usdTexts.mainChange || '';
+                          const isWorsened = mainChangeText.includes('악화');
+                          return isWorsened
+                            ? 'bg-gradient-to-r from-red-400 to-rose-500' 
+                            : 'bg-gradient-to-r from-green-400 to-emerald-500';
+                        })()
                       }`} style={{ width: '60%' }}></div>
                     </div>
                   )}
@@ -917,9 +962,13 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
               <button
                 onClick={() => addItem('usd')}
                 className={`w-full py-2 border-2 border-dashed rounded-lg transition-colors text-sm font-medium ${
-                  isUsdCostRateIncreased
-                    ? 'border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400'
-                    : 'border-green-300 text-green-600 hover:bg-green-50 hover:border-green-400'
+                  (() => {
+                    const mainChangeText = usdTexts.mainChange || '';
+                    const isWorsened = mainChangeText.includes('악화');
+                    return isWorsened
+                      ? 'border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400'
+                      : 'border-green-300 text-green-600 hover:bg-green-50 hover:border-green-400';
+                  })()
                 }`}
               >
                 + 항목 추가
@@ -929,9 +978,13 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
 
           {/* USD 핵심 메시지 */}
           <div className={`text-white rounded-lg p-4 min-h-[80px] shadow-md ${
-            isUsdCostRateIncreased
-              ? 'bg-gradient-to-r from-red-500 to-rose-600'
-              : 'bg-gradient-to-r from-green-500 to-emerald-600'
+            (() => {
+              const mainChangeText = usdTexts.mainChange || '';
+              const isWorsened = mainChangeText.includes('악화');
+              return isWorsened
+                ? 'bg-gradient-to-r from-red-500 to-rose-600'
+                : 'bg-gradient-to-r from-green-500 to-emerald-600';
+            })()
           }`}>
             <div className="flex items-start gap-3">
               <span className="text-xl w-6 flex-shrink-0">💡</span>
@@ -952,7 +1005,8 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
               </div>
             </div>
           </div>
-        </div>
+          </div>
+          )})()}
 
         {/* 오른쪽: KRW 기준 (당년 USD → 당년 KRW) */}
         <div className="bg-gradient-to-br from-orange-50 via-amber-50 to-red-50 rounded-xl p-6 shadow-md border-2 border-orange-200 hover:shadow-lg transition-shadow">

@@ -306,6 +306,71 @@ def create_insights_csv(insights: Dict[str, Any], output_file: str):
     print(f"[OK] 인사이트 CSV 저장 완료: {output_file}")
 
 
+def generate_kids_insights_only(season: str, season_folder: str):
+    """DISCOVERY-KIDS 인사이트만 생성 (DISCOVERY 인사이트는 건드리지 않음)"""
+    print(f"\n{'=' * 60}")
+    print(f"DISCOVERY-KIDS 인사이트 생성 중...")
+    print(f"{'=' * 60}")
+    
+    brand_code = 'X'
+    
+    # DISCOVERY-KIDS용 Summary 파일 확인
+    summary_file_kids = f'public/COST RAW/{season_folder}/summary_{season.lower()}_{brand_code.lower()}_kids.json'
+    if not os.path.exists(summary_file_kids):
+        print(f"[ERROR] DISCOVERY-KIDS SUMMARY 파일이 없습니다: {summary_file_kids}")
+        return False
+    
+    with open(summary_file_kids, 'r', encoding='utf-8') as f:
+        summary_kids = json.load(f)
+    total_kids = summary_kids.get('total', {})
+    
+    # 환율 정보 로드 (X 브랜드 환율 사용)
+    prev_season = get_previous_season(season)
+    prev_season_code = convert_season_format(prev_season) if prev_season else convert_season_format(season)
+    curr_season_code = convert_season_format(season)
+    
+    fx_rates_prev = load_fx_rates(brand_code, prev_season_code)
+    fx_rates_curr = load_fx_rates(brand_code, curr_season_code)
+    fx_rates = {'prev': fx_rates_prev['curr'], 'curr': fx_rates_curr['curr']}
+    
+    # DISCOVERY-KIDS 인사이트 생성
+    insights_kids = {
+        'prev_usd_cost_rate': total_kids.get('costRate24F_usd', 0),
+        'prev_krw_cost_rate': total_kids.get('costRate24F_krw', 0),
+        'usd_summary': generate_usd_summary(total_kids, season),
+        'krw_summary': generate_krw_summary(total_kids, season, fx_rates),
+    }
+    
+    actions_kids = generate_actions(total_kids)
+    risks_kids = generate_risks(total_kids, fx_rates)
+    success_kids = generate_success(total_kids, fx_rates, season)
+    
+    for i, action in enumerate(actions_kids, 1):
+        insights_kids[f'action_{i}'] = action
+    
+    for i, risk in enumerate(risks_kids, 1):
+        insights_kids[f'risk_{i}'] = risk
+    
+    for i, s in enumerate(success_kids, 1):
+        insights_kids[f'success_{i}'] = s
+    
+    insights_kids['action summary'] = f"주요 액션: {', '.join([a.split(':')[0] for a in actions_kids])}"
+    insights_kids['risk summary'] = f"주요 리스크: {', '.join([r.split(':')[0] for r in risks_kids])}"
+    insights_kids['success summary'] = f"성공 포인트: {', '.join([s.split(':')[0] for s in success_kids])}"
+    insights_kids['message'] = generate_message(total_kids, season, fx_rates)
+    
+    metrics_kids = generate_metrics_insights(total_kids, fx_rates)
+    insights_kids.update(metrics_kids)
+    insights_kids['executive_summary'] = generate_executive_summary(total_kids, season, fx_rates)
+    
+    # DISCOVERY-KIDS 인사이트 파일 저장
+    output_file_kids = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}_kids.csv'
+    create_insights_csv(insights_kids, output_file_kids)
+    print(f"[OK] DISCOVERY-KIDS 인사이트 생성 완료: {output_file_kids}")
+    
+    return True
+
+
 def generate_insights_for_brand(brand_code: str, season: str, season_folder: str):
     """브랜드별 인사이트 생성"""
     print(f"\n{'=' * 60}")
@@ -370,8 +435,55 @@ def generate_insights_for_brand(brand_code: str, season: str, season_folder: str
     insights['executive_summary'] = generate_executive_summary(total, season, fx_rates)
     
     # CSV 파일 저장
-    output_file = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}.csv'
-    create_insights_csv(insights, output_file)
+    # X 브랜드인 경우 두 개의 파일 생성 (DISCOVERY, DISCOVERY-KIDS)
+    if brand_code == 'X':
+        # DISCOVERY용 파일
+        output_file_discovery = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}.csv'
+        create_insights_csv(insights, output_file_discovery)
+        
+        # DISCOVERY-KIDS용 파일 (별도 Summary 파일이 있는 경우)
+        summary_file_kids = f'public/COST RAW/{season_folder}/summary_{season.lower()}_{brand_code.lower()}_kids.json'
+        if os.path.exists(summary_file_kids):
+            with open(summary_file_kids, 'r', encoding='utf-8') as f:
+                summary_kids = json.load(f)
+            total_kids = summary_kids.get('total', {})
+            
+            # DISCOVERY-KIDS 인사이트 생성
+            insights_kids = {
+                'prev_usd_cost_rate': total_kids.get('costRate24F_usd', 0),
+                'prev_krw_cost_rate': total_kids.get('costRate24F_krw', 0),
+                'usd_summary': generate_usd_summary(total_kids, season),
+                'krw_summary': generate_krw_summary(total_kids, season, fx_rates),
+            }
+            
+            actions_kids = generate_actions(total_kids)
+            risks_kids = generate_risks(total_kids, fx_rates)
+            success_kids = generate_success(total_kids, fx_rates, season)
+            
+            for i, action in enumerate(actions_kids, 1):
+                insights_kids[f'action_{i}'] = action
+            
+            for i, risk in enumerate(risks_kids, 1):
+                insights_kids[f'risk_{i}'] = risk
+            
+            for i, s in enumerate(success_kids, 1):
+                insights_kids[f'success_{i}'] = s
+            
+            insights_kids['action summary'] = f"주요 액션: {', '.join([a.split(':')[0] for a in actions_kids])}"
+            insights_kids['risk summary'] = f"주요 리스크: {', '.join([r.split(':')[0] for r in risks_kids])}"
+            insights_kids['success summary'] = f"성공 포인트: {', '.join([s.split(':')[0] for s in success_kids])}"
+            insights_kids['message'] = generate_message(total_kids, season, fx_rates)
+            
+            metrics_kids = generate_metrics_insights(total_kids, fx_rates)
+            insights_kids.update(metrics_kids)
+            insights_kids['executive_summary'] = generate_executive_summary(total_kids, season, fx_rates)
+            
+            # DISCOVERY-KIDS 인사이트 파일 저장
+            output_file_kids = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}_kids.csv'
+            create_insights_csv(insights_kids, output_file_kids)
+    else:
+        output_file = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}.csv'
+        create_insights_csv(insights, output_file)
     
     return True
 
@@ -379,13 +491,14 @@ def generate_insights_for_brand(brand_code: str, season: str, season_folder: str
 def main():
     parser = argparse.ArgumentParser(description='규칙 기반 인사이트 생성 스크립트')
     parser.add_argument('--season', type=str, required=True, help='시즌 코드 (예: 26SS)')
-    parser.add_argument('--brands', nargs='+', required=True, choices=['M', 'I', 'X', 'ST', 'V'],
+    parser.add_argument('--brands', nargs='+', required=False, choices=['M', 'I', 'X', 'ST', 'V'],
                        help='브랜드 코드 리스트 (예: M I X ST V)')
+    parser.add_argument('--kids-only', action='store_true',
+                       help='DISCOVERY-KIDS 인사이트만 생성 (DISCOVERY 인사이트는 건드리지 않음)')
     
     args = parser.parse_args()
     
     season = args.season.upper()
-    brands = args.brands if isinstance(args.brands, list) else [args.brands]
     
     # 시즌 폴더명 결정
     if season in ['26SS', '26S']:
@@ -402,6 +515,27 @@ def main():
     print("=" * 60)
     print("규칙 기반 인사이트 생성 스크립트")
     print("=" * 60)
+    
+    # DISCOVERY-KIDS만 생성하는 경우
+    if args.kids_only:
+        print(f"\n시즌: {season}")
+        print("DISCOVERY-KIDS 인사이트만 생성 (DISCOVERY 인사이트는 건드리지 않음)")
+        if generate_kids_insights_only(season, season_folder):
+            print("\n" + "=" * 60)
+            print("DISCOVERY-KIDS 인사이트 생성 완료")
+            print("=" * 60)
+        else:
+            print("\n" + "=" * 60)
+            print("DISCOVERY-KIDS 인사이트 생성 실패")
+            print("=" * 60)
+        return
+    
+    # 일반 브랜드 인사이트 생성
+    if not args.brands:
+        parser.error("--brands 또는 --kids-only 옵션이 필요합니다.")
+    
+    brands = args.brands if isinstance(args.brands, list) else [args.brands]
+    
     print(f"\n시즌: {season}")
     print(f"브랜드: {', '.join(brands)}")
     

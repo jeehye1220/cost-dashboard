@@ -2,15 +2,28 @@
   "seasons": {
     "25FW": {
       "brands": ["M", "I", "X", "ST", "V"],
-      "generate_insights": false,
+      "generate_insights": true,
+      "exclude_insights_for": ["M", "I", "X"],
       "season_folder": "25FW",
       "season_code": "25F"
+    },
+    "25SS": {
+      "brands": ["M", "I", "X", "ST", "V"],
+      "generate_insights": true,
+      "season_folder": "25S",
+      "season_code": "25S"
     },
     "26SS": {
       "brands": ["M", "I", "X", "ST", "V"],
       "generate_insights": true,
       "season_folder": "26SS",
       "season_code": "26SS"
+    },
+    "26FW": {
+      "brands": ["M", "I", "X", "ST", "V"],
+      "generate_insights": true,
+      "season_folder": "26FW",
+      "season_code": "26F"
     }
   },
   "email": {

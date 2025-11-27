@@ -45,11 +45,6 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
             원가율 변동 요약 (전년 USD → 당년 KRW)
           </h3>
         </div>
-        {isNON && (
-        <span className="text-xs text-gray-500 whitespace-nowrap">
-          전년: 24.06.01~24.10.31 | 당년: 25.06.01~25.10.31
-        </span>
-        )}
       </button>
 
       {showTable && (

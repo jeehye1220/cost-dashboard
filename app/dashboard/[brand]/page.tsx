@@ -11,7 +11,8 @@ import ExecutiveSummary from '@/components/ExecutiveSummary';
 import KeyMetricsTable from '@/components/KeyMetricsTable';
 import CostRateSummaryTable from '@/components/CostRateSummaryTable';
 import { loadCostData, loadSummaryData, loadExchangeRates } from '@/lib/csvParser';
-import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
+import Papa from 'papaparse';
+import { loadInsightsFromCSV, detectSeasonType, isSummaryDataValid } from '@/lib/insightsLoader';
 import { CostDataItem } from '@/lib/types';
 
 export default function BrandDashboard() {
@@ -35,16 +36,28 @@ export default function BrandDashboard() {
     message: string;
   } | null>(null);
 
-  // CSV에서 인사이트 로드 (초기화)
+  // CSV에서 인사이트 로드 (초기화) - 데이터가 유효할 때만
   useEffect(() => {
-    if (summary?.total) {
+    if (summary && isSummaryDataValid(summary)) {
       const seasonType = detectSeasonType(summary.total.qty24F);
       
       // 25SS, 26SS 등은 brandId에서 기간 추출
       let actualSeasonType = seasonType;
-      if (brandId.startsWith('25SS-') || brandId.startsWith('26SS-') || brandId.startsWith('26FW-')) {
+      if (brandId === 'DISCOVERY-KIDS') {
+        // 25FW DISCOVERY-KIDS는 명시적으로 25FW로 설정
+        actualSeasonType = '25FW';
+      } else if (brandId.startsWith('25SS-') || brandId.startsWith('26SS-') || brandId.startsWith('26FW-')) {
         actualSeasonType = brandId.startsWith('25SS-') ? '25SS' : 
                           brandId.startsWith('26SS-') ? '26SS' : '26FW';
+      } else if (brandId.includes('DISCOVERY-KIDS')) {
+        // 25SS-DISCOVERY-KIDS, 26SS-DISCOVERY-KIDS, 26FW-DISCOVERY-KIDS
+        if (brandId.startsWith('25SS-')) {
+          actualSeasonType = '25SS';
+        } else if (brandId.startsWith('26SS-')) {
+          actualSeasonType = '26SS';
+        } else if (brandId.startsWith('26FW-')) {
+          actualSeasonType = '26FW';
+        }
       }
 
       loadInsightsFromCSV(actualSeasonType, brandId).then(data => {
@@ -69,16 +82,25 @@ export default function BrandDashboard() {
     { id: 'NON', name: 'MLB ACC', icon: 'MLB', iconBg: 'bg-slate-300', textColor: 'text-slate-700', period: '25FW' },
     { id: 'KIDS', name: 'MLB KIDS', icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700', period: '25FW' },
     { id: 'DISCOVERY', name: 'DISCOVERY', icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700', period: '25FW' },
+    { id: 'DISCOVERY-KIDS', name: 'DISCOVERY KIDS', icon: 'DK', iconBg: 'bg-teal-300', textColor: 'text-teal-700', period: '25FW' },
     { id: 'ST', name: 'SERGIO TACCHINI 25FW', icon: 'ST', iconBg: 'bg-purple-300', textColor: 'text-purple-700', period: '25FW' },
     { id: 'V', name: 'DUVETICA 25FW', icon: 'DV', iconBg: 'bg-indigo-300', textColor: 'text-indigo-700', period: '25FW' },
     { id: '26SS-M', name: 'MLB 26SS', icon: 'MLB', iconBg: 'bg-blue-300', textColor: 'text-blue-700', period: '26SS' },
     { id: '26SS-I', name: 'MLB KIDS 26SS', icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700', period: '26SS' },
     { id: '26SS-X', name: 'DISCOVERY 26SS', icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700', period: '26SS' },
+    { id: '26SS-DISCOVERY-KIDS', name: 'DISCOVERY KIDS 26SS', icon: 'DK', iconBg: 'bg-teal-300', textColor: 'text-teal-700', period: '26SS' },
     { id: '26SS-ST', name: 'SERGIO TACCHINI 26SS', icon: 'ST', iconBg: 'bg-purple-300', textColor: 'text-purple-700', period: '26SS' },
     { id: '26SS-V', name: 'DUVETICA 26SS', icon: 'DV', iconBg: 'bg-indigo-300', textColor: 'text-indigo-700', period: '26SS' },
+    { id: '26FW-M', name: 'MLB 26FW', icon: 'MLB', iconBg: 'bg-blue-300', textColor: 'text-blue-700', period: '26FW' },
+    { id: '26FW-I', name: 'MLB KIDS 26FW', icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700', period: '26FW' },
+    { id: '26FW-X', name: 'DISCOVERY 26FW', icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700', period: '26FW' },
+    { id: '26FW-DISCOVERY-KIDS', name: 'DISCOVERY KIDS 26FW', icon: 'DK', iconBg: 'bg-teal-300', textColor: 'text-teal-700', period: '26FW' },
+    { id: '26FW-ST', name: 'SERGIO TACCHINI 26FW', icon: 'ST', iconBg: 'bg-purple-300', textColor: 'text-purple-700', period: '26FW' },
+    { id: '26FW-V', name: 'DUVETICA 26FW', icon: 'DV', iconBg: 'bg-indigo-300', textColor: 'text-indigo-700', period: '26FW' },
     { id: '25SS-M', name: 'MLB 25SS', icon: 'MLB', iconBg: 'bg-blue-300', textColor: 'text-blue-700', period: '25SS' },
     { id: '25SS-I', name: 'MLB KIDS 25SS', icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700', period: '25SS' },
     { id: '25SS-X', name: 'DISCOVERY 25SS', icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700', period: '25SS' },
+    { id: '25SS-DISCOVERY-KIDS', name: 'DISCOVERY KIDS 25SS', icon: 'DK', iconBg: 'bg-teal-300', textColor: 'text-teal-700', period: '25SS' },
     { id: '25SS-ST', name: 'SERGIO TACCHINI 25SS', icon: 'ST', iconBg: 'bg-purple-300', textColor: 'text-purple-700', period: '25SS' },
     { id: '25SS-V', name: 'DUVETICA 25SS', icon: 'DV', iconBg: 'bg-indigo-300', textColor: 'text-indigo-700', period: '25SS' },
   ];
@@ -94,15 +116,26 @@ export default function BrandDashboard() {
   // 현재 브랜드 코드 추출 (26SS-M → M, 25SS-M → M, 25FW → 25FW, KIDS → KIDS)
   const currentBrandCode = React.useMemo(() => {
     if (brandId.startsWith('26SS-')) {
+      // DISCOVERY-KIDS는 전체를 반환
+      if (brandId.includes('DISCOVERY-KIDS')) {
+        return 'DISCOVERY-KIDS';
+      }
       return brandId.split('-')[1]; // M, I, X, ST, V
     }
     if (brandId.startsWith('26FW-')) {
+      if (brandId.includes('DISCOVERY-KIDS')) {
+        return 'DISCOVERY-KIDS';
+      }
       return brandId.split('-')[1];
     }
     if (brandId.startsWith('25SS-')) {
+      // DISCOVERY-KIDS는 전체를 반환
+      if (brandId.includes('DISCOVERY-KIDS')) {
+        return 'DISCOVERY-KIDS';
+      }
       return brandId.split('-')[1]; // M, I, X, ST, V
     }
-    return brandId; // 25FW, NON, KIDS, DISCOVERY
+    return brandId; // 25FW, NON, KIDS, DISCOVERY, DISCOVERY-KIDS
   }, [brandId]);
 
   // 브랜드 코드 매핑 (25SS, 26SS 브랜드 → 25FW 브랜드)
@@ -115,6 +148,7 @@ export default function BrandDashboard() {
     '25FW': { '25FW': '25FW', '25SS': '25SS-M', '26SS': '26SS-M', '26FW': '26FW-M' },
     'KIDS': { '25FW': 'KIDS', '25SS': '25SS-I', '26SS': '26SS-I', '26FW': '26FW-I' },
     'DISCOVERY': { '25FW': 'DISCOVERY', '25SS': '25SS-X', '26SS': '26SS-X', '26FW': '26FW-X' },
+    'DISCOVERY-KIDS': { '25FW': 'DISCOVERY-KIDS', '25SS': '25SS-DISCOVERY-KIDS', '26SS': '26SS-DISCOVERY-KIDS', '26FW': '26FW-DISCOVERY-KIDS' },
     'NON': { '25FW': 'NON', '25SS': '', '26SS': '', '26FW': '' }, // NON은 25FW만
   };
 
@@ -198,6 +232,19 @@ export default function BrandDashboard() {
       buttonBg: 'bg-emerald-300',
       buttonHover: 'hover:bg-emerald-400',
     },
+    'DISCOVERY-KIDS': { 
+      name: 'DISCOVERY KIDS', 
+      color: 'teal',
+      headerBg: 'bg-gradient-to-r from-teal-300 to-teal-200',
+      headerText: 'text-teal-700',
+      headerTextHover: 'hover:text-teal-800',
+      infoBg: 'bg-teal-200',
+      infoBorder: 'border-teal-300',
+      infoTitle: 'text-teal-700',
+      infoText: 'text-teal-700',
+      buttonBg: 'bg-teal-300',
+      buttonHover: 'hover:bg-teal-400',
+    },
     'ST': { 
       name: 'SERGIO TACCHINI 25FW', 
       color: 'purple',
@@ -262,6 +309,19 @@ export default function BrandDashboard() {
       infoText: 'text-emerald-700',
       buttonBg: 'bg-emerald-300',
       buttonHover: 'hover:bg-emerald-400',
+    },
+    '26SS-DISCOVERY-KIDS': { 
+      name: 'DISCOVERY KIDS 26SS', 
+      color: 'teal',
+      headerBg: 'bg-gradient-to-r from-teal-300 to-teal-200',
+      headerText: 'text-teal-700',
+      headerTextHover: 'hover:text-teal-800',
+      infoBg: 'bg-teal-200',
+      infoBorder: 'border-teal-300',
+      infoTitle: 'text-teal-700',
+      infoText: 'text-teal-700',
+      buttonBg: 'bg-teal-300',
+      buttonHover: 'hover:bg-teal-400',
     },
     '26SS-ST': { 
       name: 'SERGIO TACCHINI 26SS', 
@@ -328,6 +388,19 @@ export default function BrandDashboard() {
       buttonBg: 'bg-emerald-300',
       buttonHover: 'hover:bg-emerald-400',
     },
+    '25SS-DISCOVERY-KIDS': { 
+      name: 'DISCOVERY KIDS 25SS', 
+      color: 'teal',
+      headerBg: 'bg-gradient-to-r from-teal-300 to-teal-200',
+      headerText: 'text-teal-700',
+      headerTextHover: 'hover:text-teal-800',
+      infoBg: 'bg-teal-200',
+      infoBorder: 'border-teal-300',
+      infoTitle: 'text-teal-700',
+      infoText: 'text-teal-700',
+      buttonBg: 'bg-teal-300',
+      buttonHover: 'hover:bg-teal-400',
+    },
     '25SS-ST': { 
       name: 'SERGIO TACCHINI 25SS', 
       color: 'purple',
@@ -343,6 +416,84 @@ export default function BrandDashboard() {
     },
     '25SS-V': { 
       name: 'DUVETICA 25SS', 
+      color: 'indigo',
+      headerBg: 'bg-gradient-to-r from-indigo-300 to-indigo-200',
+      headerText: 'text-indigo-700',
+      headerTextHover: 'hover:text-indigo-800',
+      infoBg: 'bg-indigo-200',
+      infoBorder: 'border-indigo-300',
+      infoTitle: 'text-indigo-700',
+      infoText: 'text-indigo-700',
+      buttonBg: 'bg-indigo-300',
+      buttonHover: 'hover:bg-indigo-400',
+    },
+    '26FW-M': { 
+      name: 'MLB 26FW', 
+      color: 'blue',
+      headerBg: 'bg-gradient-to-r from-blue-300 to-blue-200',
+      headerText: 'text-blue-700',
+      headerTextHover: 'hover:text-blue-800',
+      infoBg: 'bg-blue-200',
+      infoBorder: 'border-blue-300',
+      infoTitle: 'text-blue-700',
+      infoText: 'text-blue-700',
+      buttonBg: 'bg-blue-300',
+      buttonHover: 'hover:bg-blue-400',
+    },
+    '26FW-I': { 
+      name: 'MLB KIDS 26FW', 
+      color: 'red',
+      headerBg: 'bg-gradient-to-r from-rose-300 to-rose-200',
+      headerText: 'text-rose-700',
+      headerTextHover: 'hover:text-rose-800',
+      infoBg: 'bg-rose-200',
+      infoBorder: 'border-rose-300',
+      infoTitle: 'text-rose-700',
+      infoText: 'text-rose-700',
+      buttonBg: 'bg-rose-300',
+      buttonHover: 'hover:bg-rose-400',
+    },
+    '26FW-X': { 
+      name: 'DISCOVERY 26FW', 
+      color: 'green',
+      headerBg: 'bg-gradient-to-r from-emerald-300 to-emerald-200',
+      headerText: 'text-emerald-700',
+      headerTextHover: 'hover:text-emerald-800',
+      infoBg: 'bg-emerald-200',
+      infoBorder: 'border-emerald-300',
+      infoTitle: 'text-emerald-700',
+      infoText: 'text-emerald-700',
+      buttonBg: 'bg-emerald-300',
+      buttonHover: 'hover:bg-emerald-400',
+    },
+    '26FW-DISCOVERY-KIDS': { 
+      name: 'DISCOVERY KIDS 26FW', 
+      color: 'teal',
+      headerBg: 'bg-gradient-to-r from-teal-300 to-teal-200',
+      headerText: 'text-teal-700',
+      headerTextHover: 'hover:text-teal-800',
+      infoBg: 'bg-teal-200',
+      infoBorder: 'border-teal-300',
+      infoTitle: 'text-teal-700',
+      infoText: 'text-teal-700',
+      buttonBg: 'bg-teal-300',
+      buttonHover: 'hover:bg-teal-400',
+    },
+    '26FW-ST': { 
+      name: 'SERGIO TACCHINI 26FW', 
+      color: 'purple',
+      headerBg: 'bg-gradient-to-r from-purple-300 to-purple-200',
+      headerText: 'text-purple-700',
+      headerTextHover: 'hover:text-purple-800',
+      infoBg: 'bg-purple-200',
+      infoBorder: 'border-purple-300',
+      infoTitle: 'text-purple-700',
+      infoText: 'text-purple-700',
+      buttonBg: 'bg-purple-300',
+      buttonHover: 'hover:bg-purple-400',
+    },
+    '26FW-V': { 
+      name: 'DUVETICA 26FW', 
       color: 'indigo',
       headerBg: 'bg-gradient-to-r from-indigo-300 to-indigo-200',
       headerText: 'text-indigo-700',
@@ -399,6 +550,11 @@ export default function BrandDashboard() {
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/25FW/summary_25fw_x.json';
             break;
+          case 'DISCOVERY-KIDS':
+            csvFileName = 'COST RAW/25FW/X_25F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25FW/summary_25fw_x_kids.json';
+            break;
           case 'ST':
             csvFileName = 'COST RAW/25FW/ST_25F.csv';
             fxFileName = 'COST RAW/FX.csv';
@@ -423,6 +579,11 @@ export default function BrandDashboard() {
             csvFileName = 'COST RAW/26SS/X_26SS.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/26SS/summary_26ss_x.json';
+            break;
+          case '26SS-DISCOVERY-KIDS':
+            csvFileName = 'COST RAW/26SS/X_26SS.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26SS/summary_26ss_x_kids.json';
             break;
           case '26SS-ST':
             csvFileName = 'COST RAW/26SS/ST_26SS.csv';
@@ -449,6 +610,11 @@ export default function BrandDashboard() {
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/25S/summary_25s_x.json';
             break;
+          case '25SS-DISCOVERY-KIDS':
+            csvFileName = 'COST RAW/25S/X_25S.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25S/summary_25ss_x_kids.json';
+            break;
           case '25SS-ST':
             csvFileName = 'COST RAW/25S/ST_25S.csv';
             fxFileName = 'COST RAW/FX.csv';
@@ -458,6 +624,36 @@ export default function BrandDashboard() {
             csvFileName = 'COST RAW/25S/V_25S.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/25S/summary_25s_v.json';
+            break;
+          case '26FW-M':
+            csvFileName = 'COST RAW/26FW/M_26F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26FW/summary_26fw_m.json';
+            break;
+          case '26FW-I':
+            csvFileName = 'COST RAW/26FW/I_26F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26FW/summary_26fw_i.json';
+            break;
+          case '26FW-X':
+            csvFileName = 'COST RAW/26FW/X_26F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26FW/summary_26fw_x.json';
+            break;
+          case '26FW-DISCOVERY-KIDS':
+            csvFileName = 'COST RAW/26FW/X_26F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26FW/summary_26fw_x_kids.json';
+            break;
+          case '26FW-ST':
+            csvFileName = 'COST RAW/26FW/ST_26F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26FW/summary_26fw_st.json';
+            break;
+          case '26FW-V':
+            csvFileName = 'COST RAW/26FW/V_26F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26FW/summary_26fw_v.json';
             break;
           default:
             setError('유효하지 않은 브랜드입니다.');
@@ -476,11 +672,12 @@ export default function BrandDashboard() {
           costDataPromise = loadCostData(csvFileName, fxFileName, brandId, '26FW', '25FW');
         } else if (brandId.startsWith('25SS-')) {
           costDataPromise = loadCostData(csvFileName, fxFileName, brandId, '25SS', '24SS');
-        } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'ST' || brandId === 'V') {
+        } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'DISCOVERY-KIDS' || brandId === 'ST' || brandId === 'V') {
           // 25FW 기간 브랜드들 (M, I, X, ST, V) - 새 구조
-          const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId;
-          // 25FW-{brandCode} 형식으로 만들어서 일관성 유지
-          costDataPromise = loadCostData(csvFileName, fxFileName, `25FW-${brandCode}`, '25FW', '24FW');
+          const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId === 'DISCOVERY-KIDS' ? 'DISCOVERY-KIDS' : brandId;
+          // 25FW-{brandCode} 형식으로 만들어서 일관성 유지 (DISCOVERY-KIDS는 그대로 전달)
+          const brandIdForLoad = brandId === 'DISCOVERY-KIDS' ? 'DISCOVERY-KIDS' : `25FW-${brandCode}`;
+          costDataPromise = loadCostData(csvFileName, fxFileName, brandIdForLoad, '25FW', '24FW');
         } else {
           costDataPromise = loadCostData(csvFileName, fxFileName);
         }
@@ -493,11 +690,12 @@ export default function BrandDashboard() {
           fxRatesPromise = loadExchangeRates(fxFileName, brandId, '26FW', '25FW');
         } else if (brandId.startsWith('25SS-')) {
           fxRatesPromise = loadExchangeRates(fxFileName, brandId, '25SS', '24SS');
-        } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'ST' || brandId === 'V') {
+        } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'DISCOVERY-KIDS' || brandId === 'ST' || brandId === 'V') {
           // 25FW 기간 브랜드들 (M, I, X, ST, V) - 새 구조
-          const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId;
-          // 25FW-{brandCode} 형식으로 만들어서 일관성 유지
-          fxRatesPromise = loadExchangeRates(fxFileName, `25FW-${brandCode}`, '25FW', '24FW');
+          const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId === 'DISCOVERY-KIDS' ? 'DISCOVERY-KIDS' : brandId;
+          // 25FW-{brandCode} 형식으로 만들어서 일관성 유지 (DISCOVERY-KIDS는 그대로 전달)
+          const brandIdForFx = brandId === 'DISCOVERY-KIDS' ? 'DISCOVERY-KIDS' : `25FW-${brandCode}`;
+          fxRatesPromise = loadExchangeRates(fxFileName, brandIdForFx, '25FW', '24FW');
         } else {
           // 기존 브랜드는 기존 방식 유지 (NON 등)
           fxRatesPromise = loadExchangeRates(fxFileName);
@@ -545,7 +743,7 @@ export default function BrandDashboard() {
 
     try {
       // 파일명 추출 (경로에서 마지막 부분만)
-      const fileName = csvFileName.includes('/') 
+      let fileName = csvFileName.includes('/') 
         ? csvFileName.split('/').pop() || csvFileName
         : csvFileName;
 
@@ -557,7 +755,7 @@ export default function BrandDashboard() {
         .join('/');
       
       const fileUrl = `/${encodedPath}`;
-      console.log('CSV 다운로드 시도:', { original: csvFileName, encoded: fileUrl, fileName });
+      console.log('CSV 다운로드 시도:', { original: csvFileName, encoded: fileUrl, fileName, brandId });
 
       // 파일 가져오기
       const response = await fetch(fileUrl);
@@ -571,22 +769,94 @@ export default function BrandDashboard() {
         throw new Error(`파일을 불러올 수 없습니다 (${response.status}: ${response.statusText})`);
       }
 
-      // Blob으로 변환
-      const blob = await response.blob();
+      // DISCOVERY-KIDS 브랜드인 경우 필터링 필요
+      const isDiscoveryKids = brandId === 'DISCOVERY-KIDS' || brandId?.includes('DISCOVERY-KIDS');
       
-      // 다운로드 링크 생성
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      
-      // 정리
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-      
-      console.log('CSV 다운로드 완료:', fileName);
+      if (isDiscoveryKids) {
+        // CSV 텍스트로 가져오기 (인코딩 명시)
+        const csvText = await response.text();
+        
+        // Papa.parse로 CSV 파싱 (제대로 된 파싱)
+        const parseResult = Papa.parse(csvText, {
+          header: false,
+          skipEmptyLines: false
+        });
+        
+        if (!parseResult.data || parseResult.data.length === 0) {
+          throw new Error('CSV 파일이 비어있습니다.');
+        }
+        
+        // 헤더는 그대로 유지
+        const headerRow = parseResult.data[0] as string[];
+        const filteredRows: string[][] = [headerRow];
+        
+        // 데이터 행 필터링 (스타일 코드는 3번째 컬럼, 인덱스 2)
+        let filteredCount = 0;
+        for (let i = 1; i < parseResult.data.length; i++) {
+          const row = parseResult.data[i] as string[];
+          
+          // 빈 행은 건너뛰기
+          if (!row || row.length === 0) continue;
+          
+          // 스타일 코드 확인 (3번째 컬럼, 인덱스 2)
+          if (row.length > 2) {
+            const style = (row[2] || '').trim().toUpperCase();
+            if (style.startsWith('DK')) {
+              filteredRows.push(row);
+              filteredCount++;
+            }
+          }
+        }
+        
+        // Papa.unparse로 CSV로 변환
+        const filteredCsv = Papa.unparse(filteredRows, {
+          newline: '\n',
+          delimiter: ',',
+          header: false
+        });
+        
+        // 파일명 변경 (DISCOVERY-KIDS용)
+        const baseFileName = fileName.replace('.csv', '');
+        fileName = `${baseFileName}_kids.csv`;
+        
+        // UTF-8 BOM 추가하여 Excel에서 한글이 깨지지 않도록 함
+        const csvWithBom = '\ufeff' + filteredCsv;
+        
+        // Blob 생성 (UTF-8 BOM 포함)
+        const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8-sig;' });
+        
+        // 다운로드 링크 생성
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        
+        // 정리
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        console.log(`[DISCOVERY-KIDS 필터링] 원본: ${parseResult.data.length - 1}개 행, 필터링 후: ${filteredCount}개 행`);
+        console.log('CSV 다운로드 완료 (필터링됨):', fileName);
+      } else {
+        // 일반 브랜드는 기존 방식대로
+        const blob = await response.blob();
+        
+        // 다운로드 링크 생성
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        
+        // 정리
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        console.log('CSV 다운로드 완료:', fileName);
+      }
     } catch (error) {
       console.error('CSV 다운로드 오류:', {
         error,
@@ -720,8 +990,8 @@ export default function BrandDashboard() {
         {/* 경영진 요약 */}
         <ExecutiveSummary summary={summary} brandId={brandId} />
 
-        {/* 인사이트 요약 */}
-        {summary && (
+        {/* 인사이트 요약 - 데이터가 유효할 때만 표시 */}
+        {summary && isSummaryDataValid(summary) && (
           <div className="mb-4">
             <InsightSection
               summary={summary}

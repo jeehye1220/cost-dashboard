@@ -145,61 +145,65 @@ def generate_summary_25fw(brands: List[str]):
     return success_count == len(brands)
 
 
-def generate_summary_26ss(brands: List[str]):
-    """26SS 브랜드별 SUMMARY JSON 생성"""
+def generate_summary_26ss(brands: List[str], season: str = '26SS'):
+    """시즌별 브랜드 SUMMARY JSON 생성 (25SS, 26SS, 26FW 등)"""
     logger.info("=" * 60)
-    logger.info("[3] 26SS SUMMARY JSON 생성 시작")
+    logger.info(f"[3] {season} SUMMARY JSON 생성 시작")
     logger.info("=" * 60)
     
     success_count = 0
     
     for brand in brands:
-        logger.info(f"\n26SS 브랜드 {brand} 처리 중...")
+        logger.info(f"\n{season} 브랜드 {brand} 처리 중...")
         
         try:
             result = subprocess.run(
-                ['python', 'generate_summary_26ss.py', '--season', '26SS', '--brand', brand],
+                ['python', 'generate_summary_26ss.py', '--season', season, '--brand', brand],
                 capture_output=True,
                 text=True,
                 encoding='utf-8'
             )
             
             if result.returncode == 0:
-                logger.info(f"26SS 브랜드 {brand} SUMMARY 생성 완료")
+                logger.info(f"{season} 브랜드 {brand} SUMMARY 생성 완료")
                 success_count += 1
             else:
-                logger.error(f"26SS 브랜드 {brand} SUMMARY 생성 실패: {result.stderr}")
+                logger.error(f"{season} 브랜드 {brand} SUMMARY 생성 실패: {result.stderr}")
         except Exception as e:
-            logger.error(f"26SS 브랜드 {brand} 처리 중 오류: {e}")
+            logger.error(f"{season} 브랜드 {brand} 처리 중 오류: {e}")
     
-    logger.info(f"\n26SS SUMMARY 생성 완료: {success_count}/{len(brands)}")
+    logger.info(f"\n{season} SUMMARY 생성 완료: {success_count}/{len(brands)}")
     return success_count == len(brands)
 
 
-def generate_insights_26ss(brands: List[str]):
-    """26SS 브랜드별 인사이트 CSV 생성 (규칙 기반)"""
+def generate_insights_for_season(season: str, brands: List[str]):
+    """시즌별 인사이트 CSV 생성 (규칙 기반) - 일반화된 함수"""
     logger.info("=" * 60)
-    logger.info("[4] 26SS 인사이트 CSV 생성 시작")
+    logger.info(f"[인사이트 생성] {season} 시즌 인사이트 CSV 생성 시작")
     logger.info("=" * 60)
     
     try:
         result = subprocess.run(
-            ['python', 'generate_insights_rule_based.py', '--season', '26SS', '--brands'] + brands,
+            ['python', 'generate_insights_rule_based.py', '--season', season, '--brands'] + brands,
             capture_output=True,
             text=True,
             encoding='utf-8'
         )
         
         if result.returncode == 0:
-            logger.info("26SS 인사이트 CSV 생성 완료")
+            logger.info(f"{season} 인사이트 CSV 생성 완료")
             logger.info(result.stdout)
             return True
         else:
-            logger.error(f"26SS 인사이트 CSV 생성 실패: {result.stderr}")
+            logger.error(f"{season} 인사이트 CSV 생성 실패: {result.stderr}")
             return False
     except Exception as e:
-        logger.error(f"26SS 인사이트 CSV 생성 중 오류: {e}")
+        logger.error(f"{season} 인사이트 CSV 생성 중 오류: {e}")
         return False
+
+def generate_insights_26ss(brands: List[str]):
+    """26SS 브랜드별 인사이트 CSV 생성 (규칙 기반) - 하위 호환성 유지"""
+    return generate_insights_for_season('26SS', brands)
 
 
 def git_commit_and_push(config: Dict) -> bool:
@@ -325,12 +329,26 @@ def verify_files(config: Dict) -> bool:
                 logger.warning(f"SUMMARY JSON 없음: {summary_file}")
                 all_ok = False
             
+            # X 브랜드인 경우 DISCOVERY-KIDS Summary 파일도 확인
+            if brand == 'X':
+                summary_file_kids = Path(f'public/COST RAW/{season_folder}/summary_{season_key.lower()}_{brand.lower()}_kids.json')
+                if not summary_file_kids.exists():
+                    logger.warning(f"DISCOVERY-KIDS SUMMARY JSON 없음: {summary_file_kids}")
+                    all_ok = False
+            
             # 인사이트 CSV 확인 (26SS만)
             if season_config.get('generate_insights', False):
                 insight_file = Path(f'public/COST RAW/{season_folder}/{brand}_insight_{season_key.lower()}.csv')
                 if not insight_file.exists():
                     logger.warning(f"인사이트 CSV 없음: {insight_file}")
                     all_ok = False
+                
+                # X 브랜드인 경우 DISCOVERY-KIDS 인사이트 파일도 확인
+                if brand == 'X':
+                    insight_file_kids = Path(f'public/COST RAW/{season_folder}/{brand}_insight_{season_key.lower()}_kids.csv')
+                    if not insight_file_kids.exists():
+                        logger.warning(f"DISCOVERY-KIDS 인사이트 CSV 없음: {insight_file_kids}")
+                        all_ok = False
     
     if all_ok:
         logger.info("모든 파일 검증 완료")
@@ -376,27 +394,69 @@ def main():
                 if not generate_summary_25fw(brands):
                     success = False
                     error_messages.append(f"{season_key} SUMMARY 생성 실패")
+            elif season_key == '25SS':
+                # 25SS는 generate_summary_26ss.py 사용
+                logger.info(f"{season_key} 시즌 처리 (generate_summary_26ss.py 사용)")
+                if not generate_summary_26ss(brands, '25SS'):
+                    success = False
+                    error_messages.append(f"{season_key} SUMMARY 생성 실패")
             elif season_key == '26SS':
-                if not generate_summary_26ss(brands):
+                if not generate_summary_26ss(brands, '26SS'):
+                    success = False
+                    error_messages.append(f"{season_key} SUMMARY 생성 실패")
+            elif season_key == '26FW':
+                # 26FW는 generate_summary_26ss.py 사용
+                logger.info(f"{season_key} 시즌 처리 (generate_summary_26ss.py 사용)")
+                if not generate_summary_26ss(brands, '26FW'):
                     success = False
                     error_messages.append(f"{season_key} SUMMARY 생성 실패")
             else:
                 # 새로운 시즌은 generate_summary_26ss.py 사용
                 logger.info(f"{season_key} 시즌 처리 (generate_summary_26ss.py 사용)")
-                if not generate_summary_26ss(brands):
+                if not generate_summary_26ss(brands, season_key):
                     success = False
                     error_messages.append(f"{season_key} SUMMARY 생성 실패")
             
             # 3. 인사이트 생성 (설정된 시즌만)
             if season_config.get('generate_insights', False):
-                if season_key == '26SS':
-                    if not generate_insights_26ss(brands):
+                # 25FW의 경우 M, I, X 제외 (하지만 DISCOVERY-KIDS는 별도 생성)
+                if season_key == '25FW':
+                    exclude_brands = season_config.get('exclude_insights_for', [])
+                    filtered_brands = [b for b in brands if b not in exclude_brands]
+                    if filtered_brands:
+                        logger.info(f"{season_key} 인사이트 생성 (제외 브랜드: {', '.join(exclude_brands)})")
+                        if not generate_insights_for_season(season_key, filtered_brands):
+                            success = False
+                            error_messages.append(f"{season_key} 인사이트 생성 실패")
+                    else:
+                        logger.info(f"{season_key} 인사이트 생성할 브랜드가 없습니다 (모두 제외됨)")
+                    
+                    # DISCOVERY-KIDS 인사이트만 별도 생성 (DISCOVERY 인사이트는 건드리지 않음)
+                    logger.info(f"{season_key} DISCOVERY-KIDS 인사이트 생성 (DISCOVERY 인사이트는 건드리지 않음)")
+                    try:
+                        result = subprocess.run(
+                            ['python', 'generate_insights_rule_based.py', '--season', season_key, '--kids-only'],
+                            capture_output=True,
+                            text=True,
+                            encoding='utf-8'
+                        )
+                        if result.returncode == 0:
+                            logger.info(f"{season_key} DISCOVERY-KIDS 인사이트 생성 완료")
+                            logger.info(result.stdout)
+                        else:
+                            logger.error(f"{season_key} DISCOVERY-KIDS 인사이트 생성 실패: {result.stderr}")
+                            success = False
+                            error_messages.append(f"{season_key} DISCOVERY-KIDS 인사이트 생성 실패")
+                    except Exception as e:
+                        logger.error(f"{season_key} DISCOVERY-KIDS 인사이트 생성 중 오류: {e}")
+                        success = False
+                        error_messages.append(f"{season_key} DISCOVERY-KIDS 인사이트 생성 중 오류")
+                else:
+                    # 25SS, 26SS, 26FW 등 모든 브랜드 처리
+                    logger.info(f"{season_key} 인사이트 생성 (규칙 기반)")
+                    if not generate_insights_for_season(season_key, brands):
                         success = False
                         error_messages.append(f"{season_key} 인사이트 생성 실패")
-                else:
-                    # 새로운 시즌도 인사이트 생성 가능
-                    logger.info(f"{season_key} 인사이트 생성 (규칙 기반)")
-                    # TODO: 일반화된 인사이트 생성 함수 필요
         
         # 4. 파일 검증
         verify_files(config)

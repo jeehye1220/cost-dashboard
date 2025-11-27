@@ -507,9 +507,7 @@ def main():
         # 파일명 결정: 25FW → 25F, 26FW → 26F로 변환
         file_season = season_code if season_code in ['25F', '26F', '24F'] else season
         csv_file = f'public/COST RAW/{season_folder}/{brand_code}_{file_season}.csv'
-        output_file = f'public/COST RAW/{season_folder}/summary_{season.lower()}_{brand_code.lower()}.json'
         print(f"CSV 파일: {csv_file}")
-        print(f"출력 파일: {output_file}")
         
         # CSV 파일 로드
         if not os.path.exists(csv_file):
@@ -519,53 +517,100 @@ def main():
         print(f"\n[1] CSV 파일 로드: {csv_file}")
         df = pd.read_csv(csv_file, encoding='utf-8-sig')
         
-        # 중분류 통합: SHOES, BAG, HEADWEAR, Acc_etc → Acc_etc
-        # 컬럼 인덱스 3이 중분류
-        def normalize_category(category):
-            if pd.isna(category):
-                return 'Acc_etc'
-            category_str = str(category).strip()
-            category_upper = category_str.upper()
-            if category_upper in ['SHOES', 'BAG', 'HEADWEAR', 'ACC_ETC', 'ACC']:
-                return 'Acc_etc'
-            return category_str
+        # X 브랜드인 경우 스타일 코드로 필터링하여 두 개의 Summary 파일 생성
+        if brand_code == 'X':
+            # 스타일 코드 필터링 (컬럼 인덱스 2가 스타일 코드)
+            df['style_upper'] = df.iloc[:, 2].astype(str).str.upper().str.strip()
+            
+            # DISCOVERY: DX로 시작하는 스타일
+            df_discovery = df[df['style_upper'].str.startswith('DX', na=False)].copy()
+            # DISCOVERY-KIDS: DK로 시작하는 스타일
+            df_kids = df[df['style_upper'].str.startswith('DK', na=False)].copy()
+            
+            # DISCOVERY Summary 생성
+            if len(df_discovery) > 0:
+                print(f"\n[1-1] DISCOVERY 데이터 필터링: {len(df_discovery)}개 레코드")
+                process_brand_data(df_discovery, df_fx, brand_code, season_code, prev_season_code, 
+                                 season_folder, season, f'summary_{season.lower()}_{brand_code.lower()}.json')
+            else:
+                print(f"\n[WARN] DISCOVERY 데이터가 없습니다. (DX로 시작하는 스타일 없음)")
+            
+            # DISCOVERY-KIDS Summary 생성
+            if len(df_kids) > 0:
+                print(f"\n[1-2] DISCOVERY-KIDS 데이터 필터링: {len(df_kids)}개 레코드")
+                process_brand_data(df_kids, df_fx, brand_code, season_code, prev_season_code, 
+                                 season_folder, season, f'summary_{season.lower()}_{brand_code.lower()}_kids.json')
+            else:
+                print(f"\n[WARN] DISCOVERY-KIDS 데이터가 없습니다. (DK로 시작하는 스타일 없음)")
+            
+            continue
         
-        df.iloc[:, 3] = df.iloc[:, 3].apply(normalize_category)
-        print(f"   > 중분류 통합 완료: SHOES/BAG/HEADWEAR/Acc_etc → Acc_etc")
+        # X 브랜드가 아닌 경우 기존 로직 사용
+        output_file = f'public/COST RAW/{season_folder}/summary_{season.lower()}_{brand_code.lower()}.json'
+        print(f"출력 파일: {output_file}")
         
-        # 수량 컬럼 클렌징
-        df.iloc[:, 7] = pd.to_numeric(df.iloc[:, 7].astype(str).str.replace(',', '').str.strip(), errors='coerce').fillna(0)
-        
-        # USD/KRW 단가 컬럼도 숫자로 변환
-        for col_idx in range(14, 30):
-            df.iloc[:, col_idx] = pd.to_numeric(df.iloc[:, col_idx], errors='coerce').fillna(0)
-        
-        print(f"   > 총 {len(df)}개 레코드 로드")
-        
-        # 전체 통계 계산
-        print("\n[2] 전체 통계 계산 중...")
-        total_stats = calculate_total_stats(df, df_fx, brand_code, season_code, prev_season_code)
-        print(f"   > 전년 Cost Rate (USD): {total_stats['costRate24F_usd']:.1f}%")
-        print(f"   > 당년 Cost Rate (USD): {total_stats['costRate25F_usd']:.1f}%")
-        print(f"   > Cost Rate Change: {total_stats['costRateChange_usd']:+.1f}%p")
-        
-        # 카테고리별 통계 계산
-        print("\n[3] 카테고리별 통계 계산 중...")
-        category_stats = calculate_category_stats(df, df_fx, brand_code, season_code, prev_season_code)
-        for cat in category_stats:
-            print(f"   > {cat['category']}: {cat['costRate25F_usd']:.1f}%")
-        
-        # JSON 저장
-        print(f"\n[4] JSON 저장: {output_file}")
-        summary = {
-            'total': total_stats,
-            'categories': category_stats,
-        }
-        
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(summary, f, ensure_ascii=False, indent=2)
-        
-        print(f"   > summary_{season.lower()}_{brand_code.lower()}.json 생성 완료!")
+        # 공통 처리 함수 호출
+        process_brand_data(df, df_fx, brand_code, season_code, prev_season_code, 
+                         season_folder, season, f'summary_{season.lower()}_{brand_code.lower()}.json')
+    
+    print("\n" + "=" * 60)
+    print("All tasks completed.")
+
+
+def process_brand_data(df: pd.DataFrame, df_fx: pd.DataFrame, brand_code: str, 
+                       season_code: str, prev_season_code: str, season_folder: str, 
+                       season: str, output_filename: str):
+    """브랜드 데이터 처리 및 Summary JSON 생성"""
+    output_file = f'public/COST RAW/{season_folder}/{output_filename}'
+    print(f"출력 파일: {output_file}")
+    
+    # 중분류 통합: SHOES, BAG, HEADWEAR, Acc_etc → Acc_etc
+    # 컬럼 인덱스 3이 중분류
+    def normalize_category(category):
+        if pd.isna(category):
+            return 'Acc_etc'
+        category_str = str(category).strip()
+        category_upper = category_str.upper()
+        if category_upper in ['SHOES', 'BAG', 'HEADWEAR', 'ACC_ETC', 'ACC']:
+            return 'Acc_etc'
+        return category_str
+    
+    df.iloc[:, 3] = df.iloc[:, 3].apply(normalize_category)
+    print(f"   > 중분류 통합 완료: SHOES/BAG/HEADWEAR/Acc_etc → Acc_etc")
+    
+    # 수량 컬럼 클렌징
+    df.iloc[:, 7] = pd.to_numeric(df.iloc[:, 7].astype(str).str.replace(',', '').str.strip(), errors='coerce').fillna(0)
+    
+    # USD/KRW 단가 컬럼도 숫자로 변환
+    for col_idx in range(14, 30):
+        df.iloc[:, col_idx] = pd.to_numeric(df.iloc[:, col_idx], errors='coerce').fillna(0)
+    
+    print(f"   > 총 {len(df)}개 레코드 로드")
+    
+    # 전체 통계 계산
+    print("\n[2] 전체 통계 계산 중...")
+    total_stats = calculate_total_stats(df, df_fx, brand_code, season_code, prev_season_code)
+    print(f"   > 전년 Cost Rate (USD): {total_stats['costRate24F_usd']:.1f}%")
+    print(f"   > 당년 Cost Rate (USD): {total_stats['costRate25F_usd']:.1f}%")
+    print(f"   > Cost Rate Change: {total_stats['costRateChange_usd']:+.1f}%p")
+    
+    # 카테고리별 통계 계산
+    print("\n[3] 카테고리별 통계 계산 중...")
+    category_stats = calculate_category_stats(df, df_fx, brand_code, season_code, prev_season_code)
+    for cat in category_stats:
+        print(f"   > {cat['category']}: {cat['costRate25F_usd']:.1f}%")
+    
+    # JSON 저장
+    print(f"\n[4] JSON 저장: {output_file}")
+    summary = {
+        'total': total_stats,
+        'categories': category_stats,
+    }
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(summary, f, ensure_ascii=False, indent=2)
+    
+    print(f"   > {output_filename} 생성 완료!")
     
     print("\n" + "=" * 60)
     print("All tasks completed.")

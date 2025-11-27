@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
+import { loadInsightsFromCSV, detectSeasonType, isSummaryDataValid } from '@/lib/insightsLoader';
 import { saveStructuredInsights } from '@/lib/insightsSaver';
 
 interface WaterfallChartProps {
@@ -375,6 +375,11 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
   const [insightEditMode, setInsightEditMode] = useState<string | null>(null);
   const [loadingAISection, setLoadingAISection] = useState<{[key: string]: boolean}>({});
   
+  // 데이터 유효성 검사 - 데이터가 없으면 인사이트 섹션을 표시하지 않음
+  if (!summary || !isSummaryDataValid(summary)) {
+    return null;
+  }
+  
   const { total } = summary || {};
   
   // 시즌 타입 확인 (brandId 우선)
@@ -470,20 +475,22 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
   const [editMode, setEditMode] = useState<string | null>(null);
   const [showManageButtons, setShowManageButtons] = useState(false);
 
-  // CSV에서 인사이트 로드 (우선순위)
+  // CSV에서 인사이트 로드 (우선순위) - 데이터가 유효할 때만
   React.useEffect(() => {
-    loadInsightsFromCSV(seasonType, brandId).then(data => {
-      if (data && (data.actions?.length > 0 || data.risks?.length > 0 || data.success?.length > 0 || data.message)) {
-        // CSV 데이터가 있으면 CSV 데이터 사용
-        setInsights({
-          action: data.actions || [],
-          risk: data.risks || [],
-          success: data.success || [],
-          message: data.message || '',
-        });
-      }
-    });
-  }, [seasonType, brandId]);
+    if (isSummaryDataValid(summary)) {
+      loadInsightsFromCSV(seasonType, brandId).then(data => {
+        if (data && (data.actions?.length > 0 || data.risks?.length > 0 || data.success?.length > 0 || data.message)) {
+          // CSV 데이터가 있으면 CSV 데이터 사용
+          setInsights({
+            action: data.actions || [],
+            risk: data.risks || [],
+            success: data.success || [],
+            message: data.message || '',
+          });
+        }
+      });
+    }
+  }, [seasonType, brandId, summary]);
 
   // aiInsights prop이 있으면 업데이트 (AI 생성된 경우)
   React.useEffect(() => {

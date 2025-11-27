@@ -64,6 +64,29 @@ function parseBrandId(brandId?: string): { brandCode: string; period: string } |
 function getBrandInsightFilePath(brandId?: string, season?: string): string | null {
   if (!brandId) return null;
   
+  // DISCOVERY-KIDS 인사이트 파일 (먼저 체크하여 parseBrandId의 잘못된 파싱 방지)
+  if (brandId === 'DISCOVERY-KIDS' || brandId.includes('DISCOVERY-KIDS')) {
+    // 시즌별 파일 경로 결정
+    if (season === '25FW' || season === '25F') {
+      return '/COST RAW/25FW/X_insight_25fw_kids.csv';
+    } else if (season === '25SS' || season === '25S') {
+      return '/COST RAW/25S/X_insight_25ss_kids.csv';
+    } else if (season === '26SS' || season === '26S') {
+      return '/COST RAW/26SS/X_insight_26ss_kids.csv';
+    } else if (season === '26FW' || season === '26F') {
+      return '/COST RAW/26FW/X_insight_26fw_kids.csv';
+    }
+    // season이 없으면 brandId에서 추출
+    if (brandId.startsWith('25SS-')) {
+      return '/COST RAW/25S/X_insight_25ss_kids.csv';
+    } else if (brandId.startsWith('26SS-')) {
+      return '/COST RAW/26SS/X_insight_26ss_kids.csv';
+    } else if (brandId.startsWith('26FW-')) {
+      return '/COST RAW/26FW/X_insight_26fw_kids.csv';
+    }
+    return '/insights_discovery_kids.csv';
+  }
+  
   const brandInfo = parseBrandId(brandId);
   
   // 브랜드별 인사이트 파일이 있는 경우 (25SS-*, 26SS-*, 26FW-*)
@@ -119,6 +142,7 @@ export async function loadInsightsFromCSV(season: string, brandId?: string): Pro
         'NON': '/insights_non.csv',
         'KIDS': '/insights_kids.csv',
         'DISCOVERY': '/insights_discovery.csv',
+        'DISCOVERY-KIDS': '/insights_discovery_kids.csv',
       };
       
       filePath = fileMap[season];
@@ -258,5 +282,24 @@ export function detectSeasonType(qty24F: number): string {
   if (qty24F > 600000 && qty24F < 700000) return 'KIDS';
   if (qty24F > 1200000 && qty24F < 1400000) return 'DISCOVERY';
   return 'NON';
+}
+
+/**
+ * Summary 데이터 유효성 검사 (인사이트 표시 여부 결정)
+ * 데이터가 유효하면 true, 아니면 false 반환
+ */
+export function isSummaryDataValid(summary: any): boolean {
+  if (!summary || !summary.total) {
+    return false;
+  }
+  
+  const { total } = summary;
+  
+  // 전년과 당년 수량이 모두 있어야 함
+  if (!total.qty24F || !total.qty25F || total.qty24F <= 0 || total.qty25F <= 0) {
+    return false;
+  }
+  
+  return true;
 }
 
