@@ -38,6 +38,13 @@ export interface RawCostData {
   krw_hq_supply: number;         // 본사공급자재
   krw_margin: number;            // 정상마진
   krw_expense: number;           // 경비
+  
+  // USD 총금액 컬럼 (인덱스 30~34)
+  usd_material_total: number;    // USD_재료계(원/부/택/본공)_총금액(단가×수량)
+  usd_artwork_total: number;     // USD_아트웍_총금액(단가×수량)
+  usd_labor_total: number;       // USD_공임_총금액(단가×수량)
+  usd_margin_total: number;       // USD_정상마진_총금액(단가×수량)
+  usd_expense_total: number;      // USD_경비_총금액(단가×수량)
 }
 
 /**
@@ -220,6 +227,8 @@ export interface AICommentRequest {
 export interface AICommentResponse {
   comment: string;
 }
+
+
 
 
 

@@ -15,7 +15,9 @@ summary.json 파일을 생성합니다.
 
 import pandas as pd
 import json
-from typing import Dict, Any
+import argparse
+import os
+from typing import Dict, Any, List
 
 # CSV 파일 경로
 CSV_FILE = 'public/MLB non  251111.csv'
@@ -319,8 +321,102 @@ def calculate_category_stats(df: pd.DataFrame) -> list:
     return categories
 
 
+def load_csv_files(seasons: List[str], brand: str) -> pd.DataFrame:
+    """
+    여러 시즌의 CSV 파일을 로드하고 합치기
+    
+    Args:
+        seasons: 시즌 리스트 (예: ['24S', '24F', '25S', '25F', '26S'])
+        brand: 브랜드 코드 (예: 'M')
+    
+    Returns:
+        합쳐진 DataFrame
+    """
+    all_dataframes = []
+    
+    for season in seasons:
+        # 시즌 폴더명 결정
+        if season in ['26SS', '26S']:
+            season_folder = '26SS'
+            file_season = '26S'  # 파일명은 26S
+        elif season in ['25SS', '25S']:
+            season_folder = '25S'
+            file_season = '25S'
+        elif season in ['24SS', '24S']:
+            season_folder = '24S'
+            file_season = '24S'
+        elif season in ['25FW', '25F']:
+            season_folder = '25FW'
+            file_season = '25F'
+        elif season in ['24FW', '24F']:
+            # 24F는 루트에 있을 수도 있음
+            season_folder = None
+            file_season = '24F'
+        else:
+            season_folder = season
+            file_season = season
+        
+        # 파일 경로 결정
+        if season_folder:
+            csv_file = f'public/COST RAW/{season_folder}/{brand}_{file_season}.csv'
+        else:
+            # 24F는 루트에 있을 수 있음
+            csv_file = f'public/COST RAW/{brand}_{file_season}.csv'
+        
+        # 파일 존재 확인
+        if os.path.exists(csv_file):
+            try:
+                df = pd.read_csv(csv_file, encoding='utf-8-sig')
+                print(f"[OK] {csv_file} 로드 완료 ({len(df)}개 행)")
+                all_dataframes.append(df)
+            except Exception as e:
+                print(f"[ERROR] {csv_file} 로드 실패: {e}")
+        else:
+            print(f"[WARN] {csv_file} 파일이 없습니다. 건너뜁니다.")
+    
+    # 모든 데이터프레임 합치기
+    if len(all_dataframes) > 0:
+        combined_df = pd.concat(all_dataframes, ignore_index=True)
+        print(f"\n[OK] 총 {len(combined_df)}개 행 합치기 완료")
+        return combined_df
+    else:
+        print("[ERROR] 로드된 데이터가 없습니다.")
+        return pd.DataFrame()
+
+
 def main():
     """메인 함수"""
+    parser = argparse.ArgumentParser(description='F&F 원가 대시보드 - Summary JSON 생성')
+    parser.add_argument('--season', nargs='+', help='시즌 리스트 (예: 24S 24F 25S 25F 26S)')
+    parser.add_argument('--brand', type=str, help='브랜드 코드 (예: M)')
+    
+    args = parser.parse_args()
+    
+    # CSV 파일만 생성하는 모드
+    if args.season and args.brand:
+        print("=" * 60)
+        print(f"CSV 파일 생성 모드")
+        print(f"브랜드: {args.brand}")
+        print(f"시즌: {', '.join(args.season)}")
+        print("=" * 60)
+        
+        # CSV 파일 로드 및 합치기
+        combined_df = load_csv_files(args.season, args.brand)
+        
+        if not combined_df.empty:
+            # 출력 파일명
+            output_file = f'public/{args.brand}_ALL.csv'
+            
+            # CSV 저장
+            combined_df.to_csv(output_file, index=False, encoding='utf-8-sig', lineterminator='\n')
+            print(f"\n[OK] {output_file} 저장 완료 ({len(combined_df)}개 행)")
+            print("=" * 60)
+        else:
+            print("\n[ERROR] 저장할 데이터가 없습니다.")
+        
+        return
+    
+    # 기존 JSON 생성 모드
     print("F&F Cost Dashboard - Summary JSON Generation")
     print("=" * 60)
     

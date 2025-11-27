@@ -6,9 +6,10 @@ import { saveInsightsToCSV } from '@/lib/insightsSaver';
 
 interface KeyMetricsTableProps {
   summary: any;
+  brandId?: string;
 }
 
-const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
+const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) => {
   const [showTable, setShowTable] = React.useState(false);
 
   if (!summary || !summary.total) {
@@ -17,12 +18,60 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
 
   const { total, fx } = summary;
   
-  // 탭 이름 판별 (qty24F 기준)
+  // 브랜드명 매핑
+  const getBrandName = (brandCode: string): string => {
+    const brandMap: Record<string, string> = {
+      'M': 'MLB',
+      'I': 'MLB KIDS',
+      'X': 'DISCOVERY',
+      'ST': 'SERGIO TACCHINI',
+      'V': 'DUVETICA',
+    };
+    return brandMap[brandCode] || 'MLB';
+  };
+  
+  // 시즌 코드를 표시 형식으로 변환 (26SS → 26SS, 25FW → 25FW)
+  const formatSeason = (season: string): string => {
+    return season; // 그대로 사용
+  };
+  
+  // 탭 이름 동적 생성 (brandId 기반)
   const getTabName = () => {
-    if (total.qty24F > 3000000 && total.qty24F < 4000000) return 'MLB 25FW';
-    if (total.qty24F > 600000 && total.qty24F < 700000) return 'MLB KIDS';
-    if (total.qty24F > 1200000 && total.qty24F < 1400000) return 'DISCOVERY';
-    return 'MLB NON'; // 기본값
+    if (!brandId) {
+      // brandId가 없으면 qty24F 기준으로 판별 (기존 로직)
+      if (total.qty24F > 3000000 && total.qty24F < 4000000) return 'MLB 25FW';
+      if (total.qty24F > 600000 && total.qty24F < 700000) return 'MLB KIDS';
+      if (total.qty24F > 1200000 && total.qty24F < 1400000) return 'DISCOVERY';
+      return 'MLB NON';
+    }
+    
+    // brandId에서 브랜드 코드와 시즌 추출
+    let brandCode = '';
+    let season = '';
+    
+    if (brandId.startsWith('26SS-') || brandId.startsWith('26FW-') || brandId.startsWith('25SS-') || brandId.startsWith('25FW-')) {
+      const parts = brandId.split('-');
+      season = parts[0] || '';
+      brandCode = parts[1] || '';
+    } else if (brandId === '25FW' || brandId === 'NON' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'ST' || brandId === 'V') {
+      // 기존 브랜드 ID (25FW 기간)
+      season = '25FW';
+      if (brandId === '25FW') brandCode = 'M';
+      else if (brandId === 'KIDS') brandCode = 'I';
+      else if (brandId === 'DISCOVERY') brandCode = 'X';
+      else brandCode = brandId;
+    } else {
+      // 알 수 없는 경우 기본값
+      if (total.qty24F > 3000000 && total.qty24F < 4000000) return 'MLB 25FW';
+      if (total.qty24F > 600000 && total.qty24F < 700000) return 'MLB KIDS';
+      if (total.qty24F > 1200000 && total.qty24F < 1400000) return 'DISCOVERY';
+      return 'MLB NON';
+    }
+    
+    const brandName = getBrandName(brandCode);
+    const seasonFormatted = formatSeason(season);
+    
+    return `${brandName} ${seasonFormatted}`;
   };
   
   const tabName = getTabName();
@@ -30,6 +79,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
   // 편집 상태 관리
   const [editMode, setEditMode] = React.useState<string | null>(null);
   const [insights, setInsights] = React.useState<{[key: string]: string}>({});
+  const [loadingAI, setLoadingAI] = React.useState<{[key: string]: boolean}>({});
 
   // 환율 정보 (FX CSV 파일에서 로드)
   const fxPrev = fx?.prev || 1297.0; // 전년 환율
@@ -83,8 +133,14 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
   
   // CSV에서 인사이트 로드
   React.useEffect(() => {
-    const seasonType = detectSeasonType(total.qty24F);
-    loadInsightsFromCSV(seasonType).then(data => {
+    // brandId에서 기간 추출 (26SS, 25SS 등)
+    let seasonType = detectSeasonType(total.qty24F);
+    if (brandId?.startsWith('25SS-') || brandId?.startsWith('26SS-') || brandId?.startsWith('26FW-')) {
+      seasonType = brandId.startsWith('25SS-') ? '25SS' : 
+                   brandId.startsWith('26SS-') ? '26SS' : '26FW';
+    }
+    
+    loadInsightsFromCSV(seasonType, brandId).then(data => {
       if (data && (data.metricsTitle || data.metricsVolume || data.metricsTag || data.metricsFx || data.metricsConclusion)) {
         // CSV에 metrics 필드가 있으면 사용
         setInsights({
@@ -100,11 +156,12 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
         setInsights(defaultInsights);
       }
     });
-  }, [tabName, total.qty24F]);
+  }, [tabName, total.qty24F, brandId]);
   
   // 편집 가능한 텍스트 컴포넌트
-  const EditableText = ({ id, value, className, onSave }: any) => {
+  const EditableText = ({ id, value, className, onSave, showAIButton = false }: any) => {
     const isEditing = editMode === id;
+    const fieldName = id; // title, volume, tag, fx, conclusion
     
     return isEditing ? (
       <div className="flex flex-col gap-1">
@@ -128,18 +185,91 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
     ) : (
       <div className="group relative">
         <span className={className}>{value}</span>
-        <button
-          onClick={() => setEditMode(id)}
-          className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          ✏️
-        </button>
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="inline-flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setEditMode(id)}
+              className="text-xs text-blue-500 hover:text-blue-700"
+              title="편집"
+            >
+              ✏️
+            </button>
+            {showAIButton && (
+              <button
+                onClick={() => generateAIComment(fieldName)}
+                disabled={loadingAI[fieldName]}
+                className="text-xs text-purple-500 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="AI 생성"
+              >
+                {loadingAI[fieldName] ? '⏳' : '🤖'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   };
   
   const handleInsightEdit = (key: string, value: string) => {
     setInsights({ ...insights, [key]: value });
+  };
+
+  // AI 코멘트 생성 함수
+  const generateAIComment = async (field: string) => {
+    setLoadingAI({ ...loadingAI, [field]: true });
+    try {
+      const data = {
+        qty24F: total.qty24F,
+        qty25F: total.qty25F,
+        qtyYoY: total.qtyYoY,
+        costRate24F_usd: total.costRate24F_usd,
+        costRate25F_usd: total.costRate25F_usd,
+        costRateChange_usd: total.costRateChange_usd,
+        avgTag24F_usd: total.avgTag24F_usd,
+        avgTag25F_usd: total.avgTag25F_usd,
+        tagYoY_usd: total.tagYoY_usd,
+        avgCost24F_usd: total.avgCost24F_usd,
+        avgCost25F_usd: total.avgCost25F_usd,
+        costYoY_usd: total.costYoY_usd,
+        avgTag24F_krw: total.avgTag24F_krw,
+        avgTag25F_krw: total.avgTag25F_krw,
+        tagYoY_krw: total.tagYoY_krw,
+        totalTag24F_KRW: totalTagPrev_KRW,
+        totalTag25F_KRW: totalTagCurr_KRW,
+        tagAmountYoY: tagAmountYoY,
+        totalCost24F_USD: totalCost24F_USD,
+        totalCost25F_USD: totalCost25F_USD,
+        costAmountYoY: costAmountYoY,
+        fxPrev: fxPrev,
+        fxCurr: fxCurr,
+        fxYoY: fxYoY,
+        costRate24F_krw: total.costRate24F_krw,
+        costRate25F_krw: total.costRate25F_krw,
+        costRateChange_krw: total.costRateChange_krw,
+      };
+
+      const response = await fetch('/api/generate-comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: `metrics_${field}`,
+          data: data,
+          brandId: brandId,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        handleInsightEdit(field, result.comment);
+      } else {
+        alert('AI 코멘트 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('AI 코멘트 생성 오류:', error);
+      alert('AI 코멘트 생성 중 오류가 발생했습니다.');
+    } finally {
+      setLoadingAI({ ...loadingAI, [field]: false });
+    }
   };
 
   // CSV 파일에 저장하는 함수
@@ -351,6 +481,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
                 value={insights.title} 
                 className="flex-1"
                 onSave={(val: string) => handleInsightEdit('title', val)}
+                showAIButton={true}
               />
             </div>
           </div>
@@ -373,6 +504,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
                 value={insights.volume} 
                 className=""
                 onSave={(val: string) => handleInsightEdit('volume', val)}
+                showAIButton={true}
               />
             </div>
           </div>
@@ -389,6 +521,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
                 value={insights.tag} 
                 className=""
                 onSave={(val: string) => handleInsightEdit('tag', val)}
+                showAIButton={true}
               />
             </div>
           </div>
@@ -405,6 +538,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
                 value={insights.fx} 
                 className=""
                 onSave={(val: string) => handleInsightEdit('fx', val)}
+                showAIButton={true}
               />
             </div>
           </div>
@@ -421,6 +555,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary }) => {
                 value={insights.conclusion} 
                 className=""
                 onSave={(val: string) => handleInsightEdit('conclusion', val)}
+                showAIButton={true}
               />
             </div>
           </div>

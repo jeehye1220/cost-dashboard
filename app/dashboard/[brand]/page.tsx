@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Home } from 'lucide-react';
+import { ArrowLeft, Home, Calendar } from 'lucide-react';
 import EnhancedStoryCards from '@/components/EnhancedStoryCards';
 import Dashboard from '@/components/Dashboard';
 import CategoryComparison from '@/components/CategoryComparison';
@@ -11,6 +11,7 @@ import ExecutiveSummary from '@/components/ExecutiveSummary';
 import KeyMetricsTable from '@/components/KeyMetricsTable';
 import CostRateSummaryTable from '@/components/CostRateSummaryTable';
 import { loadCostData, loadSummaryData, loadExchangeRates } from '@/lib/csvParser';
+import { loadInsightsFromCSV, detectSeasonType } from '@/lib/insightsLoader';
 import { CostDataItem } from '@/lib/types';
 
 export default function BrandDashboard() {
@@ -33,12 +34,113 @@ export default function BrandDashboard() {
     message: string;
   } | null>(null);
 
+  // CSV에서 인사이트 로드 (초기화)
+  useEffect(() => {
+    if (summary?.total) {
+      const seasonType = detectSeasonType(summary.total.qty24F);
+      
+      // 25SS, 26SS 등은 brandId에서 기간 추출
+      let actualSeasonType = seasonType;
+      if (brandId.startsWith('25SS-') || brandId.startsWith('26SS-') || brandId.startsWith('26FW-')) {
+        actualSeasonType = brandId.startsWith('25SS-') ? '25SS' : 
+                          brandId.startsWith('26SS-') ? '26SS' : '26FW';
+      }
+
+      loadInsightsFromCSV(actualSeasonType, brandId).then(data => {
+        if (data && (data.actions?.length > 0 || data.risks?.length > 0 || data.success?.length > 0 || data.message)) {
+          setAiInsights({
+            action: data.actions || [],
+            risk: data.risks || [],
+            success: data.success || [],
+            actionSummary: data.actionSummary,
+            riskSummary: data.riskSummary,
+            successSummary: data.successSummary,
+            message: data.message || '',
+          });
+        }
+      });
+    }
+  }, [summary, brandId]);
+
   // 모든 브랜드 정보
   const allBrands = [
-    { id: '25FW', name: 'MLB 25FW', icon: 'MLB', iconBg: 'bg-blue-300', textColor: 'text-blue-700' },
-    { id: 'NON', name: 'MLB ACC', icon: 'MLB', iconBg: 'bg-slate-300', textColor: 'text-slate-700' },
-    { id: 'KIDS', name: 'MLB KIDS', icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700' },
-    { id: 'DISCOVERY', name: 'DISCOVERY', icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700' },
+    { id: '25FW', name: 'MLB 25FW', icon: 'MLB', iconBg: 'bg-blue-300', textColor: 'text-blue-700', period: '25FW' },
+    { id: 'NON', name: 'MLB ACC', icon: 'MLB', iconBg: 'bg-slate-300', textColor: 'text-slate-700', period: '25FW' },
+    { id: 'KIDS', name: 'MLB KIDS', icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700', period: '25FW' },
+    { id: 'DISCOVERY', name: 'DISCOVERY', icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700', period: '25FW' },
+    { id: 'ST', name: 'SERGIO TACCHINI 25FW', icon: 'ST', iconBg: 'bg-purple-300', textColor: 'text-purple-700', period: '25FW' },
+    { id: 'V', name: 'DUVETICA 25FW', icon: 'DV', iconBg: 'bg-indigo-300', textColor: 'text-indigo-700', period: '25FW' },
+    { id: '26SS-M', name: 'MLB 26SS', icon: 'MLB', iconBg: 'bg-blue-300', textColor: 'text-blue-700', period: '26SS' },
+    { id: '26SS-I', name: 'MLB KIDS 26SS', icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700', period: '26SS' },
+    { id: '26SS-X', name: 'DISCOVERY 26SS', icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700', period: '26SS' },
+    { id: '26SS-ST', name: 'SERGIO TACCHINI 26SS', icon: 'ST', iconBg: 'bg-purple-300', textColor: 'text-purple-700', period: '26SS' },
+    { id: '26SS-V', name: 'DUVETICA 26SS', icon: 'DV', iconBg: 'bg-indigo-300', textColor: 'text-indigo-700', period: '26SS' },
+    { id: '25SS-M', name: 'MLB 25SS', icon: 'MLB', iconBg: 'bg-blue-300', textColor: 'text-blue-700', period: '25SS' },
+    { id: '25SS-I', name: 'MLB KIDS 25SS', icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700', period: '25SS' },
+    { id: '25SS-X', name: 'DISCOVERY 25SS', icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700', period: '25SS' },
+    { id: '25SS-ST', name: 'SERGIO TACCHINI 25SS', icon: 'ST', iconBg: 'bg-purple-300', textColor: 'text-purple-700', period: '25SS' },
+    { id: '25SS-V', name: 'DUVETICA 25SS', icon: 'DV', iconBg: 'bg-indigo-300', textColor: 'text-indigo-700', period: '25SS' },
+  ];
+
+  // 현재 브랜드의 기간 추출
+  const currentPeriod = React.useMemo(() => {
+    if (brandId.startsWith('26SS-')) return '26SS';
+    if (brandId.startsWith('26FW-')) return '26FW';
+    if (brandId.startsWith('25SS-')) return '25SS';
+    return '25FW';
+  }, [brandId]);
+
+  // 현재 브랜드 코드 추출 (26SS-M → M, 25SS-M → M, 25FW → 25FW, KIDS → KIDS)
+  const currentBrandCode = React.useMemo(() => {
+    if (brandId.startsWith('26SS-')) {
+      return brandId.split('-')[1]; // M, I, X, ST, V
+    }
+    if (brandId.startsWith('26FW-')) {
+      return brandId.split('-')[1];
+    }
+    if (brandId.startsWith('25SS-')) {
+      return brandId.split('-')[1]; // M, I, X, ST, V
+    }
+    return brandId; // 25FW, NON, KIDS, DISCOVERY
+  }, [brandId]);
+
+  // 브랜드 코드 매핑 (25SS, 26SS 브랜드 → 25FW 브랜드)
+  const brandCodeMapping: Record<string, Record<string, string>> = {
+    'M': { '25FW': '25FW', '25SS': '25SS-M', '26SS': '26SS-M', '26FW': '26FW-M' },
+    'I': { '25FW': 'KIDS', '25SS': '25SS-I', '26SS': '26SS-I', '26FW': '26FW-I' },
+    'X': { '25FW': 'DISCOVERY', '25SS': '25SS-X', '26SS': '26SS-X', '26FW': '26FW-X' },
+    'ST': { '25FW': 'ST', '25SS': '25SS-ST', '26SS': '26SS-ST', '26FW': '26FW-ST' },
+    'V': { '25FW': 'V', '25SS': '25SS-V', '26SS': '26SS-V', '26FW': '26FW-V' },
+    '25FW': { '25FW': '25FW', '25SS': '25SS-M', '26SS': '26SS-M', '26FW': '26FW-M' },
+    'KIDS': { '25FW': 'KIDS', '25SS': '25SS-I', '26SS': '26SS-I', '26FW': '26FW-I' },
+    'DISCOVERY': { '25FW': 'DISCOVERY', '25SS': '25SS-X', '26SS': '26SS-X', '26FW': '26FW-X' },
+    'NON': { '25FW': 'NON', '25SS': '', '26SS': '', '26FW': '' }, // NON은 25FW만
+  };
+
+  // 기간 선택 핸들러
+  const handlePeriodChange = (newPeriod: string) => {
+    const baseBrandCode = currentBrandCode;
+    const newBrandId = brandCodeMapping[baseBrandCode]?.[newPeriod];
+    
+    if (newBrandId && newBrandId !== '') {
+      router.push(`/dashboard/${newBrandId}?period=${newPeriod}`);
+    } else {
+      // 해당 기간에 브랜드가 없으면 홈으로 이동
+      router.push(`/?period=${newPeriod}`);
+    }
+  };
+
+  // 현재 기간에 맞는 브랜드만 필터링
+  const filteredBrands = React.useMemo(() => {
+    return allBrands.filter(brand => brand.period === currentPeriod);
+  }, [currentPeriod]);
+
+  // 사용 가능한 기간 목록 (연도순, 연도 내에서 SS-FW 순서)
+  const availablePeriods = [
+    { id: '25SS', label: '25SS', value: '25SS' },
+    { id: '25FW', label: '25FW', value: '25FW' },
+    { id: '26SS', label: '26SS', value: '26SS' },
+    { id: '26FW', label: '26FW', value: '26FW' },
   ];
 
   // 브랜드 정보
@@ -95,6 +197,162 @@ export default function BrandDashboard() {
       buttonBg: 'bg-emerald-300',
       buttonHover: 'hover:bg-emerald-400',
     },
+    'ST': { 
+      name: 'SERGIO TACCHINI 25FW', 
+      color: 'purple',
+      headerBg: 'bg-gradient-to-r from-purple-300 to-purple-200',
+      headerText: 'text-purple-700',
+      headerTextHover: 'hover:text-purple-800',
+      infoBg: 'bg-purple-200',
+      infoBorder: 'border-purple-300',
+      infoTitle: 'text-purple-700',
+      infoText: 'text-purple-700',
+      buttonBg: 'bg-purple-300',
+      buttonHover: 'hover:bg-purple-400',
+    },
+    'V': { 
+      name: 'DUVETICA 25FW', 
+      color: 'indigo',
+      headerBg: 'bg-gradient-to-r from-indigo-300 to-indigo-200',
+      headerText: 'text-indigo-700',
+      headerTextHover: 'hover:text-indigo-800',
+      infoBg: 'bg-indigo-200',
+      infoBorder: 'border-indigo-300',
+      infoTitle: 'text-indigo-700',
+      infoText: 'text-indigo-700',
+      buttonBg: 'bg-indigo-300',
+      buttonHover: 'hover:bg-indigo-400',
+    },
+    '26SS-M': { 
+      name: 'MLB 26SS', 
+      color: 'blue',
+      headerBg: 'bg-gradient-to-r from-blue-300 to-blue-200',
+      headerText: 'text-blue-700',
+      headerTextHover: 'hover:text-blue-800',
+      infoBg: 'bg-blue-200',
+      infoBorder: 'border-blue-300',
+      infoTitle: 'text-blue-700',
+      infoText: 'text-blue-700',
+      buttonBg: 'bg-blue-300',
+      buttonHover: 'hover:bg-blue-400',
+    },
+    '26SS-I': { 
+      name: 'MLB KIDS 26SS', 
+      color: 'red',
+      headerBg: 'bg-gradient-to-r from-rose-300 to-rose-200',
+      headerText: 'text-rose-700',
+      headerTextHover: 'hover:text-rose-800',
+      infoBg: 'bg-rose-200',
+      infoBorder: 'border-rose-300',
+      infoTitle: 'text-rose-700',
+      infoText: 'text-rose-700',
+      buttonBg: 'bg-rose-300',
+      buttonHover: 'hover:bg-rose-400',
+    },
+    '26SS-X': { 
+      name: 'DISCOVERY 26SS', 
+      color: 'green',
+      headerBg: 'bg-gradient-to-r from-emerald-300 to-emerald-200',
+      headerText: 'text-emerald-700',
+      headerTextHover: 'hover:text-emerald-800',
+      infoBg: 'bg-emerald-200',
+      infoBorder: 'border-emerald-300',
+      infoTitle: 'text-emerald-700',
+      infoText: 'text-emerald-700',
+      buttonBg: 'bg-emerald-300',
+      buttonHover: 'hover:bg-emerald-400',
+    },
+    '26SS-ST': { 
+      name: 'SERGIO TACCHINI 26SS', 
+      color: 'purple',
+      headerBg: 'bg-gradient-to-r from-purple-300 to-purple-200',
+      headerText: 'text-purple-700',
+      headerTextHover: 'hover:text-purple-800',
+      infoBg: 'bg-purple-200',
+      infoBorder: 'border-purple-300',
+      infoTitle: 'text-purple-700',
+      infoText: 'text-purple-700',
+      buttonBg: 'bg-purple-300',
+      buttonHover: 'hover:bg-purple-400',
+    },
+    '26SS-V': { 
+      name: 'DUVETICA 26SS', 
+      color: 'indigo',
+      headerBg: 'bg-gradient-to-r from-indigo-300 to-indigo-200',
+      headerText: 'text-indigo-700',
+      headerTextHover: 'hover:text-indigo-800',
+      infoBg: 'bg-indigo-200',
+      infoBorder: 'border-indigo-300',
+      infoTitle: 'text-indigo-700',
+      infoText: 'text-indigo-700',
+      buttonBg: 'bg-indigo-300',
+      buttonHover: 'hover:bg-indigo-400',
+    },
+    '25SS-M': { 
+      name: 'MLB 25SS', 
+      color: 'blue',
+      headerBg: 'bg-gradient-to-r from-blue-300 to-blue-200',
+      headerText: 'text-blue-700',
+      headerTextHover: 'hover:text-blue-800',
+      infoBg: 'bg-blue-200',
+      infoBorder: 'border-blue-300',
+      infoTitle: 'text-blue-700',
+      infoText: 'text-blue-700',
+      buttonBg: 'bg-blue-300',
+      buttonHover: 'hover:bg-blue-400',
+    },
+    '25SS-I': { 
+      name: 'MLB KIDS 25SS', 
+      color: 'red',
+      headerBg: 'bg-gradient-to-r from-rose-300 to-rose-200',
+      headerText: 'text-rose-700',
+      headerTextHover: 'hover:text-rose-800',
+      infoBg: 'bg-rose-200',
+      infoBorder: 'border-rose-300',
+      infoTitle: 'text-rose-700',
+      infoText: 'text-rose-700',
+      buttonBg: 'bg-rose-300',
+      buttonHover: 'hover:bg-rose-400',
+    },
+    '25SS-X': { 
+      name: 'DISCOVERY 25SS', 
+      color: 'green',
+      headerBg: 'bg-gradient-to-r from-emerald-300 to-emerald-200',
+      headerText: 'text-emerald-700',
+      headerTextHover: 'hover:text-emerald-800',
+      infoBg: 'bg-emerald-200',
+      infoBorder: 'border-emerald-300',
+      infoTitle: 'text-emerald-700',
+      infoText: 'text-emerald-700',
+      buttonBg: 'bg-emerald-300',
+      buttonHover: 'hover:bg-emerald-400',
+    },
+    '25SS-ST': { 
+      name: 'SERGIO TACCHINI 25SS', 
+      color: 'purple',
+      headerBg: 'bg-gradient-to-r from-purple-300 to-purple-200',
+      headerText: 'text-purple-700',
+      headerTextHover: 'hover:text-purple-800',
+      infoBg: 'bg-purple-200',
+      infoBorder: 'border-purple-300',
+      infoTitle: 'text-purple-700',
+      infoText: 'text-purple-700',
+      buttonBg: 'bg-purple-300',
+      buttonHover: 'hover:bg-purple-400',
+    },
+    '25SS-V': { 
+      name: 'DUVETICA 25SS', 
+      color: 'indigo',
+      headerBg: 'bg-gradient-to-r from-indigo-300 to-indigo-200',
+      headerText: 'text-indigo-700',
+      headerTextHover: 'hover:text-indigo-800',
+      infoBg: 'bg-indigo-200',
+      infoBorder: 'border-indigo-300',
+      infoTitle: 'text-indigo-700',
+      infoText: 'text-indigo-700',
+      buttonBg: 'bg-indigo-300',
+      buttonHover: 'hover:bg-indigo-400',
+    },
   }[brandId] || { 
     name: 'Unknown', 
     color: 'gray',
@@ -121,9 +379,9 @@ export default function BrandDashboard() {
         
         switch (brandId) {
           case '25FW':
-            csvFileName = 'MLB FW.csv';
-            fxFileName = 'FX FW.csv';
-            summaryFileName = 'summary_25fw.json';
+            csvFileName = 'COST RAW/25FW/M_25F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25FW/summary_25fw_m.json';
             break;
           case 'NON':
             csvFileName = 'MLB non  251111.csv';
@@ -131,14 +389,74 @@ export default function BrandDashboard() {
             summaryFileName = 'summary.json';
             break;
           case 'KIDS':
-            csvFileName = 'MLB KIDS FW.csv';
-            fxFileName = 'MLB KIDS FX FW.csv';
-            summaryFileName = 'summary_kids.json';
+            csvFileName = 'COST RAW/25FW/I_25F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25FW/summary_25fw_i.json';
             break;
           case 'DISCOVERY':
-            csvFileName = 'DX FW.csv';
-            fxFileName = 'DX FX FW.csv';
-            summaryFileName = 'summary_discovery.json';
+            csvFileName = 'COST RAW/25FW/X_25F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25FW/summary_25fw_x.json';
+            break;
+          case 'ST':
+            csvFileName = 'COST RAW/25FW/ST_25F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25FW/summary_25fw_st.json';
+            break;
+          case 'V':
+            csvFileName = 'COST RAW/25FW/V_25F.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25FW/summary_25fw_v.json';
+            break;
+          case '26SS-M':
+            csvFileName = 'COST RAW/26SS/M_26SS.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26SS/summary_26ss_m.json';
+            break;
+          case '26SS-I':
+            csvFileName = 'COST RAW/26SS/I_26SS.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26SS/summary_26ss_i.json';
+            break;
+          case '26SS-X':
+            csvFileName = 'COST RAW/26SS/X_26SS.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26SS/summary_26ss_x.json';
+            break;
+          case '26SS-ST':
+            csvFileName = 'COST RAW/26SS/ST_26SS.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26SS/summary_26ss_st.json';
+            break;
+          case '26SS-V':
+            csvFileName = 'COST RAW/26SS/V_26SS.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/26SS/summary_26ss_v.json';
+            break;
+          case '25SS-M':
+            csvFileName = 'COST RAW/25S/M_25S.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25S/summary_25s_m.json';
+            break;
+          case '25SS-I':
+            csvFileName = 'COST RAW/25S/I_25S.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25S/summary_25s_i.json';
+            break;
+          case '25SS-X':
+            csvFileName = 'COST RAW/25S/X_25S.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25S/summary_25s_x.json';
+            break;
+          case '25SS-ST':
+            csvFileName = 'COST RAW/25S/ST_25S.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25S/summary_25s_st.json';
+            break;
+          case '25SS-V':
+            csvFileName = 'COST RAW/25S/V_25S.csv';
+            fxFileName = 'COST RAW/FX.csv';
+            summaryFileName = 'COST RAW/25S/summary_25s_v.json';
             break;
           default:
             setError('유효하지 않은 브랜드입니다.');
@@ -147,14 +465,45 @@ export default function BrandDashboard() {
         }
         
         // CSV 파일에서 아이템별 데이터 로드
-        const costData = await loadCostData(csvFileName, fxFileName);
+        let costData;
+        if (brandId.startsWith('26SS-')) {
+          costData = await loadCostData(csvFileName, fxFileName, brandId, '26SS', '25SS');
+        } else if (brandId.startsWith('26FW-')) {
+          costData = await loadCostData(csvFileName, fxFileName, brandId, '26FW', '25FW');
+        } else if (brandId.startsWith('25SS-')) {
+          costData = await loadCostData(csvFileName, fxFileName, brandId, '25SS', '24SS');
+        } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'ST' || brandId === 'V') {
+          // 25FW 기간 브랜드들 (M, I, X, ST, V) - 새 구조
+          const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId;
+          // 25FW-{brandCode} 형식으로 만들어서 일관성 유지
+          costData = await loadCostData(csvFileName, fxFileName, `25FW-${brandCode}`, '25FW', '24FW');
+        } else {
+          costData = await loadCostData(csvFileName, fxFileName);
+        }
         setItems(costData);
         
         // summary.json 로드
         const summaryData = await loadSummaryData(summaryFileName);
         
         // 환율 정보 로드하여 summary에 추가
-        const fxRates = await loadExchangeRates(fxFileName);
+        let fxRates;
+        // 새로운 시즌 형식(26SS-*, 26FW-*, 25SS-* 등)인 경우 브랜드 ID와 시즌 정보 전달
+        if (brandId.startsWith('26SS-')) {
+          fxRates = await loadExchangeRates(fxFileName, brandId, '26SS', '25SS');
+        } else if (brandId.startsWith('26FW-')) {
+          fxRates = await loadExchangeRates(fxFileName, brandId, '26FW', '25FW');
+        } else if (brandId.startsWith('25SS-')) {
+          fxRates = await loadExchangeRates(fxFileName, brandId, '25SS', '24SS');
+        } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'ST' || brandId === 'V') {
+          // 25FW 기간 브랜드들 (M, I, X, ST, V) - 새 구조
+          const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId;
+          // 25FW-{brandCode} 형식으로 만들어서 일관성 유지
+          fxRates = await loadExchangeRates(fxFileName, `25FW-${brandCode}`, '25FW', '24FW');
+        } else {
+          // 기존 브랜드는 기존 방식 유지 (NON 등)
+          fxRates = await loadExchangeRates(fxFileName);
+        }
+        
         const enrichedSummary = {
           ...summaryData,
           fx: {
@@ -186,10 +535,7 @@ export default function BrandDashboard() {
       { id: 'Outer', name: '아우터 (Outer)', color: '#3b82f6' },
       { id: 'Inner', name: '이너 (Inner)', color: '#10b981' },
       { id: 'Bottom', name: '바텀 (Bottom)', color: '#f59e0b' },
-      { id: 'Shoes', name: '슈즈 (Shoes)', color: '#8b5cf6' },
-      { id: 'Bag', name: '가방 (Bag)', color: '#ec4899' },
-      { id: 'Headwear', name: '헤드웨어 (Headwear)', color: '#06b6d4' },
-      { id: 'Acc_etc', name: '악세사리 (Acc_etc)', color: '#ef4444' },
+      { id: 'Acc_etc', name: 'ACC', color: '#ef4444' },
     ].filter(cat => categorySet.has(cat.id));
   }, [items]);
 
@@ -227,28 +573,43 @@ export default function BrandDashboard() {
       {/* 헤더 */}
       <header className="sticky top-0 z-50 bg-white shadow-md pt-4">
         <div className="w-full px-8 sm:px-12 lg:px-16 py-6">
-          <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => router.push('/')}
+                  onClick={() => router.push(`/?period=${currentPeriod}`)}
                   className="bg-white rounded-lg shadow-sm p-2 hover:shadow-md transition-all text-gray-600 hover:text-gray-800"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <h1 className="text-2xl font-bold text-gray-800">{brandInfo.name} 원가 대시보드</h1>
               </div>
+              {/* 기간 선택 드롭다운 */}
+              <div className="relative">
+                <select
+                  value={currentPeriod}
+                  onChange={(e) => handlePeriodChange(e.target.value)}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors bg-white cursor-pointer appearance-none pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-medium"
+                >
+                  {availablePeriods.map((period) => (
+                    <option key={period.id} value={period.value}>
+                      {period.label}
+                    </option>
+                  ))}
+                </select>
+                <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+              </div>
               {/* 브랜드 아이콘 네비게이션 */}
               <div className="flex items-center gap-2">
                 {/* 홈 아이콘 */}
                 <button
-                  onClick={() => router.push('/')}
+                  onClick={() => router.push(`/?period=${currentPeriod}`)}
                   className="bg-gray-200 text-gray-700 w-10 h-10 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md hover:bg-gray-300 transition-all"
                   title="홈으로"
                 >
                   <Home className="w-5 h-5" />
                 </button>
-                {allBrands.map((brand) => (
+                {filteredBrands.map((brand) => (
                   <button
                     key={brand.id}
                     onClick={() => router.push(`/dashboard/${brand.id}`)}
@@ -266,6 +627,9 @@ export default function BrandDashboard() {
               <p className="text-gray-600 text-sm">
                 시즌별 원가 분석 및 인사이트 (v1.4.0)
               </p>
+              <p className="text-gray-500 text-xs">
+                매일 오전 11시 업데이트
+              </p>
             </div>
           </div>
         </div>
@@ -274,13 +638,14 @@ export default function BrandDashboard() {
       {/* 메인 컨텐츠 */}
       <main className="w-full max-w-[98%] mx-auto px-2 sm:px-4 lg:px-6 py-4">
         {/* 경영진 요약 */}
-        <ExecutiveSummary summary={summary} />
+        <ExecutiveSummary summary={summary} brandId={brandId} />
 
         {/* 인사이트 요약 */}
         {summary && (
           <div className="mb-4">
             <InsightSection
               summary={summary}
+              brandId={brandId}
               onGenerateAI={async () => {
                 setLoadingAi(true);
                 try {
@@ -307,6 +672,7 @@ export default function BrandDashboard() {
                         expenseChange: expenseChange,
                         exchangeRateEffect: exchangeRateEffect,
                       },
+                      brandId: brandId,
                     }),
                   });
 
@@ -337,12 +703,12 @@ export default function BrandDashboard() {
 
         {/* 워터폴 차트 */}
         <div className="mb-4">
-          <WaterfallChart summary={summary} />
+          <WaterfallChart summary={summary} brandId={brandId} />
         </div>
 
         {/* 주요 지표 비교 & 원가율 변동 요약 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-          <KeyMetricsTable summary={summary} />
+          <KeyMetricsTable summary={summary} brandId={brandId} />
           <CostRateSummaryTable summary={summary} />
         </div>
 

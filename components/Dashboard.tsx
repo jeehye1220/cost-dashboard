@@ -14,10 +14,48 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('전체');
   const [sortBy, setSortBy] = useState<string>('수량순');
 
+  // 카테고리 색상 및 이름 매핑 (MLB NON 시즌용)
+  const getCategoryInfoForNon = (categoryId: string): { name: string; color: string } => {
+    const categoryMap: Record<string, { name: string; color: string }> = {
+      'Outer': { name: 'OUTER', color: '#3b82f6' },
+      'Inner': { name: 'INNER', color: '#10b981' },
+      'Bottom': { name: 'BOTTOM', color: '#f59e0b' },
+      'Shoes': { name: 'SHOES', color: '#8b5cf6' },
+      'Bag': { name: 'BAG', color: '#ec4899' },
+      'Headwear': { name: 'HEADWEAR', color: '#f97316' },
+      'Acc_etc': { name: 'ACC', color: '#ef4444' },
+      'Wear_etc': { name: 'WEAR', color: '#f97316' },
+    };
+    return categoryMap[categoryId] || { name: categoryId.toUpperCase(), color: '#6b7280' };
+  };
+
   // CSV 데이터에 실제로 존재하는 카테고리만 추출
   const availableCategories = React.useMemo(() => {
     const categorySet = new Set(items.map(item => item.category));
-    return CATEGORIES.filter(cat => categorySet.has(cat.id));
+    const categoriesFromItems = Array.from(categorySet);
+    
+    // MLB NON 시즌인지 확인 (카테고리에 SHOES, BAG, HEADWEAR가 있으면 NON 시즌)
+    const isNonSeason = categoriesFromItems.some(cat => 
+      ['Shoes', 'Bag', 'Headwear'].includes(cat)
+    );
+    
+    if (isNonSeason) {
+      // MLB NON 시즌: items에서 직접 카테고리 정보 생성
+      return categoriesFromItems
+        .filter(cat => cat !== 'Acc_etc' && cat !== 'Wear_etc') // ETC 제외
+        .map(cat => {
+          const info = getCategoryInfoForNon(cat);
+          return {
+            id: cat,
+            name: info.name,
+            color: info.color,
+            order: 0,
+          };
+        });
+    } else {
+      // FW/SS 시즌: CATEGORIES 사용
+      return CATEGORIES.filter(cat => categorySet.has(cat.id));
+    }
   }, [items]);
 
   // 히트맵 색상 계산 (증감에 따라)
@@ -44,6 +82,12 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
 
   // 카테고리 정보 조회
   const getCategoryInfo = (categoryId: string): CategoryInfo | undefined => {
+    // 먼저 availableCategories에서 찾기
+    const found = availableCategories.find(c => c.id === categoryId);
+    if (found) {
+      return found as CategoryInfo;
+    }
+    // 없으면 CATEGORIES에서 찾기
     return CATEGORIES.find(c => c.id === categoryId);
   };
 
@@ -187,8 +231,8 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                     const marginChange = item.margin25F - item.margin24F;
                     const expenseChange = item.expense25F - item.expense24F;
 
-                    // KRW TAG 계산 (25F 기준, 1288 환율 적용)
-                    const avgTagKRW = item.avgTag25F * 1288;
+                    // KRW TAG는 이미 KRW 단위
+                    const avgTagKRW = item.avgTag25F;
 
                     return (
                       <React.Fragment key={itemKey}>
@@ -327,7 +371,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                     <div className="flex justify-between">
                                       <span className="text-gray-600">평균 TAG:</span>
                                       <span className="font-medium">
-                                        {(item.avgTag24F * 1297)?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '0'}
+                                        {(item.avgTag24F)?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '0'}
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
@@ -404,7 +448,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                                     <div className="flex justify-between">
                                       <span className="text-gray-600">평균 TAG:</span>
                                       <span className="font-medium">
-                                        {(item.avgTag25F * 1297)?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '0'}
+                                        {(item.avgTag25F)?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '0'}
                                         <span className={`ml-2 text-xs ${
                                           (item.tagYoY || 0) > 100
                                             ? 'text-blue-600'
@@ -551,7 +595,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
          {/* 히트맵 색상 범례 */}
          <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
            <div className="flex items-center gap-4 justify-center flex-wrap">
-             <span className="text-sm text-gray-700 font-semibold">히트맵 범례 (24F→25F 증감):</span>
+             <span className="text-sm text-gray-700 font-semibold">히트맵 범례 (전년→당년 증감):</span>
              <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-md border border-gray-200">
                <div className="w-12 h-6 rounded" style={{ backgroundColor: getHeatmapColor(-3) }}></div>
                <span className="text-xs text-gray-600 font-medium">큰 감소</span>

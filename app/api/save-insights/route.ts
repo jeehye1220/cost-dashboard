@@ -81,9 +81,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 시즌별 CSV 파일 매핑
+    // 시즌별 CSV 파일 매핑 (S=SS, F=FW 동일 처리)
     const fileMap: { [key: string]: string } = {
       '25FW': 'insights_25fw.csv',
+      '25F': 'insights_25fw.csv',       // F = FW
+      '25SS': 'insights_25s.csv',      // SS = S
+      '25S': 'insights_25s.csv',       // S = SS
+      '26SS': 'insights_26s.csv',      // 향후용
+      '26S': 'insights_26s.csv',       // 향후용
       'NON': 'insights_non.csv',
       'KIDS': 'insights_kids.csv',
       'DISCOVERY': 'insights_discovery.csv',

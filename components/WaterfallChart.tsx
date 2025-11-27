@@ -6,9 +6,10 @@ import { saveStructuredInsights } from '@/lib/insightsSaver';
 
 interface WaterfallChartProps {
   summary: any;
+  brandId?: string;
 }
 
-const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
+const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary, brandId }) => {
   const [loadingAi, setLoadingAi] = useState(false);
   const [aiInsights, setAiInsights] = useState<{
     action: string[];
@@ -29,12 +30,16 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
 
   const { total, fx } = summary;
   
-  // 시즌 타입 감지
-  const seasonType = detectSeasonType(total.qty24F);
+  // 시즌 타입 감지 (brandId 우선)
+  let seasonType = detectSeasonType(total.qty24F);
+  if (brandId?.startsWith('25SS-') || brandId?.startsWith('26SS-') || brandId?.startsWith('26FW-')) {
+    seasonType = brandId.startsWith('25SS-') ? '25SS' : 
+                 brandId.startsWith('26SS-') ? '26SS' : '26FW';
+  }
   
   // CSV 인사이트 로드
   useEffect(() => {
-    loadInsightsFromCSV(seasonType).then(data => {
+    loadInsightsFromCSV(seasonType, brandId).then(data => {
       if (data) {
         setCsvInsights(data);
         // CSV 데이터를 aiInsights로 설정
@@ -49,7 +54,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
         });
       }
     });
-  }, [seasonType]);
+  }, [seasonType, brandId]);
 
   // 환율 정보 추출 (동적)
   const fxPrev = fx?.prev || 1297;
@@ -110,6 +115,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary }) => {
             expenseChange: expenseChange,
             exchangeRateEffect: exchangeRateEffect,
           },
+          brandId: brandId,
         }),
       });
 
@@ -354,20 +360,28 @@ interface InsightSectionProps {
     successSummary?: string;
     message: string;
   } | null;
+  brandId?: string;
 }
 
-const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, loadingAi, aiInsights }) => {
+const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, loadingAi, aiInsights, brandId }) => {
   const [insightEditMode, setInsightEditMode] = useState<string | null>(null);
+  const [loadingAISection, setLoadingAISection] = useState<{[key: string]: boolean}>({});
   
   const { total } = summary || {};
   
-  // 시즌 타입 확인
-  const seasonType = detectSeasonType(total?.qty24F || 0);
+  // 시즌 타입 확인 (brandId 우선)
+  let seasonType = detectSeasonType(total?.qty24F || 0);
+  if (brandId?.startsWith('25SS-') || brandId?.startsWith('26SS-') || brandId?.startsWith('26FW-')) {
+    seasonType = brandId.startsWith('25SS-') ? '25SS' : 
+                 brandId.startsWith('26SS-') ? '26SS' : '26FW';
+  }
   
   // MLB KIDS 시즌 여부 판별 (qty24F가 60만~70만 정도면 KIDS)
   const isKIDS = total?.qty24F > 600000 && total?.qty24F < 700000;
   // DISCOVERY 시즌 여부 판별 (qty24F가 120만~140만 정도면 DISCOVERY)
   const isDISCOVERY = total?.qty24F > 1200000 && total?.qty24F < 1400000;
+  // 25FW 시즌 여부 판별 (qty24F가 300만~400만 정도면 25FW)
+  const is25FW = (total?.qty24F > 3000000 && total?.qty24F < 4000000) || seasonType === '25FW';
   
   const defaultInsights = isDISCOVERY ? {
     // DISCOVERY 시즌 인사이트
@@ -448,6 +462,22 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
   const [editMode, setEditMode] = useState<string | null>(null);
   const [showManageButtons, setShowManageButtons] = useState(false);
 
+  // CSV에서 인사이트 로드 (우선순위)
+  React.useEffect(() => {
+    loadInsightsFromCSV(seasonType, brandId).then(data => {
+      if (data && (data.actions?.length > 0 || data.risks?.length > 0 || data.success?.length > 0 || data.message)) {
+        // CSV 데이터가 있으면 CSV 데이터 사용
+        setInsights({
+          action: data.actions || [],
+          risk: data.risks || [],
+          success: data.success || [],
+          message: data.message || '',
+        });
+      }
+    });
+  }, [seasonType, brandId]);
+
+  // aiInsights prop이 있으면 업데이트 (AI 생성된 경우)
   React.useEffect(() => {
     if (aiInsights) {
       setInsights(aiInsights);
@@ -523,6 +553,68 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
     }
   };
 
+  // 각 섹션별 AI 생성 함수
+  const generateAISection = async (section: 'action' | 'risk' | 'success' | 'message') => {
+    setLoadingAISection({ ...loadingAISection, [section]: true });
+    try {
+      // 워터폴 데이터 계산
+      const materialArtwork24F = total.materialRate24F_usd + total.artworkRate24F_usd;
+      const materialArtwork25F = total.materialRate25F_usd + total.artworkRate25F_usd;
+      const materialArtworkChange = materialArtwork25F - materialArtwork24F;
+      const laborChange = total.laborRate25F_usd - total.laborRate24F_usd;
+      const marginChange = total.marginRate25F_usd - total.marginRate24F_usd;
+      const expenseChange = total.expenseRate25F_usd - total.expenseRate24F_usd;
+      const exchangeRateEffect = total.costRate25F_krw - total.costRate25F_usd;
+
+      const response = await fetch('/api/generate-comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: `waterfall_${section}`,
+          data: {
+            costRate24F_usd: total.costRate24F_usd,
+            costRate25F_usd: total.costRate25F_usd,
+            costRate25F_krw: total.costRate25F_krw,
+            materialArtworkChange: materialArtworkChange,
+            laborChange: laborChange,
+            marginChange: marginChange,
+            expenseChange: expenseChange,
+            exchangeRateEffect: exchangeRateEffect,
+          },
+          brandId: brandId,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        if (section === 'message') {
+          // message는 텍스트 형식
+          setInsights({ ...insights, message: result.comment });
+        } else {
+          // action, risk, success는 JSON 형식
+          try {
+            const parsed = JSON.parse(result.comment);
+            if (parsed[section] && Array.isArray(parsed[section])) {
+              setInsights({ ...insights, [section]: parsed[section] });
+            }
+          } catch (e) {
+            console.error('AI 응답 파싱 오류:', e);
+            alert('AI 응답을 처리할 수 없습니다.');
+          }
+        }
+        await saveToCSV();
+      } else {
+        alert('AI 인사이트 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('AI 인사이트 생성 오류:', error);
+      alert('AI 인사이트 생성 중 오류가 발생했습니다.');
+    } finally {
+      setLoadingAISection({ ...loadingAISection, [section]: false });
+    }
+  };
+
   return (
     <div className="mt-8 space-y-4">
       {/* 3단 그리드 */}
@@ -534,13 +626,25 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
               <span className="text-2xl">⏰</span>
               즉시 액션
             </h4>
-            {showManageButtons && (
-              <button
-                onClick={() => handleAdd('action')}
-                className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 shadow-sm transition-colors font-medium"
-              >
-                + 추가
-              </button>
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => generateAISection('action')}
+                  disabled={loadingAISection['action']}
+                  className="text-xs bg-purple-500 text-white px-3 py-1.5 rounded-lg hover:bg-purple-600 shadow-sm transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="AI 생성"
+                >
+                  {loadingAISection['action'] ? '⏳ 생성 중...' : '🤖 AI 생성'}
+                </button>
+                {showManageButtons && (
+                  <button
+                    onClick={() => handleAdd('action')}
+                    className="text-xs bg-red-500 text-white px-3 py-1.5 rounded-lg hover:bg-red-600 shadow-sm transition-colors font-medium"
+                  >
+                    + 추가
+                  </button>
+                )}
+              </div>
             )}
           </div>
           {aiInsights?.actionSummary && (
@@ -580,12 +684,14 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                 ) : (
                   <div className="flex-1 group">
                     <span className="text-gray-700">{item}</span>
-                    <button
-                      onClick={() => setInsightEditMode(`action-${idx}`)}
-                      className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100"
-                    >
-                      ✏️
-                    </button>
+                    {process.env.NODE_ENV !== 'production' && (
+                      <button
+                        onClick={() => setInsightEditMode(`action-${idx}`)}
+                        className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100"
+                      >
+                        ✏️
+                      </button>
+                    )}
                   </div>
                 )}
               </li>
@@ -600,13 +706,25 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
               <span className="text-2xl">⚠️</span>
               리스크 관리
             </h4>
-            {showManageButtons && (
-              <button
-                onClick={() => handleAdd('risk')}
-                className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 shadow-sm transition-colors font-medium"
-              >
-                + 추가
-              </button>
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => generateAISection('risk')}
+                  disabled={loadingAISection['risk']}
+                  className="text-xs bg-purple-500 text-white px-3 py-1.5 rounded-lg hover:bg-purple-600 shadow-sm transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="AI 생성"
+                >
+                  {loadingAISection['risk'] ? '⏳ 생성 중...' : '🤖 AI 생성'}
+                </button>
+                {showManageButtons && (
+                  <button
+                    onClick={() => handleAdd('risk')}
+                    className="text-xs bg-orange-500 text-white px-3 py-1.5 rounded-lg hover:bg-orange-600 shadow-sm transition-colors font-medium"
+                  >
+                    + 추가
+                  </button>
+                )}
+              </div>
             )}
           </div>
           {aiInsights?.riskSummary && (
@@ -643,12 +761,14 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                 ) : (
                   <div className="flex-1 group">
                     <span className="text-gray-700">{item}</span>
-                    <button
-                      onClick={() => setInsightEditMode(`risk-${idx}`)}
-                      className="ml-2 text-xs text-orange-500 opacity-0 group-hover:opacity-100"
-                    >
-                      ✏️
-                    </button>
+                    {process.env.NODE_ENV !== 'production' && (
+                      <button
+                        onClick={() => setInsightEditMode(`risk-${idx}`)}
+                        className="ml-2 text-xs text-orange-500 opacity-0 group-hover:opacity-100"
+                      >
+                        ✏️
+                      </button>
+                    )}
                   </div>
                 )}
               </li>
@@ -661,15 +781,27 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
           <div className="flex items-center justify-between mb-4">
             <h4 className="font-bold text-green-700 flex items-center gap-2 text-lg">
               <span className="text-2xl">💡</span>
-              {(isKIDS || isDISCOVERY) ? '시사점' : '성공 포인트'}
+              {(isKIDS || isDISCOVERY || !is25FW) ? '시사점' : '성공 포인트'}
             </h4>
-            {showManageButtons && (
-              <button
-                onClick={() => handleAdd('success')}
-                className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 shadow-sm transition-colors font-medium"
-              >
-                + 추가
-              </button>
+            {process.env.NODE_ENV !== 'production' && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => generateAISection('success')}
+                  disabled={loadingAISection['success']}
+                  className="text-xs bg-purple-500 text-white px-3 py-1.5 rounded-lg hover:bg-purple-600 shadow-sm transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="AI 생성"
+                >
+                  {loadingAISection['success'] ? '⏳ 생성 중...' : '🤖 AI 생성'}
+                </button>
+                {showManageButtons && (
+                  <button
+                    onClick={() => handleAdd('success')}
+                    className="text-xs bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 shadow-sm transition-colors font-medium"
+                  >
+                    + 추가
+                  </button>
+                )}
+              </div>
             )}
           </div>
           {aiInsights?.successSummary && (
@@ -706,12 +838,14 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                 ) : (
                   <div className="flex-1 group">
                     <span className="text-gray-700">{item}</span>
-                    <button
-                      onClick={() => setInsightEditMode(`success-${idx}`)}
-                      className="ml-2 text-xs text-green-500 opacity-0 group-hover:opacity-100"
-                    >
-                      ✏️
-                    </button>
+                    {process.env.NODE_ENV !== 'production' && (
+                      <button
+                        onClick={() => setInsightEditMode(`success-${idx}`)}
+                        className="ml-2 text-xs text-green-500 opacity-0 group-hover:opacity-100"
+                      >
+                        ✏️
+                      </button>
+                    )}
                   </div>
                 )}
               </li>
@@ -750,12 +884,24 @@ const InsightSection: React.FC<InsightSectionProps> = ({ summary, onGenerateAI, 
                 <div className="bg-white rounded-lg p-4 border border-purple-200 shadow-sm">
                   <p className="text-gray-700 text-sm leading-relaxed">{insights.message}</p>
                 </div>
-                <button
-                  onClick={() => setInsightEditMode('message')}
-                  className="mt-3 text-sm text-purple-600 hover:text-purple-700 opacity-0 group-hover:opacity-100 transition-opacity font-medium"
-                >
-                  ✏️ 편집
-                </button>
+                {process.env.NODE_ENV !== 'production' && (
+                  <div className="mt-3 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                      onClick={() => generateAISection('message')}
+                      disabled={loadingAISection['message']}
+                      className="text-sm bg-purple-500 text-white px-3 py-1.5 rounded-lg hover:bg-purple-600 shadow-sm transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="AI 생성"
+                    >
+                      {loadingAISection['message'] ? '⏳ 생성 중...' : '🤖 AI 생성'}
+                    </button>
+                    <button
+                      onClick={() => setInsightEditMode('message')}
+                      className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                    >
+                      ✏️ 편집
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>

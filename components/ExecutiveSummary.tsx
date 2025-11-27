@@ -7,52 +7,125 @@ import { saveStructuredInsights } from '@/lib/insightsSaver';
 
 interface ExecutiveSummaryProps {
   summary: any;
+  brandId?: string;
 }
 
-const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
+const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId }) => {
   if (!summary || !summary.total) {
     return <div>데이터를 불러오는 중...</div>;
   }
 
   const { total } = summary;
 
-  // 시즌 타입 확인 (컴포넌트 최상위에서 선언)
-  const seasonType = detectSeasonType(total.qty24F);
+  // 시즌 타입 확인 (brandId 우선, 없으면 qty24F 기반)
+  const is25SS = brandId?.startsWith('25SS-') || false;
+  const is26SS = brandId?.startsWith('26SS-') || false;
+  const is26FW = brandId?.startsWith('26FW-') || false;
+  
+  // brandId가 없으면 qty24F 기반으로 시즌 타입 감지
+  const seasonType = is25SS ? '25SS' : 
+                     is26SS ? '26SS' : 
+                     is26FW ? '26FW' : 
+                     detectSeasonType(total.qty24F);
+  
   const is25FW = seasonType === '25FW';
   const isKIDS = seasonType === 'KIDS';
   const isDISCOVERY = seasonType === 'DISCOVERY';
   
   // CSV에서 로드된 인사이트 데이터
   const [csvInsights, setCsvInsights] = useState<any>(null);
+  const [loadingAI, setLoadingAI] = useState<{[key: string]: boolean}>({});
   
   // CSV 인사이트 로드
   useEffect(() => {
-    loadInsightsFromCSV(seasonType).then(data => {
+    loadInsightsFromCSV(seasonType, brandId).then(data => {
       if (data) {
         setCsvInsights(data);
       }
     });
-  }, [seasonType]);
+  }, [seasonType, brandId]);
 
 
   // 25FW와 NON, KIDS, DISCOVERY 시즌별 초기 텍스트 설정
   const getInitialTexts = () => {
+    // USD 원가율 변화 계산 (당년 - 전년)
+    const usdCostRateChange = total.costRate25F_usd - total.costRate24F_usd;
+    const isUsdImproved = usdCostRateChange < 0; // 하락 = 개선
+    const isUsdWorsened = usdCostRateChange > 0; // 상승 = 악화
+    
+    // USD 타이틀 동적 생성
+    const getUsdTitle = () => {
+      if (isUsdImproved) {
+        return 'USD 기준: 원가율 개선';
+      } else if (isUsdWorsened) {
+        return 'USD 기준: 원가율 악화';
+      } else {
+        return 'USD 기준: 원가율 유지';
+      }
+    };
+    
     // KRW mainChange 동적 계산 (당년 KRW - 당년 USD = 환율 효과) - 모든 경우에 적용
     const krwChange = total.costRate25F_krw - total.costRate25F_usd;
+    const isKrwImproved = krwChange < 0; // 하락 = 개선 (환율 유리)
+    const isKrwWorsened = krwChange > 0; // 상승 = 악화 (환율 불리)
+    
     const krwChangeText = krwChange > 0 
       ? `▲ ${krwChange.toFixed(1)}%p 악화`
       : krwChange < 0 
       ? `▼ ${Math.abs(krwChange).toFixed(1)}%p 개선`
       : `➡️ 0.0%p 동일`;
     
-    // CSV 데이터가 있으면 CSV 데이터 사용
+    // KRW 타이틀 동적 생성
+    const getKrwTitle = () => {
+      if (isKrwImproved) {
+        return 'KRW 기준: 환율 효과로 개선';
+      } else if (isKrwWorsened) {
+        return 'KRW 기준: 환율 영향으로 악화';
+      } else {
+        return 'KRW 기준: 환율 영향 없음';
+      }
+    };
+    
+    // CSV 데이터가 있으면 CSV 데이터 사용 (단, 타이틀은 동적으로 생성)
     if (csvInsights) {
+      // USD mainChange 계산 (CSV에 없으면 동적 계산)
+      const usdMainChange = csvInsights.usd?.mainChange || 
+        (isUsdImproved ? `▼ ${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
+         isUsdWorsened ? `▲ ${usdCostRateChange.toFixed(1)}%p 악화` : 
+         `➡️ 0.0%p 동일`);
+      
       return {
-        usd: csvInsights.usd,
+        usd: {
+          title: csvInsights.usd?.title || getUsdTitle(),
+          mainChange: usdMainChange,
+          items: csvInsights.usd?.items || [],
+          summary: csvInsights.usd?.summary || '',
+        },
         krw: {
-          ...csvInsights.krw,
-          // mainChange는 당년 KRW - 당년 USD (환율 효과)로 동적 계산
+          title: csvInsights.krw?.title || getKrwTitle(),
+          mainChange: krwChangeText, // 동적 계산
+          items: csvInsights.krw?.items || [],
+          summary: csvInsights.krw?.summary || '',
+        },
+      };
+    }
+    
+    // 25SS, 26SS, 26FW 기간인 경우 기본 텍스트 (CSV 데이터가 없을 때)
+    if (is25SS || is26SS || is26FW) {
+      return {
+        usd: {
+          title: getUsdTitle(),
+          mainChange: isUsdImproved ? `▼ ${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
+                     isUsdWorsened ? `▲ ${usdCostRateChange.toFixed(1)}%p 악화` : 
+                     `➡️ 0.0%p 동일`,
+          items: [],
+          summary: '',
+        },
+        krw: {
+          title: getKrwTitle(),
           mainChange: krwChangeText,
+          items: [],
+          summary: '',
         },
       };
     }
@@ -158,7 +231,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
       // 25FW 시즌 텍스트
       return {
         usd: {
-          title: 'USD 기준: 개선 성공',
+          title: isUsdImproved ? 'USD 기준: 원가율 개선' : isUsdWorsened ? 'USD 기준: 원가율 악화' : 'USD 기준: 원가율 유지',
           mainChange: `▼ 0.8%p 개선`,
           items: [
             {
@@ -183,7 +256,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
           summary: `소재 믹스 개선과 공임 효율화로 절감 효과를 달성했으나, 전체 평균 품목 단가 상승이 실질 개선폭 제한`
         },
         krw: {
-          title: 'KRW 기준: 환율에 상쇄',
+          title: isKrwImproved ? 'KRW 기준: 환율 효과로 개선' : isKrwWorsened ? 'KRW 기준: 환율 영향으로 악화' : 'KRW 기준: 환율 영향 없음',
           mainChange: (() => {
             const change = total.costRate25F_krw - total.costRate25F_usd;
             return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
@@ -215,7 +288,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
       // NON 시즌 텍스트
       return {
         usd: {
-          title: 'USD 기준: 개선 성공',
+          title: isUsdImproved ? 'USD 기준: 원가율 개선' : isUsdWorsened ? 'USD 기준: 원가율 악화' : 'USD 기준: 원가율 유지',
           mainChange: `▼ ${Math.abs(total.costRate25F_usd - total.costRate24F_usd).toFixed(1)}%p 개선`,
           items: [
             {
@@ -246,7 +319,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
           summary: `TAG 상승과 원가 절감의 동시효과로 USD 기준 원가율 –1.1%p 개선. 생산단가 인상 압력 속에서도 가격 믹스 전략으로 구조적 개선 달성`
         },
         krw: {
-          title: 'KRW 기준: 환율에 상쇄',
+          title: isKrwImproved ? 'KRW 기준: 환율 효과로 개선' : isKrwWorsened ? 'KRW 기준: 환율 영향으로 악화' : 'KRW 기준: 환율 영향 없음',
           mainChange: (() => {
             const change = total.costRate25F_krw - total.costRate25F_usd;
             return change > 0 ? `▲ ${change.toFixed(1)}%p 악화` : change < 0 ? `▼ ${Math.abs(change).toFixed(1)}%p 개선` : `➡️ 0.0%p 동일`;
@@ -307,23 +380,67 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
   // CSV 데이터가 로드되면 state 업데이트
   useEffect(() => {
     if (csvInsights) {
-      setUsdTexts(csvInsights.usd);
+      // USD 원가율 변화 계산 (당년 - 전년)
+      const usdCostRateChange = total.costRate25F_usd - total.costRate24F_usd;
+      const isUsdImproved = usdCostRateChange < 0;
+      const isUsdWorsened = usdCostRateChange > 0;
+      
+      // USD 타이틀 동적 생성
+      const getUsdTitle = () => {
+        if (isUsdImproved) {
+          return 'USD 기준: 원가율 개선';
+        } else if (isUsdWorsened) {
+          return 'USD 기준: 원가율 악화';
+        } else {
+          return 'USD 기준: 원가율 유지';
+        }
+      };
+      
+      // USD mainChange 계산
+      const usdMainChange = csvInsights.usd?.mainChange || 
+        (isUsdImproved ? `▼ ${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
+         isUsdWorsened ? `▲ ${usdCostRateChange.toFixed(1)}%p 악화` : 
+         `➡️ 0.0%p 동일`);
+      
       // KRW mainChange는 항상 동적으로 계산 (당년 KRW - 당년 USD)
       const krwChange = total.costRate25F_krw != null && total.costRate25F_usd != null
         ? total.costRate25F_krw - total.costRate25F_usd
         : 0;
+      const isKrwImproved = krwChange < 0;
+      const isKrwWorsened = krwChange > 0;
+      
       const krwChangeText = krwChange > 0 
         ? `▲ ${krwChange.toFixed(1)}%p 악화`
         : krwChange < 0 
         ? `▼ ${Math.abs(krwChange).toFixed(1)}%p 개선`
         : `➡️ 0.0%p 동일`;
       
+      // KRW 타이틀 동적 생성
+      const getKrwTitle = () => {
+        if (isKrwImproved) {
+          return 'KRW 기준: 환율 효과로 개선';
+        } else if (isKrwWorsened) {
+          return 'KRW 기준: 환율 영향으로 악화';
+        } else {
+          return 'KRW 기준: 환율 영향 없음';
+        }
+      };
+      
+      setUsdTexts({
+        title: csvInsights.usd?.title || getUsdTitle(),
+        mainChange: usdMainChange,
+        items: csvInsights.usd?.items || [],
+        summary: csvInsights.usd?.summary || '',
+      });
+      
       setKrwTexts({
-        ...csvInsights.krw,
+        title: csvInsights.krw?.title || getKrwTitle(),
         mainChange: krwChangeText, // 항상 동적으로 계산된 값 사용
+        items: csvInsights.krw?.items || [],
+        summary: csvInsights.krw?.summary || '',
       });
     }
-  }, [csvInsights, total.costRate25F_krw, total.costRate25F_usd]);
+  }, [csvInsights, total.costRate25F_krw, total.costRate25F_usd, total.costRate24F_usd, total.costRate25F_usd]);
 
   const [editMode, setEditMode] = useState<string | null>(null);
   const [showManageButtons, setShowManageButtons] = useState(false);
@@ -475,9 +592,93 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
     }
   };
 
+  // AI 코멘트 생성 함수
+  const generateAIComment = async (section: 'usd' | 'krw', field: string, itemIndex?: number) => {
+    const key = itemIndex !== undefined ? `${section}-${field}-${itemIndex}` : `${section}-${field}`;
+    setLoadingAI({ ...loadingAI, [key]: true });
+    try {
+      const data = {
+        costRate24F_usd: total.costRate24F_usd,
+        costRate25F_usd: total.costRate25F_usd,
+        costRateChange_usd: total.costRateChange_usd,
+        avgTag24F_usd: total.avgTag24F_usd,
+        avgTag25F_usd: total.avgTag25F_usd,
+        tagYoY_usd: total.tagYoY_usd,
+        avgCost24F_usd: total.avgCost24F_usd,
+        avgCost25F_usd: total.avgCost25F_usd,
+        costYoY_usd: total.costYoY_usd,
+        material24F_usd: total.material24F_usd,
+        material25F_usd: total.material25F_usd,
+        labor24F_usd: total.labor24F_usd,
+        labor25F_usd: total.labor25F_usd,
+        costRate24F_krw: total.costRate24F_krw,
+        costRate25F_krw: total.costRate25F_krw,
+        costRateChange_krw: total.costRateChange_krw,
+        avgTag24F_krw: total.avgTag24F_krw,
+        avgTag25F_krw: total.avgTag25F_krw,
+        tagYoY_krw: total.tagYoY_krw,
+        avgCost24F_krw: total.avgCost24F_krw,
+        avgCost25F_krw: total.avgCost25F_krw,
+        costYoY_krw: total.costYoY_krw,
+        itemTitle: itemIndex !== undefined ? (section === 'usd' ? usdTexts.items[itemIndex]?.title : krwTexts.items[itemIndex]?.title) : undefined,
+      };
+
+      // executive_usd_item 또는 executive_krw_item인 경우 JSON 형식으로 응답 받음
+      const isItemField = itemIndex !== undefined && (field === 'title' || field === 'description' || field === 'change');
+
+      const response = await fetch('/api/generate-comment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          section: `executive_${section}_item`,
+          data: data,
+          brandId: brandId,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // executive_usd_item 또는 executive_krw_item이고 title/description/change 필드인 경우 JSON 파싱
+        if (isItemField) {
+          try {
+            const parsed = JSON.parse(result.comment);
+            if (parsed.title && parsed.change && parsed.description) {
+              // title, change, description 모두 업데이트
+              handleTextEdit(section, 'title', parsed.title, itemIndex);
+              handleTextEdit(section, 'change', parsed.change, itemIndex);
+              handleTextEdit(section, 'description', parsed.description, itemIndex);
+            } else {
+              // JSON 형식이 아니거나 필드가 없는 경우 기존 로직 사용
+              handleTextEdit(section, field, result.comment, itemIndex);
+            }
+          } catch (e) {
+            // JSON 파싱 실패 시 기존 로직 사용
+            handleTextEdit(section, field, result.comment, itemIndex);
+          }
+        } else {
+          // 기존 로직 (summary 등)
+          if (itemIndex !== undefined) {
+            handleTextEdit(section, field, result.comment, itemIndex);
+          } else {
+            handleTextEdit(section, field, result.comment);
+          }
+        }
+      } else {
+        alert('AI 코멘트 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('AI 코멘트 생성 오류:', error);
+      alert('AI 코멘트 생성 중 오류가 발생했습니다.');
+    } finally {
+      setLoadingAI({ ...loadingAI, [key]: false });
+    }
+  };
+
   // 편집 가능한 텍스트 컴포넌트
-  const EditableText = ({ id, value, multiline = false, className, onSave }: any) => {
+  const EditableText = ({ id, value, multiline = false, className, onSave, showAIButton = false, aiSection, aiField, aiItemIndex }: any) => {
     const isEditing = editMode === id;
+    const aiKey = aiItemIndex !== undefined ? `${aiSection}-${aiField}-${aiItemIndex}` : `${aiSection}-${aiField}`;
     
     return isEditing ? (
       <div className="flex flex-col gap-1">
@@ -511,12 +712,27 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
     ) : (
       <div className="group relative">
         <span className={className}>{value}</span>
-        <button
-          onClick={() => setEditMode(id)}
-          className="ml-2 text-xs text-blue-500 opacity-0 group-hover:opacity-100"
-        >
-          ✏️
-        </button>
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="inline-flex items-center gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={() => setEditMode(id)}
+              className="text-xs text-blue-500 hover:text-blue-700"
+              title="편집"
+            >
+              ✏️
+            </button>
+            {showAIButton && (
+              <button
+                onClick={() => generateAIComment(aiSection, aiField, aiItemIndex)}
+                disabled={loadingAI[aiKey]}
+                className="text-xs text-purple-500 hover:text-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                title="AI 생성"
+              >
+                {loadingAI[aiKey] ? '⏳' : '🤖'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     );
   };
@@ -527,15 +743,19 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
         <h2 className="text-2xl font-bold text-gray-800">
           USD 기준 vs KRW 기준 원가율 비교 분석
         </h2>
-        {!showManageButtons && (
-          <span className="text-xs text-gray-400 italic">
-            💡 Alt 키를 눌러 편집 모드
-          </span>
-        )}
-        {showManageButtons && (
-          <span className="text-xs text-blue-600 font-semibold animate-pulse">
-            ✏️ 편집 모드 활성화
-          </span>
+        {process.env.NODE_ENV !== 'production' && (
+          <>
+            {!showManageButtons && (
+              <span className="text-xs text-gray-400 italic">
+                💡 Alt 키를 눌러 편집 모드
+              </span>
+            )}
+            {showManageButtons && (
+              <span className="text-xs text-blue-600 font-semibold animate-pulse">
+                ✏️ 편집 모드 활성화
+              </span>
+            )}
+          </>
         )}
       </div>
 
@@ -632,18 +852,26 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                     </button>
                     <div className="flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <EditableText
-                          id={`usd-title-${idx}`}
-                          value={item.title}
-                          className="font-semibold text-gray-800 text-sm"
-                          onSave={(val: string) => handleTextEdit('usd', 'title', val, idx)}
-                        />
+                      <EditableText
+                        id={`usd-title-${idx}`}
+                        value={item.title}
+                        className="font-semibold text-gray-800 text-sm"
+                        onSave={(val: string) => handleTextEdit('usd', 'title', val, idx)}
+                        showAIButton={true}
+                        aiSection="usd"
+                        aiField="title"
+                        aiItemIndex={idx}
+                      />
                         {item.change && (
                           <EditableText
                             id={`usd-change-${idx}`}
                             value={item.change}
                             className={`text-xs font-bold px-2 py-0.5 rounded-full ${getChangeColor(item.change)}`}
                             onSave={(val: string) => handleTextEdit('usd', 'change', val, idx)}
+                            showAIButton={true}
+                            aiSection="usd"
+                            aiField="change"
+                            aiItemIndex={idx}
                           />
                         )}
                       </div>
@@ -666,6 +894,10 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                         multiline
                         className="text-xs text-gray-600 leading-relaxed"
                         onSave={(val: string) => handleTextEdit('usd', 'description', val, idx)}
+                        showAIButton={true}
+                        aiSection="usd"
+                        aiField="description"
+                        aiItemIndex={idx}
                       />
                       <div className={`h-1 rounded-full mt-3 ${
                         isUsdCostRateIncreased 
@@ -710,6 +942,9 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                     multiline
                     className=""
                     onSave={(val: string) => handleTextEdit('usd', 'summary', val)}
+                    showAIButton={true}
+                    aiSection="usd"
+                    aiField="summary"
                   />
                 </div>
               </div>
@@ -771,6 +1006,10 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                           value={item.title}
                           className="font-semibold text-gray-800 text-sm"
                           onSave={(val: string) => handleTextEdit('krw', 'title', val, idx)}
+                          showAIButton={true}
+                          aiSection="krw"
+                          aiField="title"
+                          aiItemIndex={idx}
                         />
                         {item.change && (
                           <EditableText
@@ -778,6 +1017,10 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                             value={item.change}
                             className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full"
                             onSave={(val: string) => handleTextEdit('krw', 'change', val, idx)}
+                            showAIButton={true}
+                            aiSection="krw"
+                            aiField="change"
+                            aiItemIndex={idx}
                           />
                         )}
                       </div>
@@ -800,6 +1043,10 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                         multiline
                         className="text-xs text-gray-600 leading-relaxed"
                         onSave={(val: string) => handleTextEdit('krw', 'description', val, idx)}
+                        showAIButton={true}
+                        aiSection="krw"
+                        aiField="description"
+                        aiItemIndex={idx}
                       />
                       <div className="h-1 bg-gradient-to-r from-orange-400 to-red-500 rounded-full mt-3" style={{ width: '60%' }}></div>
                     </div>
@@ -832,6 +1079,9 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary }) => {
                     multiline
                     className=""
                     onSave={(val: string) => handleTextEdit('krw', 'summary', val)}
+                    showAIButton={true}
+                    aiSection="krw"
+                    aiField="summary"
                   />
                 </div>
               </div>

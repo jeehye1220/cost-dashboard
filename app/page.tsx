@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calculator, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calculator, Calendar, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { loadSummaryData, loadExchangeRates } from '@/lib/csvParser';
+import { parseBrandId } from '@/lib/brandUtils';
 
 const brands = [
   {
     id: '25FW',
     name: 'MLB 25FW',
     icon: 'MLB',
+    period: '25FW',
     color: 'blue',
     bgColor: 'bg-blue-200',
     hoverColor: 'hover:bg-blue-300',
@@ -23,6 +25,7 @@ const brands = [
     id: 'NON',
     name: 'MLB ACC',
     icon: 'MLB',
+    period: '25FW',
     color: 'slate',
     bgColor: 'bg-slate-200',
     hoverColor: 'hover:bg-slate-300',
@@ -36,6 +39,7 @@ const brands = [
     id: 'KIDS',
     name: 'MLB KIDS',
     icon: 'MK',
+    period: '25FW',
     color: 'red',
     bgColor: 'bg-rose-200',
     hoverColor: 'hover:bg-rose-300',
@@ -49,6 +53,7 @@ const brands = [
     id: 'DISCOVERY',
     name: 'DISCOVERY',
     icon: 'DX',
+    period: '25FW',
     color: 'green',
     bgColor: 'bg-emerald-200',
     hoverColor: 'hover:bg-emerald-300',
@@ -57,6 +62,174 @@ const brands = [
     iconBg: 'bg-emerald-300',
     buttonBg: 'bg-emerald-300',
     buttonHover: 'hover:bg-emerald-400',
+  },
+  {
+    id: 'ST',
+    name: 'SERGIO TACCHINI',
+    icon: 'ST',
+    period: '25FW',
+    color: 'purple',
+    bgColor: 'bg-purple-200',
+    hoverColor: 'hover:bg-purple-300',
+    borderColor: 'border-purple-300',
+    textColor: 'text-purple-700',
+    iconBg: 'bg-purple-300',
+    buttonBg: 'bg-purple-300',
+    buttonHover: 'hover:bg-purple-400',
+  },
+  {
+    id: 'V',
+    name: 'DUVETICA',
+    icon: 'DV',
+    period: '25FW',
+    color: 'indigo',
+    bgColor: 'bg-indigo-200',
+    hoverColor: 'hover:bg-indigo-300',
+    borderColor: 'border-indigo-300',
+    textColor: 'text-indigo-700',
+    iconBg: 'bg-indigo-300',
+    buttonBg: 'bg-indigo-300',
+    buttonHover: 'hover:bg-indigo-400',
+  },
+  {
+    id: '26SS-M',
+    name: 'MLB',
+    icon: 'MLB',
+    period: '26SS',
+    color: 'blue',
+    bgColor: 'bg-blue-200',
+    hoverColor: 'hover:bg-blue-300',
+    borderColor: 'border-blue-300',
+    textColor: 'text-blue-700',
+    iconBg: 'bg-blue-300',
+    buttonBg: 'bg-blue-300',
+    buttonHover: 'hover:bg-blue-400',
+  },
+  {
+    id: '26SS-I',
+    name: 'MLB KIDS',
+    icon: 'MK',
+    period: '26SS',
+    color: 'red',
+    bgColor: 'bg-rose-200',
+    hoverColor: 'hover:bg-rose-300',
+    borderColor: 'border-rose-300',
+    textColor: 'text-rose-700',
+    iconBg: 'bg-rose-300',
+    buttonBg: 'bg-rose-300',
+    buttonHover: 'hover:bg-rose-400',
+  },
+  {
+    id: '26SS-X',
+    name: 'DISCOVERY',
+    icon: 'DX',
+    period: '26SS',
+    color: 'green',
+    bgColor: 'bg-emerald-200',
+    hoverColor: 'hover:bg-emerald-300',
+    borderColor: 'border-emerald-300',
+    textColor: 'text-emerald-700',
+    iconBg: 'bg-emerald-300',
+    buttonBg: 'bg-emerald-300',
+    buttonHover: 'hover:bg-emerald-400',
+  },
+  {
+    id: '26SS-ST',
+    name: 'SERGIO TACCHINI',
+    icon: 'ST',
+    period: '26SS',
+    color: 'purple',
+    bgColor: 'bg-purple-200',
+    hoverColor: 'hover:bg-purple-300',
+    borderColor: 'border-purple-300',
+    textColor: 'text-purple-700',
+    iconBg: 'bg-purple-300',
+    buttonBg: 'bg-purple-300',
+    buttonHover: 'hover:bg-purple-400',
+  },
+  {
+    id: '26SS-V',
+    name: 'DUVETICA',
+    icon: 'DV',
+    period: '26SS',
+    color: 'indigo',
+    bgColor: 'bg-indigo-200',
+    hoverColor: 'hover:bg-indigo-300',
+    borderColor: 'border-indigo-300',
+    textColor: 'text-indigo-700',
+    iconBg: 'bg-indigo-300',
+    buttonBg: 'bg-indigo-300',
+    buttonHover: 'hover:bg-indigo-400',
+  },
+  {
+    id: '25SS-M',
+    name: 'MLB',
+    icon: 'MLB',
+    period: '25SS',
+    color: 'blue',
+    bgColor: 'bg-blue-200',
+    hoverColor: 'hover:bg-blue-300',
+    borderColor: 'border-blue-300',
+    textColor: 'text-blue-700',
+    iconBg: 'bg-blue-300',
+    buttonBg: 'bg-blue-300',
+    buttonHover: 'hover:bg-blue-400',
+  },
+  {
+    id: '25SS-I',
+    name: 'MLB KIDS',
+    icon: 'MK',
+    period: '25SS',
+    color: 'red',
+    bgColor: 'bg-rose-200',
+    hoverColor: 'hover:bg-rose-300',
+    borderColor: 'border-rose-300',
+    textColor: 'text-rose-700',
+    iconBg: 'bg-rose-300',
+    buttonBg: 'bg-rose-300',
+    buttonHover: 'hover:bg-rose-400',
+  },
+  {
+    id: '25SS-X',
+    name: 'DISCOVERY',
+    icon: 'DX',
+    period: '25SS',
+    color: 'green',
+    bgColor: 'bg-emerald-200',
+    hoverColor: 'hover:bg-emerald-300',
+    borderColor: 'border-emerald-300',
+    textColor: 'text-emerald-700',
+    iconBg: 'bg-emerald-300',
+    buttonBg: 'bg-emerald-300',
+    buttonHover: 'hover:bg-emerald-400',
+  },
+  {
+    id: '25SS-ST',
+    name: 'SERGIO TACCHINI',
+    icon: 'ST',
+    period: '25SS',
+    color: 'purple',
+    bgColor: 'bg-purple-200',
+    hoverColor: 'hover:bg-purple-300',
+    borderColor: 'border-purple-300',
+    textColor: 'text-purple-700',
+    iconBg: 'bg-purple-300',
+    buttonBg: 'bg-purple-300',
+    buttonHover: 'hover:bg-purple-400',
+  },
+  {
+    id: '25SS-V',
+    name: 'DUVETICA',
+    icon: 'DV',
+    period: '25SS',
+    color: 'indigo',
+    bgColor: 'bg-indigo-200',
+    hoverColor: 'hover:bg-indigo-300',
+    borderColor: 'border-indigo-300',
+    textColor: 'text-indigo-700',
+    iconBg: 'bg-indigo-300',
+    buttonBg: 'bg-indigo-300',
+    buttonHover: 'hover:bg-indigo-400',
   },
 ];
 
@@ -96,29 +269,86 @@ interface BrandSummary {
   expenseRate25F_usd: number;
 }
 
+// 기간 옵션 정의 (연도순, 연도 내에서 SS-FW 순서)
+const periods = [
+  { id: '25SS', label: '25SS기간 (25.03~25.08)', value: '25SS' },
+  { id: '25FW', label: '25FW기간 (25.09~26.02)', value: '25FW' },
+  { id: '26SS', label: '26SS기간 (26.03~26.08)', value: '26SS' },
+  { id: '26FW', label: '26FW기간 (26.09~27.02)', value: '26FW' },
+];
+
 export default function Home() {
   const router = useRouter();
-  const [selectedDate] = useState('25FW기간 (25.09~26.02)');
+  // URL 쿼리 파라미터에서 period 읽기
+  const [selectedPeriod, setSelectedPeriod] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('period') || '25FW';
+    }
+    return '25FW';
+  });
   const [brandSummaries, setBrandSummaries] = useState<Record<string, BrandSummary | null>>({});
   const [loading, setLoading] = useState(true);
   const [expandedCostItems, setExpandedCostItems] = useState<Set<string>>(new Set());
+  const [batchAILoading, setBatchAILoading] = useState(false);
+  const [batchAIProgress, setBatchAIProgress] = useState<{current: number; total: number; brand: string} | null>(null);
+
+  // URL 쿼리 파라미터 변경 감지
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const period = params.get('period');
+      if (period && (period === '25FW' || period === '25SS' || period === '26SS' || period === '26FW')) {
+        setSelectedPeriod(period);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const loadAllSummaries = async () => {
       const summaries: Record<string, BrandSummary | null> = {};
       
       // 각 브랜드별 summary 파일 및 FX 파일 매핑
-      const brandFiles = {
-        '25FW': { summary: 'summary_25fw.json', fx: 'FX FW.csv' },
+      const brandFiles: Record<string, { summary: string; fx: string }> = {
+        '25FW': { summary: 'COST RAW/25FW/summary_25fw_m.json', fx: 'COST RAW/FX.csv' },
         'NON': { summary: 'summary.json', fx: 'FX 251111.csv' },
-        'KIDS': { summary: 'summary_kids.json', fx: 'MLB KIDS FX FW.csv' },
-        'DISCOVERY': { summary: 'summary_discovery.json', fx: 'DX FX FW.csv' },
+        'KIDS': { summary: 'COST RAW/25FW/summary_25fw_i.json', fx: 'COST RAW/FX.csv' },
+        'DISCOVERY': { summary: 'COST RAW/25FW/summary_25fw_x.json', fx: 'COST RAW/FX.csv' },
+        'ST': { summary: 'COST RAW/25FW/summary_25fw_st.json', fx: 'COST RAW/FX.csv' },
+        'V': { summary: 'COST RAW/25FW/summary_25fw_v.json', fx: 'COST RAW/FX.csv' },
+        '26SS-M': { summary: 'COST RAW/26SS/summary_26ss_m.json', fx: 'COST RAW/FX.csv' },
+        '26SS-I': { summary: 'COST RAW/26SS/summary_26ss_i.json', fx: 'COST RAW/FX.csv' },
+        '26SS-X': { summary: 'COST RAW/26SS/summary_26ss_x.json', fx: 'COST RAW/FX.csv' },
+        '26SS-ST': { summary: 'COST RAW/26SS/summary_26ss_st.json', fx: 'COST RAW/FX.csv' },
+        '26SS-V': { summary: 'COST RAW/26SS/summary_26ss_v.json', fx: 'COST RAW/FX.csv' },
+        '25SS-M': { summary: 'COST RAW/25S/summary_25s_m.json', fx: 'COST RAW/FX.csv' },
+        '25SS-I': { summary: 'COST RAW/25S/summary_25s_i.json', fx: 'COST RAW/FX.csv' },
+        '25SS-X': { summary: 'COST RAW/25S/summary_25s_x.json', fx: 'COST RAW/FX.csv' },
+        '25SS-ST': { summary: 'COST RAW/25S/summary_25s_st.json', fx: 'COST RAW/FX.csv' },
+        '25SS-V': { summary: 'COST RAW/25S/summary_25s_v.json', fx: 'COST RAW/FX.csv' },
       };
 
       for (const [brandId, files] of Object.entries(brandFiles)) {
         try {
           const data = await loadSummaryData(files.summary);
-          const fxRates = await loadExchangeRates(files.fx);
+          
+          // 환율 정보 로드 - 새로운 시즌 형식인 경우 브랜드 ID와 시즌 정보 전달
+          let fxRates;
+          if (brandId.startsWith('26SS-')) {
+            fxRates = await loadExchangeRates(files.fx, brandId, '26SS', '25SS');
+          } else if (brandId.startsWith('26FW-')) {
+            fxRates = await loadExchangeRates(files.fx, brandId, '26FW', '25FW');
+          } else if (brandId.startsWith('25SS-')) {
+            fxRates = await loadExchangeRates(files.fx, brandId, '25SS', '24SS');
+          } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'ST' || brandId === 'V') {
+            // 25FW 기간 브랜드들 (M, I, X, ST, V) - 새 구조
+            const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId;
+            // 25FW-{brandCode} 형식으로 만들어서 일관성 유지
+            fxRates = await loadExchangeRates(files.fx, `25FW-${brandCode}`, '25FW', '24FW');
+          } else {
+            // 기존 브랜드는 기존 방식 유지 (NON 등)
+            fxRates = await loadExchangeRates(files.fx);
+          }
           
           if (data && data.total) {
             summaries[brandId] = {
@@ -170,7 +400,7 @@ export default function Home() {
     };
 
     loadAllSummaries();
-  }, []);
+  }, [selectedPeriod]);
 
   const handleBrandClick = (brandId: string) => {
     try {
@@ -208,6 +438,89 @@ export default function Home() {
     return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  // 배치 AI 분석 실행
+  const handleBatchAIAnalysis = async () => {
+    if (batchAILoading) return;
+    
+    // 현재 기간의 브랜드 목록 자동 파악
+    const currentPeriodBrands = brands.filter(brand => brand.period === selectedPeriod);
+    
+    if (currentPeriodBrands.length === 0) {
+      alert('선택된 기간에 브랜드가 없습니다.');
+      return;
+    }
+
+    // 확인 메시지
+    const confirmMessage = `${selectedPeriod} 기간의 ${currentPeriodBrands.length}개 브랜드에 대해 AI 분석을 실행하시겠습니까?\n\n예상 소요 시간: 약 ${currentPeriodBrands.length * 2}분\n예상 비용: 약 $${(currentPeriodBrands.length * 0.5).toFixed(2)}`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    // 브랜드 ID와 브랜드 코드 추출
+    const brandData = currentPeriodBrands.map(brand => {
+      const brandInfo = parseBrandId(brand.id);
+      return {
+        brandId: brand.id,
+        brandCode: brandInfo.brandCode,
+        brandName: brand.name,
+      };
+    });
+
+    setBatchAILoading(true);
+    setBatchAIProgress({ current: 0, total: brandData.length, brand: '시작 중...' });
+
+    try {
+      // 진행 상황 시뮬레이션 (실제로는 API에서 처리 중)
+      const progressInterval = setInterval(() => {
+        setBatchAIProgress(prev => {
+          if (!prev) return null;
+          // 예상 진행률 업데이트 (실제로는 API에서 받아야 함)
+          return prev;
+        });
+      }, 1000);
+
+      const response = await fetch('/api/batch-generate-insights', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          period: selectedPeriod,
+          brands: brandData,
+        }),
+      });
+
+      clearInterval(progressInterval);
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || '배치 AI 분석에 실패했습니다.');
+      }
+
+      const result = await response.json();
+      
+      // 결과 상세 표시
+      let resultMessage = `배치 AI 분석이 완료되었습니다!\n\n`;
+      resultMessage += `총 ${result.total}개 브랜드\n`;
+      resultMessage += `✅ 성공: ${result.success}개\n`;
+      if (result.failed > 0) {
+        resultMessage += `❌ 실패: ${result.failed}개\n\n`;
+        resultMessage += `실패한 브랜드:\n`;
+        result.results.forEach((r: any) => {
+          if (!r.success) {
+            resultMessage += `- ${r.brandCode}: ${r.error || '알 수 없는 오류'}\n`;
+          }
+        });
+      }
+      
+      alert(resultMessage);
+    } catch (error: any) {
+      console.error('배치 AI 분석 오류:', error);
+      alert(`배치 AI 분석 중 오류가 발생했습니다: ${error.message}`);
+    } finally {
+      setBatchAILoading(false);
+      setBatchAIProgress(null);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* 헤더 - 카드 형태 */}
@@ -231,18 +544,58 @@ export default function Home() {
             <p className="text-gray-600 text-sm">분석할 브랜드를 클릭하여 상세 대시보드로 이동합니다</p>
           </div>
 
-          {/* 날짜 선택 */}
+          {/* 날짜 선택 및 전체 AI 분석 버튼 */}
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2 border border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors">
-              <Calendar className="w-4 h-4" />
-              <span className="text-sm">{selectedDate}</span>
+            <div className="relative">
+              <select
+                value={selectedPeriod}
+                onChange={(e) => {
+                  const newPeriod = e.target.value;
+                  setSelectedPeriod(newPeriod);
+                  // URL 쿼리 파라미터 업데이트
+                  if (typeof window !== 'undefined') {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('period', newPeriod);
+                    window.history.pushState({}, '', url.toString());
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 border border-blue-300 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors bg-white cursor-pointer appearance-none pr-10 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                {periods.map((period) => (
+                  <option key={period.id} value={period.value}>
+                    {period.label}
+                  </option>
+                ))}
+              </select>
+              <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none" />
+            </div>
+            
+            {/* 전체 AI 분석 버튼 */}
+            <button
+              onClick={handleBatchAIAnalysis}
+              disabled={batchAILoading}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+            >
+              <Sparkles className="w-4 h-4" />
+              {batchAILoading ? (
+                <span className="flex items-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  {batchAIProgress && (
+                    <span className="text-sm">
+                      {batchAIProgress.brand} ({batchAIProgress.current}/{batchAIProgress.total})
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span>{selectedPeriod} 전체 AI 분석</span>
+              )}
             </button>
           </div>
         </div>
 
         {/* 브랜드 카드 그리드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-12">
-          {brands.map((brand) => (
+          {brands.filter(brand => brand.period === selectedPeriod).map((brand) => (
             <div
               key={brand.id}
               className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200"

@@ -27,6 +27,13 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
 
   const { categories, total } = summary;
 
+  // 시즌 판별 (EnhancedStoryCards와 동일한 로직)
+  const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
+  const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
+  const isDISCOVERY = total.qty24F > 1200000 && total.qty24F < 1400000;
+  const isFWSS = is25FW || isKIDS || isDISCOVERY;
+  const isNonSeason = !isFWSS;
+
   // 전체 레이더 차트 데이터 (5각형: 원부자재, 아트웍, 공임, 마진, 경비)
   const createRadarData = (data: any) => [
     { subject: '원부자재', '전년': data.materialRate24F_usd, '당년': data.materialRate25F_usd, fullMark: 15 },
@@ -39,30 +46,146 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
   // 전체 데이터
   const totalRadarData = createRadarData(total);
 
-  // 카테고리별 레이더 데이터
-  const categoryRadarData = CATEGORIES.map(cat => {
-    const categoryData = categories.find((c: any) => c.category === cat.id);
-    if (!categoryData) return null;
-    
-    return {
-      id: cat.id,
-      name: cat.name,
-      color: cat.color,
-      data: createRadarData(categoryData),
-      costRate24F: categoryData.costRate24F_usd,
-      costRate25F: categoryData.costRate25F_usd,
-      materialRate24F: categoryData.materialRate24F_usd,
-      materialRate25F: categoryData.materialRate25F_usd,
-      artworkRate24F: categoryData.artworkRate24F_usd,
-      artworkRate25F: categoryData.artworkRate25F_usd,
-      laborRate24F: categoryData.laborRate24F_usd,
-      laborRate25F: categoryData.laborRate25F_usd,
-      marginRate24F: categoryData.marginRate24F_usd,
-      marginRate25F: categoryData.marginRate25F_usd,
-      expenseRate24F: categoryData.expenseRate24F_usd,
-      expenseRate25F: categoryData.expenseRate25F_usd,
+  // 카테고리 색상 매핑 (MLB NON 시즌용)
+  const getCategoryColor = (categoryId: string): string => {
+    const categoryMap: Record<string, string> = {
+      'Outer': '#3b82f6',
+      'Inner': '#10b981',
+      'Bottom': '#f59e0b',
+      'Shoes': '#8b5cf6',
+      'Bag': '#ec4899',
+      'Headwear': '#f97316',
+      'Acc_etc': '#ef4444',
+      'Wear_etc': '#f97316',
     };
-  }).filter(Boolean);
+    return categoryMap[categoryId] || '#6b7280';
+  };
+
+  // 카테고리 이름 매핑
+  const getCategoryName = (categoryId: string): string => {
+    const nameMap: Record<string, string> = {
+      'Outer': 'OUTER',
+      'Inner': 'INNER',
+      'Bottom': 'BOTTOM',
+      'Shoes': 'SHOES',
+      'Bag': 'BAG',
+      'Headwear': 'HEADWEAR',
+      'Acc_etc': 'ACC',
+      'Wear_etc': 'WEAR',
+    };
+    return nameMap[categoryId] || categoryId.toUpperCase();
+  };
+
+  // 카테고리별 레이더 데이터
+  // MLB NON 시즌은 summary.categories에서 직접 가져오고, FW/SS 시즌은 CATEGORIES 사용
+  const categoryRadarData = isNonSeason
+    ? (() => {
+        // 모든 카테고리 데이터 생성
+        const allCategoryData = categories.map((categoryData: any) => {
+          const catId = categoryData.category;
+          // Wear_etc만 제외
+          if (catId === 'Wear_etc') {
+            return null;
+          }
+          return {
+            id: catId,
+            name: getCategoryName(catId),
+            color: getCategoryColor(catId),
+            data: createRadarData(categoryData),
+            costRate24F: categoryData.costRate24F_usd,
+            costRate25F: categoryData.costRate25F_usd,
+            materialRate24F: categoryData.materialRate24F_usd,
+            materialRate25F: categoryData.materialRate25F_usd,
+            artworkRate24F: categoryData.artworkRate24F_usd,
+            artworkRate25F: categoryData.artworkRate25F_usd,
+            laborRate24F: categoryData.laborRate24F_usd,
+            laborRate25F: categoryData.laborRate25F_usd,
+            marginRate24F: categoryData.marginRate24F_usd,
+            marginRate25F: categoryData.marginRate25F_usd,
+            expenseRate24F: categoryData.expenseRate24F_usd,
+            expenseRate25F: categoryData.expenseRate25F_usd,
+          };
+        }).filter(Boolean);
+        
+        // ETC 제외한 상위 4개 + ACC_ETC
+        const nonEtcCategories = allCategoryData.filter((cat: any) => 
+          cat.id !== 'Acc_etc' && cat.id !== 'Wear_etc'
+        );
+        const top4 = nonEtcCategories
+          .sort((a: any, b: any) => (b.costRate25F || 0) - (a.costRate25F || 0))
+          .slice(0, 4);
+        
+        // ACC_ETC 추가
+        const accEtc = allCategoryData.find((cat: any) => cat.id === 'Acc_etc');
+        if (accEtc) {
+          top4.push(accEtc);
+        }
+        
+        return top4;
+      })()
+    : (() => {
+        // FW/SS 시즌: Outer, Inner, Bottom 무조건 표시 + (Wear_etc 있으면 Wear_etc, 없으면 Acc_etc)
+        const requiredCategories = ['Outer', 'Inner', 'Bottom'];
+        const selected: any[] = [];
+        
+        // Outer, Inner, Bottom 추가
+        requiredCategories.forEach(catId => {
+          const categoryData = categories.find((c: any) => c.category === catId);
+          if (categoryData) {
+            const cat = CATEGORIES.find(c => c.id === catId);
+            if (cat) {
+              selected.push({
+                id: cat.id,
+                name: cat.name,
+                color: cat.color,
+                data: createRadarData(categoryData),
+                costRate24F: categoryData.costRate24F_usd,
+                costRate25F: categoryData.costRate25F_usd,
+                materialRate24F: categoryData.materialRate24F_usd,
+                materialRate25F: categoryData.materialRate25F_usd,
+                artworkRate24F: categoryData.artworkRate24F_usd,
+                artworkRate25F: categoryData.artworkRate25F_usd,
+                laborRate24F: categoryData.laborRate24F_usd,
+                laborRate25F: categoryData.laborRate25F_usd,
+                marginRate24F: categoryData.marginRate24F_usd,
+                marginRate25F: categoryData.marginRate25F_usd,
+                expenseRate24F: categoryData.expenseRate24F_usd,
+                expenseRate25F: categoryData.expenseRate25F_usd,
+              });
+            }
+          }
+        });
+        
+        // 4번째 카드: Wear_etc 있으면 Wear_etc, 없으면 Acc_etc
+        const wearEtcData = categories.find((c: any) => c.category === 'Wear_etc');
+        const accEtcData = categories.find((c: any) => c.category === 'Acc_etc');
+        const etcCategoryData = wearEtcData || accEtcData;
+        const etcCategory = wearEtcData ? CATEGORIES.find(c => c.id === 'Wear_etc') : 
+                           accEtcData ? CATEGORIES.find(c => c.id === 'Acc_etc') : null;
+        
+        if (etcCategoryData && etcCategory) {
+          selected.push({
+            id: etcCategory.id,
+            name: etcCategory.name,
+            color: etcCategory.color,
+            data: createRadarData(etcCategoryData),
+            costRate24F: etcCategoryData.costRate24F_usd,
+            costRate25F: etcCategoryData.costRate25F_usd,
+            materialRate24F: etcCategoryData.materialRate24F_usd,
+            materialRate25F: etcCategoryData.materialRate25F_usd,
+            artworkRate24F: etcCategoryData.artworkRate24F_usd,
+            artworkRate25F: etcCategoryData.artworkRate25F_usd,
+            laborRate24F: etcCategoryData.laborRate24F_usd,
+            laborRate25F: etcCategoryData.laborRate25F_usd,
+            marginRate24F: etcCategoryData.marginRate24F_usd,
+            marginRate25F: etcCategoryData.marginRate25F_usd,
+            expenseRate24F: etcCategoryData.expenseRate24F_usd,
+            expenseRate25F: etcCategoryData.expenseRate25F_usd,
+          });
+        }
+        
+        return selected;
+      })();
 
   // 개별 레이더 차트 컴포넌트
   const RadarChartCard = ({ title, data, color, stats }: any) => (
@@ -286,8 +409,8 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
               <span className="text-blue-600 text-xs">▸</span>
             </div>
             <div className="text-xs text-gray-600">
-              <span className="font-semibold text-gray-700">회색 영역:</span> 24F(전년) 데이터<br />
-              <span className="font-semibold text-gray-700">컬러 영역:</span> 25F(당년) 데이터
+              <span className="font-semibold text-gray-700">회색 영역:</span> 전년 데이터<br />
+              <span className="font-semibold text-gray-700">컬러 영역:</span> 당년 데이터
             </div>
           </div>
           <div className="flex items-start gap-2">

@@ -26,13 +26,70 @@ const StoryCards: React.FC<StoryCardsProps> = ({ summary }) => {
     setLoading(true);
     try {
       const data = section === 'usd' ? {
-        costRate24F: total.costRate24F_usd,
-        costRate25F: total.costRate25F_usd,
-        avgCostRateChange: total.costRateChange_usd,
+        costRate24F_usd: total.costRate24F_usd,
+        costRate25F_usd: total.costRate25F_usd,
+        costRateChange_usd: total.costRateChange_usd,
+        avgTag24F_usd: total.avgTag24F_usd,
+        avgTag25F_usd: total.avgTag25F_usd,
+        tagYoY_usd: total.tagYoY_usd,
+        avgCost24F_usd: total.avgCost24F_usd,
+        avgCost25F_usd: total.avgCost25F_usd,
+        costYoY_usd: total.costYoY_usd,
+        // 세부 항목별 원가율 (USD)
+        materialRate24F_usd: total.materialRate24F_usd,
+        materialRate25F_usd: total.materialRate25F_usd,
+        artworkRate24F_usd: total.artworkRate24F_usd,
+        artworkRate25F_usd: total.artworkRate25F_usd,
+        laborRate24F_usd: total.laborRate24F_usd,
+        laborRate25F_usd: total.laborRate25F_usd,
+        marginRate24F_usd: total.marginRate24F_usd,
+        marginRate25F_usd: total.marginRate25F_usd,
+        expenseRate24F_usd: total.expenseRate24F_usd,
+        expenseRate25F_usd: total.expenseRate25F_usd,
+        // 세부 항목별 평균단가 (USD)
+        material24F_usd: total.material24F_usd,
+        material25F_usd: total.material25F_usd,
+        artwork24F_usd: total.artwork24F_usd,
+        artwork25F_usd: total.artwork25F_usd,
+        labor24F_usd: total.labor24F_usd,
+        labor25F_usd: total.labor25F_usd,
+        margin24F_usd: total.margin24F_usd,
+        margin25F_usd: total.margin25F_usd,
+        expense24F_usd: total.expense24F_usd,
+        expense25F_usd: total.expense25F_usd,
       } : {
-        costRate24F: total.costRate24F_krw,
-        costRate25F: total.costRate25F_krw,
-        avgCostRateChange: total.costRateChange_krw,
+        costRate24F_krw: total.costRate24F_krw,
+        costRate25F_krw: total.costRate25F_krw,
+        costRateChange_krw: total.costRateChange_krw,
+        costRate25F_usd: total.costRate25F_usd,
+        avgTag24F_krw: total.avgTag24F_krw,
+        avgTag25F_krw: total.avgTag25F_krw,
+        tagYoY_krw: total.tagYoY_krw,
+        avgCost24F_krw: total.avgCost24F_krw,
+        avgCost25F_krw: total.avgCost25F_krw,
+        costYoY_krw: total.costYoY_krw,
+        // 세부 항목별 원가율 (KRW)
+        materialRate24F_krw: total.materialRate24F_krw || 0,
+        materialRate25F_krw: total.materialRate25F_krw || 0,
+        artworkRate24F_krw: total.artworkRate24F_krw || 0,
+        artworkRate25F_krw: total.artworkRate25F_krw || 0,
+        laborRate24F_krw: total.laborRate24F_krw || 0,
+        laborRate25F_krw: total.laborRate25F_krw || 0,
+        marginRate24F_krw: total.marginRate24F_krw || 0,
+        marginRate25F_krw: total.marginRate25F_krw || 0,
+        expenseRate24F_krw: total.expenseRate24F_krw || 0,
+        expenseRate25F_krw: total.expenseRate25F_krw || 0,
+        // 세부 항목별 평균단가 (USD - 참고용)
+        material24F_usd: total.material24F_usd,
+        material25F_usd: total.material25F_usd,
+        artwork24F_usd: total.artwork24F_usd,
+        artwork25F_usd: total.artwork25F_usd,
+        labor24F_usd: total.labor24F_usd,
+        labor25F_usd: total.labor25F_usd,
+        margin24F_usd: total.margin24F_usd,
+        margin25F_usd: total.margin25F_usd,
+        expense24F_usd: total.expense24F_usd,
+        expense25F_usd: total.expense25F_usd,
       };
 
       const response = await fetch('/api/generate-comment', {
@@ -124,13 +181,15 @@ const StoryCards: React.FC<StoryCardsProps> = ({ summary }) => {
           </div>
 
           {/* AI 코멘트 버튼 */}
-          <button
-            onClick={() => generateAIComment('usd')}
-            disabled={loadingUsd}
-            className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
-          >
-            {loadingUsd ? '생성 중...' : 'AI 인사이트 생성'}
-          </button>
+          {process.env.NODE_ENV !== 'production' && (
+            <button
+              onClick={() => generateAIComment('usd')}
+              disabled={loadingUsd}
+              className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400 transition-colors"
+            >
+              {loadingUsd ? '생성 중...' : 'AI 인사이트 생성'}
+            </button>
+          )}
 
           {/* AI 코멘트 표시 */}
           {usdComment && (
@@ -208,13 +267,15 @@ const StoryCards: React.FC<StoryCardsProps> = ({ summary }) => {
           </div>
 
           {/* AI 코멘트 버튼 */}
-          <button
-            onClick={() => generateAIComment('krw')}
-            disabled={loadingKrw}
-            className="w-full mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-400 transition-colors"
-          >
-            {loadingKrw ? '생성 중...' : 'AI 인사이트 생성'}
-          </button>
+          {process.env.NODE_ENV !== 'production' && (
+            <button
+              onClick={() => generateAIComment('krw')}
+              disabled={loadingKrw}
+              className="w-full mt-4 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-400 transition-colors"
+            >
+              {loadingKrw ? '생성 중...' : 'AI 인사이트 생성'}
+            </button>
+          )}
 
           {/* AI 코멘트 표시 */}
           {krwComment && (
@@ -229,6 +290,9 @@ const StoryCards: React.FC<StoryCardsProps> = ({ summary }) => {
 };
 
 export default StoryCards;
+
+
+
 
 
 

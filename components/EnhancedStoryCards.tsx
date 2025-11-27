@@ -53,15 +53,47 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
     orderShareYoY: 100
   };
 
+  // 카테고리 색상 및 이름 매핑 (MLB NON 시즌용)
+  const getCategoryInfo = (categoryId: string) => {
+    const categoryMap: Record<string, { name: string; color: string }> = {
+      'Outer': { name: 'OUTER', color: '#3b82f6' },
+      'Inner': { name: 'INNER', color: '#10b981' },
+      'Bottom': { name: 'BOTTOM', color: '#f59e0b' },
+      'Shoes': { name: 'SHOES', color: '#8b5cf6' },
+      'Bag': { name: 'BAG', color: '#ec4899' },
+      'Headwear': { name: 'HEADWEAR', color: '#f97316' },
+      'Acc_etc': { name: 'ACC', color: '#ef4444' },
+      'Wear_etc': { name: 'WEAR', color: '#f97316' },
+    };
+    return categoryMap[categoryId] || { name: categoryId.toUpperCase(), color: '#6b7280' };
+  };
+
   // 카테고리 선택 로직
   const categoryData = (() => {
-    const allCategoryData = CATEGORIES.map(cat => {
-      const data = categories.find((c: any) => c.category === cat.id);
-      return {
-        ...cat,
-        data: data || null,
-      };
-    }).filter(cat => cat.data !== null);
+    let allCategoryData;
+    
+    if (isNON) {
+      // MLB NON 시즌: summary.categories에서 직접 가져오기
+      allCategoryData = categories.map((categoryData: any) => {
+        const catId = categoryData.category;
+        const info = getCategoryInfo(catId);
+        return {
+          id: catId,
+          name: info.name,
+          color: info.color,
+          data: categoryData,
+        };
+      }).filter(cat => cat.data !== null);
+    } else {
+      // FW/SS 시즌: CATEGORIES 사용
+      allCategoryData = CATEGORIES.map(cat => {
+        const data = categories.find((c: any) => c.category === cat.id);
+        return {
+          ...cat,
+          data: data || null,
+        };
+      }).filter(cat => cat.data !== null);
+    }
 
     if (isFWSS) {
       // FW/SS 시즌: Outer, Inner, Bottom 무조건 표시 + (Wear_etc 있으면 Wear_etc, 없으면 Acc_etc)
@@ -79,33 +111,26 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
 
       return selected;
     } else {
-      // NON 시즌: 발주 비중(생산수량) 상위 4개 표시, ETC는 항상 마지막
+      // NON 시즌: ETC를 제외한 상위 4개 중분류 + ACC_ETC 표시
       const sortedByQty = [...allCategoryData].sort((a, b) => {
         const qtyA = a.data?.qty25F || 0;
         const qtyB = b.data?.qty25F || 0;
         return qtyB - qtyA; // 내림차순
       });
 
-      // ETC 카테고리 분리
-      const etcCategories = sortedByQty.filter(cat => 
-        cat.id === 'Acc_etc' || cat.id === 'Wear_etc'
-      );
-      const nonEtcCategories = sortedByQty.filter(cat => 
-        cat.id !== 'Acc_etc' && cat.id !== 'Wear_etc'
-      );
+      // ETC 카테고리 제외 (Wear_etc만 제외, Acc_etc는 포함)
+      const nonEtcCategories = sortedByQty.filter(cat => {
+        // Wear_etc만 ETC로 간주하여 제외
+        return cat.id !== 'Wear_etc';
+      });
 
-      // 상위 4개 선택 (ETC 제외)
-      const top4 = nonEtcCategories.slice(0, 4);
+      // ETC 제외한 상위 4개 선택
+      const top4 = nonEtcCategories.filter(cat => cat.id !== 'Acc_etc').slice(0, 4);
       
-      // ETC가 있으면 마지막에 추가
-      if (etcCategories.length > 0) {
-        // ETC 중 하나만 선택 (Wear_etc 우선, 없으면 Acc_etc)
-        const etcToAdd = etcCategories.find(cat => cat.id === 'Wear_etc') || etcCategories[0];
-        // 이미 4개가 있으면 마지막 것을 제거하고 ETC 추가
-        if (top4.length >= 4) {
-          top4.pop();
-        }
-        top4.push(etcToAdd);
+      // ACC_ETC 추가
+      const accEtc = allCategoryData.find(cat => cat.id === 'Acc_etc');
+      if (accEtc) {
+        top4.push(accEtc);
       }
 
       return top4;

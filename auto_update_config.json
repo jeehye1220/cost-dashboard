@@ -1,0 +1,24 @@
+{
+  "seasons": {
+    "25FW": {
+      "brands": ["M", "I", "X", "ST", "V"],
+      "generate_insights": false,
+      "season_folder": "25FW",
+      "season_code": "25F"
+    },
+    "26SS": {
+      "brands": ["M", "I", "X", "ST", "V"],
+      "generate_insights": true,
+      "season_folder": "26SS",
+      "season_code": "26SS"
+    }
+  },
+  "email": {
+    "recipient": "KJH1@FNFCORP.COM",
+    "smtp_server": "smtp.gmail.com",
+    "smtp_port": 587,
+    "sender_email": "",
+    "sender_password": ""
+  }
+}
+

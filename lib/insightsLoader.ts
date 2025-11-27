@@ -40,21 +40,92 @@ interface InsightsData {
 }
 
 /**
+ * 브랜드 ID에서 브랜드 코드와 기간 추출
+ */
+function parseBrandId(brandId?: string): { brandCode: string; period: string } | null {
+  if (!brandId) return null;
+  
+  // 25SS-M, 26SS-M 형식
+  if (brandId.startsWith('25SS-') || brandId.startsWith('26SS-') || brandId.startsWith('26FW-')) {
+    const parts = brandId.split('-');
+    return {
+      brandCode: parts[1] || '',
+      period: parts[0] || '',
+    };
+  }
+  
+  // 25FW, KIDS, DISCOVERY 등 기존 형식
+  return null;
+}
+
+/**
+ * 브랜드별 인사이트 파일 경로 생성
+ */
+function getBrandInsightFilePath(brandId?: string, season?: string): string | null {
+  if (!brandId) return null;
+  
+  const brandInfo = parseBrandId(brandId);
+  
+  // 브랜드별 인사이트 파일이 있는 경우 (25SS-*, 26SS-*, 26FW-*)
+  if (brandInfo) {
+    const { brandCode, period } = brandInfo;
+    
+    // 기간별 폴더 매핑
+    const periodFolderMap: Record<string, string> = {
+      '25SS': '25S',
+      '26SS': '26SS',
+      '26FW': '26FW',
+    };
+    
+    const folder = periodFolderMap[period] || period;
+    const periodCode = period.toLowerCase();
+    return `/COST RAW/${folder}/${brandCode}_insight_${periodCode}.csv`;
+  }
+  
+  // 25FW 기간 브랜드별 인사이트 파일 (ST, V 포함)
+  if (brandId === 'ST' || brandId === 'V') {
+    return `/COST RAW/25FW/${brandId}_insight_25fw.csv`;
+  }
+  
+  // 기존 통합 CSV 파일 (25FW, KIDS, DISCOVERY 등)
+  const fileMap: { [key: string]: string } = {
+    '25FW': '/insights_25fw.csv',
+    '25F': '/insights_25fw.csv',
+    'NON': '/insights_non.csv',
+    'KIDS': '/insights_kids.csv',
+    'DISCOVERY': '/insights_discovery.csv',
+  };
+  
+  return fileMap[brandId] || null;
+}
+
+/**
  * CSV 파일을 파싱하여 인사이트 데이터로 변환
  */
-export async function loadInsightsFromCSV(season: string): Promise<InsightsData | null> {
+export async function loadInsightsFromCSV(season: string, brandId?: string): Promise<InsightsData | null> {
   try {
-    // 시즌별 CSV 파일 매핑
-    const fileMap: { [key: string]: string } = {
-      '25FW': '/insights_25fw.csv',
-      'NON': '/insights_non.csv',
-      'KIDS': '/insights_kids.csv',
-      'DISCOVERY': '/insights_discovery.csv',
-    };
-
-    const filePath = fileMap[season];
+    // 브랜드별 인사이트 파일 경로 생성
+    let filePath = getBrandInsightFilePath(brandId, season);
+    
+    // 브랜드별 파일이 없으면 기존 방식으로 시즌 기반 파일 찾기
     if (!filePath) {
-      console.warn(`Unknown season: ${season}`);
+      const fileMap: { [key: string]: string } = {
+        '25FW': '/insights_25fw.csv',
+        '25F': '/insights_25fw.csv',      // F = FW
+        '25SS': '/insights_25s.csv',      // SS = S (fallback)
+        '25S': '/insights_25s.csv',       // S = SS (fallback)
+        '26SS': '/insights_26s.csv',      // 향후용
+        '26S': '/insights_26s.csv',        // 향후용
+        'NON': '/insights_non.csv',
+        'KIDS': '/insights_kids.csv',
+        'DISCOVERY': '/insights_discovery.csv',
+      };
+      
+      filePath = fileMap[season];
+    }
+    
+    if (!filePath) {
+      console.warn(`Unknown season: ${season}, brandId: ${brandId}`);
       return null;
     }
 
