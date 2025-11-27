@@ -364,6 +364,8 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
   
   // KRW mainChange 동적 계산 (초기값 설정 시에도)
   const initialKrwChange = total.costRate25F_krw - total.costRate25F_usd;
+  const isKrwImproved = initialKrwChange < 0; // 하락 = 개선 (환율 유리)
+  const isKrwWorsened = initialKrwChange > 0; // 상승 = 악화 (환율 불리)
   const initialKrwChangeText = initialKrwChange > 0 
     ? `▲ ${initialKrwChange.toFixed(1)}%p 악화`
     : initialKrwChange < 0 
@@ -969,9 +971,9 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
                 <div className="text-3xl font-bold text-gray-800 mb-1">
                   <span className="text-gray-500">{total.costRate25F_usd.toFixed(1)}%</span>
                   <span className="mx-2 text-gray-400">→</span>
-                  <span className="text-red-600">{total.costRate25F_krw.toFixed(1)}%</span>
+                  <span className={isKrwImproved ? 'text-green-600' : isKrwWorsened ? 'text-red-600' : 'text-gray-600'}>{total.costRate25F_krw.toFixed(1)}%</span>
                 </div>
-                <div className="text-sm text-red-600 font-bold">
+                <div className={`text-sm font-bold ${isKrwImproved ? 'text-green-600' : isKrwWorsened ? 'text-red-600' : 'text-gray-600'}`}>
                   <EditableText
                     id="krw-main-change"
                     value={krwTexts.mainChange}
@@ -1015,7 +1017,9 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
                           <EditableText
                             id={`krw-change-${idx}`}
                             value={item.change}
-                            className="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full"
+                            className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                              isKrwImproved ? 'text-green-600 bg-green-50' : isKrwWorsened ? 'text-red-600 bg-red-50' : 'text-gray-600 bg-gray-50'
+                            }`}
                             onSave={(val: string) => handleTextEdit('krw', 'change', val, idx)}
                             showAIButton={true}
                             aiSection="krw"
@@ -1048,7 +1052,13 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
                         aiField="description"
                         aiItemIndex={idx}
                       />
-                      <div className="h-1 bg-gradient-to-r from-orange-400 to-red-500 rounded-full mt-3" style={{ width: '60%' }}></div>
+                      <div className={`h-1 rounded-full mt-3 ${
+                        isKrwImproved 
+                          ? 'bg-gradient-to-r from-green-400 to-emerald-500' 
+                          : isKrwWorsened 
+                          ? 'bg-gradient-to-r from-orange-400 to-red-500' 
+                          : 'bg-gradient-to-r from-gray-400 to-gray-500'
+                      }`} style={{ width: '60%' }}></div>
                     </div>
                   )}
                 </div>
@@ -1067,7 +1077,13 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
           </div>
 
           {/* KRW 핵심 메시지 */}
-          <div className="bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-lg p-4 min-h-[80px] shadow-md">
+          <div className={`text-white rounded-lg p-4 min-h-[80px] shadow-md ${
+            isKrwImproved 
+              ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+              : isKrwWorsened 
+              ? 'bg-gradient-to-r from-orange-500 to-red-600' 
+              : 'bg-gradient-to-r from-gray-500 to-gray-600'
+          }`}>
             <div className="flex items-start gap-3">
               <span className="text-xl w-6 flex-shrink-0">⚠️</span>
               <div className="flex-1">
