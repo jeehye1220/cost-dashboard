@@ -262,13 +262,17 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary, brandId }) => 
 
           {/* 환율 효과 */}
           <div className="flex flex-col items-center relative">
-            <div className="absolute -translate-y-3 bg-white px-3 py-1.5 rounded-lg shadow-md border-2 border-red-200 text-xs font-bold text-red-600 z-10">
-              +{exchangeRateEffect.toFixed(1)}%p
+            <div className={`absolute -translate-y-3 bg-white px-3 py-1.5 rounded-lg shadow-md border-2 ${exchangeRateEffect > 0 ? 'border-red-200' : exchangeRateEffect < 0 ? 'border-blue-200' : 'border-gray-200'} text-xs font-bold ${exchangeRateEffect > 0 ? 'text-red-600' : exchangeRateEffect < 0 ? 'text-blue-600' : 'text-gray-600'} z-10`}>
+              {exchangeRateEffect > 0 ? '+' : ''}{exchangeRateEffect.toFixed(1)}%p
             </div>
             <div
               className="rounded-xl flex flex-col items-center justify-center text-white font-bold shadow-lg border-2 border-white/20"
               style={{
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                background: exchangeRateEffect > 0 
+                  ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
+                  : exchangeRateEffect < 0
+                  ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                  : 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)',
                 width: '100px',
                 height: `${getBarHeight(exchangeRateEffect)}px`
               }}
@@ -325,11 +329,15 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary, brandId }) => 
           <p className="text-xs text-gray-600 mb-2 font-medium">
             전년 USD원가율 ({total.costRate24F_usd.toFixed(1)}) × 환율 ({fxPrev.toFixed(2)}→{fxCurr.toFixed(2)})
           </p>
-          <p className="text-2xl font-extrabold mb-2 text-red-600">
-            +{exchangeRateEffect.toFixed(1)}%p
+          <p className={`text-2xl font-extrabold mb-2 ${exchangeRateEffect > 0 ? 'text-red-600' : exchangeRateEffect < 0 ? 'text-blue-600' : 'text-gray-600'}`}>
+            {exchangeRateEffect > 0 ? '+' : ''}{exchangeRateEffect.toFixed(1)}%p
           </p>
           <p className="text-xs text-gray-600 leading-relaxed">
-            환율 악재로 공급 원가 실손익 상승
+            {exchangeRateEffect > 0 
+              ? '환율 악재로 공급 원가 실손익 상승'
+              : exchangeRateEffect < 0
+              ? '환율 호재로 공급 원가 실손익 개선'
+              : '환율 영향 없음'}
           </p>
         </div>
       </div>
@@ -339,7 +347,7 @@ const WaterfallChart: React.FC<WaterfallChartProps> = ({ summary, brandId }) => 
         "USD 기준 {Math.abs(realCostChange).toFixed(1)}%p 개선 
         (소재/아트웍 {materialArtworkChange.toFixed(1)} + 마진 {marginChange.toFixed(1)} + 
         공임 +{laborChange.toFixed(1)} + 경비 +{expenseChange.toFixed(1)}) + 
-        환율효과 +{exchangeRateEffect.toFixed(1)}%p = 
+        환율효과 {exchangeRateEffect > 0 ? '+' : ''}{exchangeRateEffect.toFixed(1)}%p = 
         KRW 기준 {(total.costRate25F_krw - total.costRate24F_usd).toFixed(1)}%p 악화"
       </div>
     </div>

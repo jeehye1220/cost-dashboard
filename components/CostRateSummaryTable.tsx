@@ -108,8 +108,8 @@ const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary }) 
                 <td className="border-r border-gray-200 px-4 py-3 font-bold text-gray-900">환율 효과</td>
                 <td className="border-r border-gray-200 px-4 py-3 text-right text-gray-500">-</td>
                 <td className="border-r border-gray-200 px-4 py-3 text-right text-gray-500">-</td>
-                <td className="px-4 py-3 text-right font-bold text-red-600">
-                  +{exchangeRateEffect.toFixed(1)}%p
+                <td className={`px-4 py-3 text-right font-bold ${exchangeRateEffect > 0 ? 'text-red-600' : exchangeRateEffect < 0 ? 'text-blue-600' : 'text-gray-600'}`}>
+                  {exchangeRateEffect > 0 ? '+' : ''}{exchangeRateEffect.toFixed(1)}%p
                 </td>
               </tr>
               <tr className="bg-gray-100 border-b-2 border-gray-300">

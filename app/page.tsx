@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Calculator, Calendar, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { Calculator, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { loadSummaryData, loadExchangeRates } from '@/lib/csvParser';
 import { parseBrandId } from '@/lib/brandUtils';
 
@@ -290,8 +290,6 @@ export default function Home() {
   const [brandSummaries, setBrandSummaries] = useState<Record<string, BrandSummary | null>>({});
   const [loading, setLoading] = useState(true);
   const [expandedCostItems, setExpandedCostItems] = useState<Set<string>>(new Set());
-  const [batchAILoading, setBatchAILoading] = useState(false);
-  const [batchAIProgress, setBatchAIProgress] = useState<{current: number; total: number; brand: string} | null>(null);
 
   // URL 쿼리 파라미터 변경 감지
   useEffect(() => {
@@ -438,88 +436,6 @@ export default function Home() {
     return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
-  // 배치 AI 분석 실행
-  const handleBatchAIAnalysis = async () => {
-    if (batchAILoading) return;
-    
-    // 현재 기간의 브랜드 목록 자동 파악
-    const currentPeriodBrands = brands.filter(brand => brand.period === selectedPeriod);
-    
-    if (currentPeriodBrands.length === 0) {
-      alert('선택된 기간에 브랜드가 없습니다.');
-      return;
-    }
-
-    // 확인 메시지
-    const confirmMessage = `${selectedPeriod} 기간의 ${currentPeriodBrands.length}개 브랜드에 대해 AI 분석을 실행하시겠습니까?\n\n예상 소요 시간: 약 ${currentPeriodBrands.length * 2}분\n예상 비용: 약 $${(currentPeriodBrands.length * 0.5).toFixed(2)}`;
-    if (!confirm(confirmMessage)) {
-      return;
-    }
-
-    // 브랜드 ID와 브랜드 코드 추출
-    const brandData = currentPeriodBrands.map(brand => {
-      const brandInfo = parseBrandId(brand.id);
-      return {
-        brandId: brand.id,
-        brandCode: brandInfo.brandCode,
-        brandName: brand.name,
-      };
-    });
-
-    setBatchAILoading(true);
-    setBatchAIProgress({ current: 0, total: brandData.length, brand: '시작 중...' });
-
-    try {
-      // 진행 상황 시뮬레이션 (실제로는 API에서 처리 중)
-      const progressInterval = setInterval(() => {
-        setBatchAIProgress(prev => {
-          if (!prev) return null;
-          // 예상 진행률 업데이트 (실제로는 API에서 받아야 함)
-          return prev;
-        });
-      }, 1000);
-
-      const response = await fetch('/api/batch-generate-insights', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          period: selectedPeriod,
-          brands: brandData,
-        }),
-      });
-
-      clearInterval(progressInterval);
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || '배치 AI 분석에 실패했습니다.');
-      }
-
-      const result = await response.json();
-      
-      // 결과 상세 표시
-      let resultMessage = `배치 AI 분석이 완료되었습니다!\n\n`;
-      resultMessage += `총 ${result.total}개 브랜드\n`;
-      resultMessage += `✅ 성공: ${result.success}개\n`;
-      if (result.failed > 0) {
-        resultMessage += `❌ 실패: ${result.failed}개\n\n`;
-        resultMessage += `실패한 브랜드:\n`;
-        result.results.forEach((r: any) => {
-          if (!r.success) {
-            resultMessage += `- ${r.brandCode}: ${r.error || '알 수 없는 오류'}\n`;
-          }
-        });
-      }
-      
-      alert(resultMessage);
-    } catch (error: any) {
-      console.error('배치 AI 분석 오류:', error);
-      alert(`배치 AI 분석 중 오류가 발생했습니다: ${error.message}`);
-    } finally {
-      setBatchAILoading(false);
-      setBatchAIProgress(null);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -544,7 +460,7 @@ export default function Home() {
             <p className="text-gray-600 text-sm">분석할 브랜드를 클릭하여 상세 대시보드로 이동합니다</p>
           </div>
 
-          {/* 날짜 선택 및 전체 AI 분석 버튼 */}
+          {/* 날짜 선택 */}
           <div className="flex items-center gap-3">
             <div className="relative">
               <select
@@ -569,27 +485,6 @@ export default function Home() {
               </select>
               <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-600 pointer-events-none" />
             </div>
-            
-            {/* 전체 AI 분석 버튼 */}
-            <button
-              onClick={handleBatchAIAnalysis}
-              disabled={batchAILoading}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
-            >
-              <Sparkles className="w-4 h-4" />
-              {batchAILoading ? (
-                <span className="flex items-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  {batchAIProgress && (
-                    <span className="text-sm">
-                      {batchAIProgress.brand} ({batchAIProgress.current}/{batchAIProgress.total})
-                    </span>
-                  )}
-                </span>
-              ) : (
-                <span>{selectedPeriod} 전체 AI 분석</span>
-              )}
-            </button>
           </div>
         </div>
 

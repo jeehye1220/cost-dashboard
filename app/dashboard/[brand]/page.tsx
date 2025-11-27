@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Home, Calendar } from 'lucide-react';
+import { ArrowLeft, Home, Calendar, Download } from 'lucide-react';
 import EnhancedStoryCards from '@/components/EnhancedStoryCards';
 import Dashboard from '@/components/Dashboard';
 import CategoryComparison from '@/components/CategoryComparison';
@@ -24,6 +24,7 @@ export default function BrandDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingAi, setLoadingAi] = useState(false);
+  const [csvFileName, setCsvFileName] = useState<string>('');
   const [aiInsights, setAiInsights] = useState<{
     action: string[];
     risk: string[];
@@ -464,6 +465,9 @@ export default function BrandDashboard() {
             return;
         }
         
+        // CSV 파일명을 state에 저장 (다운로드용)
+        setCsvFileName(csvFileName);
+        
         // CSV 파일에서 아이템별 데이터 로드
         let costData;
         if (brandId.startsWith('26SS-')) {
@@ -528,6 +532,67 @@ export default function BrandDashboard() {
     }
   }, [brandId]);
 
+  // CSV 파일 다운로드 함수
+  const handleDownloadCSV = async () => {
+    if (!csvFileName) {
+      alert('다운로드할 파일이 없습니다.');
+      return;
+    }
+
+    try {
+      // 파일명 추출 (경로에서 마지막 부분만)
+      const fileName = csvFileName.includes('/') 
+        ? csvFileName.split('/').pop() || csvFileName
+        : csvFileName;
+
+      // 파일 경로 URL 인코딩 (공백 등 특수문자 처리)
+      // 경로를 '/'로 분할하여 각 부분을 인코딩
+      const encodedPath = csvFileName
+        .split('/')
+        .map(part => encodeURIComponent(part))
+        .join('/');
+      
+      const fileUrl = `/${encodedPath}`;
+      console.log('CSV 다운로드 시도:', { original: csvFileName, encoded: fileUrl, fileName });
+
+      // 파일 가져오기
+      const response = await fetch(fileUrl);
+      
+      if (!response.ok) {
+        console.error('파일 로드 실패:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: fileUrl
+        });
+        throw new Error(`파일을 불러올 수 없습니다 (${response.status}: ${response.statusText})`);
+      }
+
+      // Blob으로 변환
+      const blob = await response.blob();
+      
+      // 다운로드 링크 생성
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      
+      // 정리
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('CSV 다운로드 완료:', fileName);
+    } catch (error) {
+      console.error('CSV 다운로드 오류:', {
+        error,
+        csvFileName,
+        message: error instanceof Error ? error.message : '알 수 없는 오류'
+      });
+      alert(`CSV 파일 다운로드에 실패했습니다.\n\n오류: ${error instanceof Error ? error.message : '알 수 없는 오류'}\n파일: ${csvFileName}`);
+    }
+  };
+
   // 실제 데이터에 존재하는 카테고리만 필터링
   const availableCategories = React.useMemo(() => {
     const categorySet = new Set(items.map(item => item.category));
@@ -583,6 +648,17 @@ export default function BrandDashboard() {
                   <ArrowLeft className="w-5 h-5" />
                 </button>
                 <h1 className="text-2xl font-bold text-gray-800">{brandInfo.name} 원가 대시보드</h1>
+                {/* CSV 다운로드 버튼 */}
+                {csvFileName && (
+                  <button
+                    onClick={handleDownloadCSV}
+                    className={`${brandInfo.buttonBg} ${brandInfo.headerText} rounded-lg shadow-md px-4 py-2 hover:shadow-lg transition-all font-semibold flex items-center gap-2 ${brandInfo.buttonHover}`}
+                    title="CSV 파일 다운로드"
+                  >
+                    <Download className="w-5 h-5" />
+                    <span className="text-sm">CSV 다운로드</span>
+                  </button>
+                )}
               </div>
               {/* 기간 선택 드롭다운 */}
               <div className="relative">
