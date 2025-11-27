@@ -468,45 +468,49 @@ export default function BrandDashboard() {
         // CSV 파일명을 state에 저장 (다운로드용)
         setCsvFileName(csvFileName);
         
-        // CSV 파일에서 아이템별 데이터 로드
-        let costData;
+        // 병렬 데이터 로딩: CSV, Summary, 환율 정보를 동시에 로드
+        let costDataPromise: Promise<any>;
         if (brandId.startsWith('26SS-')) {
-          costData = await loadCostData(csvFileName, fxFileName, brandId, '26SS', '25SS');
+          costDataPromise = loadCostData(csvFileName, fxFileName, brandId, '26SS', '25SS');
         } else if (brandId.startsWith('26FW-')) {
-          costData = await loadCostData(csvFileName, fxFileName, brandId, '26FW', '25FW');
+          costDataPromise = loadCostData(csvFileName, fxFileName, brandId, '26FW', '25FW');
         } else if (brandId.startsWith('25SS-')) {
-          costData = await loadCostData(csvFileName, fxFileName, brandId, '25SS', '24SS');
+          costDataPromise = loadCostData(csvFileName, fxFileName, brandId, '25SS', '24SS');
         } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'ST' || brandId === 'V') {
           // 25FW 기간 브랜드들 (M, I, X, ST, V) - 새 구조
           const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId;
           // 25FW-{brandCode} 형식으로 만들어서 일관성 유지
-          costData = await loadCostData(csvFileName, fxFileName, `25FW-${brandCode}`, '25FW', '24FW');
+          costDataPromise = loadCostData(csvFileName, fxFileName, `25FW-${brandCode}`, '25FW', '24FW');
         } else {
-          costData = await loadCostData(csvFileName, fxFileName);
+          costDataPromise = loadCostData(csvFileName, fxFileName);
         }
-        setItems(costData);
         
-        // summary.json 로드
-        const summaryData = await loadSummaryData(summaryFileName);
-        
-        // 환율 정보 로드하여 summary에 추가
-        let fxRates;
+        let fxRatesPromise: Promise<any>;
         // 새로운 시즌 형식(26SS-*, 26FW-*, 25SS-* 등)인 경우 브랜드 ID와 시즌 정보 전달
         if (brandId.startsWith('26SS-')) {
-          fxRates = await loadExchangeRates(fxFileName, brandId, '26SS', '25SS');
+          fxRatesPromise = loadExchangeRates(fxFileName, brandId, '26SS', '25SS');
         } else if (brandId.startsWith('26FW-')) {
-          fxRates = await loadExchangeRates(fxFileName, brandId, '26FW', '25FW');
+          fxRatesPromise = loadExchangeRates(fxFileName, brandId, '26FW', '25FW');
         } else if (brandId.startsWith('25SS-')) {
-          fxRates = await loadExchangeRates(fxFileName, brandId, '25SS', '24SS');
+          fxRatesPromise = loadExchangeRates(fxFileName, brandId, '25SS', '24SS');
         } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'ST' || brandId === 'V') {
           // 25FW 기간 브랜드들 (M, I, X, ST, V) - 새 구조
           const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId;
           // 25FW-{brandCode} 형식으로 만들어서 일관성 유지
-          fxRates = await loadExchangeRates(fxFileName, `25FW-${brandCode}`, '25FW', '24FW');
+          fxRatesPromise = loadExchangeRates(fxFileName, `25FW-${brandCode}`, '25FW', '24FW');
         } else {
           // 기존 브랜드는 기존 방식 유지 (NON 등)
-          fxRates = await loadExchangeRates(fxFileName);
+          fxRatesPromise = loadExchangeRates(fxFileName);
         }
+        
+        // 병렬 로딩 실행
+        const [costData, summaryData, fxRates] = await Promise.all([
+          costDataPromise,
+          loadSummaryData(summaryFileName),
+          fxRatesPromise
+        ]);
+        
+        setItems(costData);
         
         const enrichedSummary = {
           ...summaryData,

@@ -185,6 +185,29 @@ async function aggregateByItem(
     }
   });
   
+  // 환율 캐시: 카테고리별 환율을 한 번만 조회하고 재사용
+  const fxRateCache = new Map<string, number>();
+  const getCachedFxRate = async (category: string): Promise<number> => {
+    const cacheKey = `${brandCode}_${prevSeasonCode}_${category || '의류'}`;
+    if (!fxRateCache.has(cacheKey)) {
+      const rate = await getExchangeRateFromFx(brandCode, prevSeasonCode, category);
+      fxRateCache.set(cacheKey, rate);
+    }
+    return fxRateCache.get(cacheKey)!;
+  };
+  
+  // 모든 고유 카테고리 수집 및 환율 사전 로드
+  const allCategories = new Set<string>();
+  for (const group of itemMap.values()) {
+    group.dataPrev.forEach(row => allCategories.add(row.category || '의류'));
+    group.dataCurr.forEach(row => allCategories.add(row.category || '의류'));
+  }
+  
+  // 환율 사전 로드 (병렬 처리)
+  await Promise.all(
+    Array.from(allCategories).map(category => getCachedFxRate(category))
+  );
+  
   // 각 아이템별 집계 계산
   const items: CostDataItem[] = [];
   
@@ -220,10 +243,10 @@ async function aggregateByItem(
     const avgCost24F = material24F + artwork24F + labor24F + margin24F + expense24F;
     
     // 원가율 계산: 평균 KRW TAG를 환율로 나눠서 USD로 변환 후 계산
-    // 각 행의 카테고리에 맞는 환율 사용 (전년 시즌 환율)
+    // 캐시된 환율 사용 (전년 시즌 환율)
     let tag24FTotalUSD = 0;
     for (const row of group.dataPrev) {
-      const fxRate = await getExchangeRateFromFx(brandCode, prevSeasonCode, row.category);
+      const fxRate = await getCachedFxRate(row.category);
       tag24FTotalUSD += (row.tag / fxRate) * row.qty;
     }
     const avgTag24F_usd = qty24F > 0 ? tag24FTotalUSD / qty24F : 0;
@@ -260,10 +283,10 @@ async function aggregateByItem(
     const avgCost25F = material25F + artwork25F + labor25F + margin25F + expense25F;
     
     // 원가율 계산: 평균 KRW TAG를 전시즌 환율로 나눠서 USD로 변환 후 계산
-    // 각 행의 카테고리에 맞는 환율 사용 (전시즌 환율, 26SS 당년은 25SS 환율)
+    // 캐시된 환율 사용 (전시즌 환율, 26SS 당년은 25SS 환율)
     let tag25FTotalUSD = 0;
     for (const row of group.dataCurr) {
-      const fxRate = await getExchangeRateFromFx(brandCode, prevSeasonCode, row.category);
+      const fxRate = await getCachedFxRate(row.category);
       tag25FTotalUSD += (row.tag / fxRate) * row.qty;
     }
     const avgTag25F_usd = qty25F > 0 ? tag25FTotalUSD / qty25F : 0;
