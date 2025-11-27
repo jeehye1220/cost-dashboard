@@ -429,7 +429,7 @@ def format_data_like_mlb_fw(df: pd.DataFrame, df_fx: pd.DataFrame) -> pd.DataFra
     """
     MLB FW.csv 형식에 맞게 데이터 변환
     - TAG_총금액 추가 (TAG × 수량)
-    - TAG_USD금액(24F환율) 추가 (TAG_총금액 / 24F 환율)
+    - TAG_USD금액(전년환율) 추가 (TAG_총금액 / 전년 환율)
     - 각 항목별 총금액 컬럼 추가 (단가 × 수량)
     """
     df_result = df.copy()
@@ -443,7 +443,7 @@ def format_data_like_mlb_fw(df: pd.DataFrame, df_fx: pd.DataFrame) -> pd.DataFra
     
     # 2. TAG_USD금액 계산 (각 행의 시즌에 따라 전시즌 환율 사용)
     # 예: 25F → 24F 환율, 24S → 23S 환율, 25S → 24S 환율
-    df_result['TAG_USD금액(24F환율)'] = 0.0  # 초기화
+    df_result['TAG_USD금액(전년환율)'] = 0.0  # 초기화
     
     print("\n[INFO] TAG_USD금액 계산 중 (전시즌 환율 적용)...")
     for idx, row in df_result.iterrows():
@@ -464,18 +464,22 @@ def format_data_like_mlb_fw(df: pd.DataFrame, df_fx: pd.DataFrame) -> pd.DataFra
             # TAG_USD금액 계산 (TAG_총금액 / 전시즌 환율)
             tag_total = pd.to_numeric(row['TAG_총금액'], errors='coerce')
             if pd.notna(tag_total) and fx_rate > 0:
-                df_result.at[idx, 'TAG_USD금액(24F환율)'] = tag_total / fx_rate
+                df_result.at[idx, 'TAG_USD금액(전년환율)'] = tag_total / fx_rate
         else:
             # 전시즌이 없는 경우 기본 환율 사용
             season_code = convert_season_format(current_season)
             fx_rate = get_exchange_rate(df_fx, brand_code, season_code, category)
             tag_total = pd.to_numeric(row['TAG_총금액'], errors='coerce')
             if pd.notna(tag_total) and fx_rate > 0:
-                df_result.at[idx, 'TAG_USD금액(24F환율)'] = tag_total / fx_rate
+                df_result.at[idx, 'TAG_USD금액(전년환율)'] = tag_total / fx_rate
     
     print("[OK] TAG_USD금액 계산 완료")
     
     # 3. 컬럼명 수정 (MLB FW 형식에 맞게)
+    # "TAG_USD금액(24F환율)" → "TAG_USD금액(전년환율)" (기존 파일 호환성)
+    if 'TAG_USD금액(24F환율)' in df_result.columns:
+        df_result = df_result.rename(columns={'TAG_USD금액(24F환율)': 'TAG_USD금액(전년환율)'})
+    
     # "(USD)_공임" → "(USD) 공임"
     if '(USD)_공임' in df_result.columns:
         df_result = df_result.rename(columns={'(USD)_공임': '(USD) 공임'})
@@ -555,7 +559,7 @@ def format_data_like_mlb_fw(df: pd.DataFrame, df_fx: pd.DataFrame) -> pd.DataFra
     # 원산지명, 마감형태를 제조업체 다음에 배치
     column_order = [
         '브랜드', '시즌', '스타일', '중분류', '아이템명', 'PO', 'TAG', '수량',
-        'TAG_총금액', 'TAG_USD금액(24F환율)',
+        'TAG_총금액', 'TAG_USD금액(전년환율)',
         '원가견적번호', '발주통화', '제조업체', '원산지명', '마감형태', '견적서제출일자',
         '(USD)_원자재', '(USD)_아트웍', '(USD)_부자재', '(USD)_택/라벨', 
         '(USD) 공임', '(USD)본사공급자재', '(USD)_정상마진', '(USD)_경비',
