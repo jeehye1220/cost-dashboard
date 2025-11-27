@@ -129,7 +129,11 @@ export async function loadInsightsFromCSV(season: string, brandId?: string): Pro
       return null;
     }
 
-    const response = await fetch(filePath);
+    // 캐시 무효화를 위해 timestamp 추가
+    const cacheBuster = `?t=${Date.now()}`;
+    const response = await fetch(filePath + cacheBuster, {
+      cache: 'no-store',
+    });
     if (!response.ok) {
       console.warn(`Failed to load insights CSV: ${filePath}`);
       return null;
