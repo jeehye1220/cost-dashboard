@@ -193,7 +193,7 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
                 기타경비
               </th>
               <th className="border-r border-gray-200 bg-white px-3 py-3 text-center font-semibold text-gray-800">
-                수량
+                수량(전년비)
               </th>
             </tr>
           </thead>
