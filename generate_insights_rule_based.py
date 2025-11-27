@@ -97,22 +97,24 @@ def generate_usd_summary(total: Dict[str, Any], season: str) -> str:
 
 def generate_krw_summary(total: Dict[str, Any], season: str, fx_rates: Dict[str, float]) -> str:
     """KRW 기준 요약 생성"""
-    cost_rate_change_krw = total.get('costRateChange_krw', 0)
-    cost_rate_change_usd = total.get('costRateChange_usd', 0)
-    cost_rate_prev = total.get('costRate24F_krw', 0)
-    cost_rate_curr = total.get('costRate25F_krw', 0)
+    cost_rate_curr_usd = total.get('costRate25F_usd', 0)
+    cost_rate_curr_krw = total.get('costRate25F_krw', 0)
     
-    fx_effect = cost_rate_change_krw - cost_rate_change_usd
+    # 환율 효과: 당년 KRW 원가율 - 당년 USD 원가율
+    fx_effect = cost_rate_curr_krw - cost_rate_curr_usd
+    # 환율 변동률: (현재/이전 * 100) - 100
     fx_change = ((fx_rates['curr'] / fx_rates['prev']) * 100) - 100 if fx_rates['prev'] > 0 else 0
     
-    direction = "개선" if cost_rate_change_krw < 0 else "악화"
-    sign = "" if cost_rate_change_krw < 0 else "+"
-    fx_sign = "" if fx_change < 0 else "+"
+    # 환율 변동 방향
+    fx_direction = "하락" if fx_change < 0 else "상승"
+    # 환율 효과 방향 (fx_effect < 0이면 개선, > 0이면 악화)
+    fx_effect_direction = "개선" if fx_effect < 0 else "악화"
+    fx_effect_sign = "" if fx_effect < 0 else "+"
     
     if abs(fx_effect) > 0.5:
-        return f"{season} 시즌 KRW 기준 원가율은 {cost_rate_prev:.1f}%에서 {cost_rate_curr:.1f}%로 {sign}{abs(cost_rate_change_krw):.1f}%p {direction}되었습니다. 환율 {fx_sign}{abs(fx_change):.1f}% 변동({fx_rates['prev']:.0f}→{fx_rates['curr']:.0f}원)으로 USD 기준 {sign}{abs(cost_rate_change_usd):.1f}%p {direction} 효과가 {fx_sign}{abs(fx_effect):.1f}%p {direction}되었습니다."
+        return f"당년 USD 원가율 {cost_rate_curr_usd:.1f}%에서 환율 {abs(fx_change):.1f}% {fx_direction}({fx_rates['prev']:.0f}→{fx_rates['curr']:.0f}원) 효과로 당년 KRW 원가율은 {cost_rate_curr_krw:.1f}%로 {fx_effect_sign}{abs(fx_effect):.1f}%p {fx_effect_direction}되었습니다."
     
-    return f"{season} 시즌 KRW 기준 원가율은 {cost_rate_prev:.1f}%에서 {cost_rate_curr:.1f}%로 {sign}{abs(cost_rate_change_krw):.1f}%p {direction}되었습니다."
+    return f"당년 USD 원가율 {cost_rate_curr_usd:.1f}%에서 환율 변동 효과로 당년 KRW 원가율은 {cost_rate_curr_krw:.1f}%로 나타났습니다."
 
 
 def generate_actions(total: Dict[str, Any]) -> List[str]:
