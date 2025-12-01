@@ -587,10 +587,11 @@ export default function Home() {
 
   useEffect(() => {
     const loadAllSummaries = async () => {
-      const summaries: Record<string, BrandSummary | null> = {};
-      
-      // 각 브랜드별 summary 파일 및 FX 파일 매핑
-      const brandFiles: Record<string, { summary: string; fx: string }> = {
+      try {
+        const summaries: Record<string, BrandSummary | null> = {};
+        
+        // 각 브랜드별 summary 파일 및 FX 파일 매핑
+        const brandFiles: Record<string, { summary: string; fx: string }> = {
         '25FW': { summary: 'COST RAW/25FW/summary_25fw_m.json', fx: 'COST RAW/FX.csv' },
         'KIDS': { summary: 'COST RAW/25FW/summary_25fw_i.json', fx: 'COST RAW/FX.csv' },
         'DISCOVERY': { summary: 'COST RAW/25FW/summary_25fw_x.json', fx: 'COST RAW/FX.csv' },
@@ -706,6 +707,10 @@ export default function Home() {
       
       setBrandSummaries(summaries);
       setLoading(false);
+      } catch (error) {
+        console.error('Failed to load summaries:', error);
+        setLoading(false);
+      }
     };
 
     loadAllSummaries();
@@ -1023,9 +1028,10 @@ export default function Home() {
                           <div className="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm">
                             <div className="text-xs text-gray-500 mb-1.5 font-medium">환율</div>
                             <div className="text-lg font-bold text-gray-900">
-                              {brandSummaries[brand.id]!.fxPrev.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} → {brandSummaries[brand.id]!.fxCurr.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                              <span className="ml-2 text-sm text-gray-600 font-semibold">
-                                ({Math.round((brandSummaries[brand.id]!.fxCurr / brandSummaries[brand.id]!.fxPrev) * 100)}%)
+                              {brandSummaries[brand.id]!.fxPrev.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} →{' '}
+                              {brandSummaries[brand.id]!.fxCurr.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}{' '}
+                              <span className="ml-1 text-sm text-gray-600 font-semibold">
+                                ({brandSummaries[brand.id]!.fxPrev > 0 ? Math.round((brandSummaries[brand.id]!.fxCurr / brandSummaries[brand.id]!.fxPrev) * 100) : 0}%)
                               </span>
                             </div>
                           </div>

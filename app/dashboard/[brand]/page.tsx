@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Home, Calendar, Download } from 'lucide-react';
+import { ArrowLeft, Home, Calendar, Download, RefreshCw } from 'lucide-react';
 import EnhancedStoryCards from '@/components/EnhancedStoryCards';
 import Dashboard from '@/components/Dashboard';
 import CategoryComparison from '@/components/CategoryComparison';
@@ -35,6 +35,19 @@ export default function BrandDashboard() {
     successSummary?: string;
     message: string;
   } | null>(null);
+
+  // 의류 / ACC 카테고리 상태 (상세 대시보드용)
+  const [categoryType, setCategoryType] = useState<'apparel' | 'acc'>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const category = params.get('category');
+      if (category === 'apparel' || category === 'acc') {
+        return category;
+      }
+    }
+    // URL 정보가 없으면 브랜드 ID 기반으로 기본값 결정
+    return (typeof params.brand === 'string' && params.brand.includes('-NON')) ? 'acc' : 'apparel';
+  });
 
   // CSV에서 인사이트 로드 (초기화) - 데이터가 유효할 때만
   useEffect(() => {
@@ -86,7 +99,6 @@ export default function BrandDashboard() {
   // 모든 브랜드 정보
   const allBrands = [
     { id: '25FW', name: 'MLB 25FW', icon: 'MLB', iconBg: 'bg-blue-300', textColor: 'text-blue-700', period: '25FW' },
-    { id: 'NON', name: 'MLB ACC', icon: 'MLB', iconBg: 'bg-slate-300', textColor: 'text-slate-700', period: '25FW' },
     { id: 'KIDS', name: 'MLB KIDS', icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700', period: '25FW' },
     { id: 'DISCOVERY', name: 'DISCOVERY', icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700', period: '25FW' },
     { id: 'DISCOVERY-KIDS', name: 'DISCOVERY KIDS', icon: 'DK', iconBg: 'bg-teal-300', textColor: 'text-teal-700', period: '25FW' },
@@ -145,7 +157,7 @@ export default function BrandDashboard() {
     return brandId; // 25FW, NON, KIDS, DISCOVERY, DISCOVERY-KIDS
   }, [brandId]);
 
-  // 브랜드 코드 매핑 (25SS, 26SS 브랜드 → 25FW 브랜드)
+  // 브랜드 코드 매핑 (25SS, 26SS 브랜드 → 25FW 브랜드) - 레거시/백업용
   const brandCodeMapping: Record<string, Record<string, string>> = {
     'M': { '25FW': '25FW', '25SS': '25SS-M', '26SS': '26SS-M', '26FW': '26FW-M' },
     'I': { '25FW': 'KIDS', '25SS': '25SS-I', '26SS': '26SS-I', '26FW': '26FW-I' },
@@ -156,26 +168,122 @@ export default function BrandDashboard() {
     'KIDS': { '25FW': 'KIDS', '25SS': '25SS-I', '26SS': '26SS-I', '26FW': '26FW-I' },
     'DISCOVERY': { '25FW': 'DISCOVERY', '25SS': '25SS-X', '26SS': '26SS-X', '26FW': '26FW-X' },
     'DISCOVERY-KIDS': { '25FW': 'DISCOVERY-KIDS', '25SS': '25SS-DISCOVERY-KIDS', '26SS': '26SS-DISCOVERY-KIDS', '26FW': '26FW-DISCOVERY-KIDS' },
-    'NON': { '25FW': 'NON', '25SS': '', '26SS': '26SS-NON', '26FW': '26FW-NON' },
   };
 
-  // 기간 선택 핸들러
+  // MLB / MK / DX 브랜드 코드 추출 (패턴 기반)
+  const getBrandCodeFromId = (id: string): 'M' | 'I' | 'X' | null => {
+    if (id === '25FW') return 'M';
+    if (id === 'M-NON') return 'M';
+    if (id === 'KIDS' || id === 'I-NON') return 'I';
+    if (id === 'DISCOVERY' || id === 'X-NON') return 'X';
+
+    const parts = id.split('-');
+    if (parts.length === 0) return null;
+    const last = parts[parts.length - 1];
+
+    if (last === 'M' || last === 'I' || last === 'X') {
+      return last;
+    }
+
+    // 26SS-M-NON, 27FW-X-NON 등
+    if (last === 'NON' && parts.length >= 2) {
+      const code = parts[parts.length - 2];
+      if (code === 'M' || code === 'I' || code === 'X') {
+        return code;
+      }
+    }
+    return null;
+  };
+
+  // 의류용 브랜드 ID 생성 (패턴 + 특수 케이스)
+  const getApparelBrandIdForPeriod = (period: string, code: 'M' | 'I' | 'X'): string | null => {
+    if (period === '25FW') {
+      if (code === 'M') return '25FW';
+      if (code === 'I') return 'KIDS';
+      if (code === 'X') return 'DISCOVERY';
+      return null;
+    }
+    return `${period}-${code}`;
+  };
+
+  // ACC용 브랜드 ID 생성 (패턴 + 특수 케이스)
+  const getAccBrandIdForPeriod = (period: string, code: 'M' | 'I' | 'X'): string | null => {
+    if (period === '25FW') {
+      // 25FW 기간의 NON 브랜드들
+      if (code === 'M') return 'M-NON';
+      if (code === 'I') return 'I-NON';
+      if (code === 'X') return 'X-NON';
+      return null;
+    }
+    // 새 시즌(예: 27FW)도 동일 패턴으로 자동 동작
+    return `${period}-${code}-NON`;
+  };
+
+  // 기간 선택 핸들러 (카테고리/브랜드 코드 유지, 패턴 기반)
   const handlePeriodChange = (newPeriod: string) => {
-    const baseBrandCode = currentBrandCode;
-    const newBrandId = brandCodeMapping[baseBrandCode]?.[newPeriod];
-    
-    if (newBrandId && newBrandId !== '') {
-      router.push(`/dashboard/${newBrandId}?period=${newPeriod}`);
+    const code = getBrandCodeFromId(brandId);
+    let targetBrandId: string | null = null;
+
+    if (code) {
+      if (categoryType === 'acc') {
+        targetBrandId = getAccBrandIdForPeriod(newPeriod, code);
+      } else {
+        targetBrandId = getApparelBrandIdForPeriod(newPeriod, code);
+      }
+    }
+
+    // 패턴으로 찾지 못한 경우 기존 매핑을 백업으로 사용
+    if (!targetBrandId) {
+      const baseBrandCode = currentBrandCode;
+      targetBrandId = brandCodeMapping[baseBrandCode]?.[newPeriod] || null;
+    }
+
+    if (targetBrandId) {
+      router.push(`/dashboard/${targetBrandId}?period=${newPeriod}&category=${categoryType}`);
     } else {
       // 해당 기간에 브랜드가 없으면 홈으로 이동
-      router.push(`/?period=${newPeriod}`);
+      router.push(`/?period=${newPeriod}&category=${categoryType}`);
     }
   };
 
-  // 현재 기간에 맞는 브랜드만 필터링
-  const filteredBrands = React.useMemo(() => {
+  // 현재 기간에 맞는 의류 브랜드만 필터링 (ACC 브랜드는 별도 처리)
+  const filteredApparelBrands = React.useMemo(() => {
     return allBrands.filter(brand => brand.period === currentPeriod);
   }, [currentPeriod]);
+
+  // ACC 모드에서 사용할 헤더 아이콘 (MLB / MK / DX만, 패턴 기반)
+  const accHeaderBrands = React.useMemo(() => {
+    if (categoryType !== 'acc') return [];
+
+    const baseIcons = [
+      { code: 'M' as const, icon: 'MLB', iconBg: 'bg-blue-300', textColor: 'text-blue-700' },
+      { code: 'I' as const, icon: 'MK', iconBg: 'bg-rose-300', textColor: 'text-rose-700' },
+      { code: 'X' as const, icon: 'DX', iconBg: 'bg-emerald-300', textColor: 'text-emerald-700' },
+    ];
+
+    return baseIcons
+      .map((base) => {
+        const targetId = getAccBrandIdForPeriod(currentPeriod, base.code);
+        if (!targetId) return null;
+        return {
+          id: targetId,
+          name: `${base.icon} ${currentPeriod} ACC`,
+          icon: base.icon,
+          iconBg: base.iconBg,
+          textColor: base.textColor,
+          period: currentPeriod,
+        };
+      })
+      .filter((b) => b !== null) as typeof allBrands;
+  }, [categoryType, currentPeriod]);
+
+  // 헤더에서 사용할 브랜드 리스트 (의류 / ACC 모드에 따라 변경)
+  const headerBrands = React.useMemo(() => {
+    if (categoryType === 'acc') {
+      return accHeaderBrands;
+    }
+    return filteredApparelBrands;
+  }, [categoryType, accHeaderBrands, filteredApparelBrands]);
 
   // 사용 가능한 기간 목록 (연도순, 연도 내에서 SS-FW 순서)
   const availablePeriods = [
@@ -199,19 +307,6 @@ export default function BrandDashboard() {
       infoText: 'text-blue-700',
       buttonBg: 'bg-blue-300',
       buttonHover: 'hover:bg-blue-400',
-    },
-    'NON': { 
-      name: 'MLB ACC', 
-      color: 'slate',
-      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
-      headerText: 'text-slate-700',
-      headerTextHover: 'hover:text-slate-800',
-      infoBg: 'bg-slate-200',
-      infoBorder: 'border-slate-300',
-      infoTitle: 'text-slate-700',
-      infoText: 'text-slate-700',
-      buttonBg: 'bg-slate-300',
-      buttonHover: 'hover:bg-slate-400',
     },
     'KIDS': { 
       name: 'MLB KIDS', 
@@ -658,11 +753,6 @@ export default function BrandDashboard() {
             csvFileName = 'COST RAW/25FW/M_25F.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/25FW/summary_25fw_m.json';
-            break;
-          case 'NON':
-            csvFileName = 'MLB non  251111.csv';
-            fxFileName = 'FX 251111.csv';
-            summaryFileName = 'summary.json';
             break;
           case 'KIDS':
             csvFileName = 'COST RAW/25FW/I_25F.csv';
@@ -1142,6 +1232,20 @@ export default function BrandDashboard() {
                   </button>
                 )}
               </div>
+              {/* 의류/ACC 선택 드롭다운 */}
+              <div className="relative">
+                <select
+                  value={categoryType}
+                  onChange={(e) => {
+                    const newCategory = e.target.value === 'acc' ? 'acc' : 'apparel';
+                    setCategoryType(newCategory);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors bg-white cursor-pointer appearance-none pr-8 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm font-medium"
+                >
+                  <option value="apparel">의류</option>
+                  <option value="acc">ACC</option>
+                </select>
+              </div>
               {/* 기간 선택 드롭다운 */}
               <div className="relative">
                 <select
@@ -1161,22 +1265,22 @@ export default function BrandDashboard() {
               <div className="flex items-center gap-2">
                 {/* 홈 아이콘 */}
                 <button
-                  onClick={() => router.push(`/?period=${currentPeriod}`)}
+                  onClick={() => router.push(`/?period=${currentPeriod}&category=${categoryType}`)}
                   className="bg-gray-200 text-gray-700 w-10 h-10 rounded-lg flex items-center justify-center shadow-sm hover:shadow-md hover:bg-gray-300 transition-all"
                   title="홈으로"
                 >
                   <Home className="w-5 h-5" />
                 </button>
-                {filteredBrands.map((brand) => (
+                {headerBrands.map((brand) => (
                   <button
                     key={brand.id}
-                    onClick={() => router.push(`/dashboard/${brand.id}`)}
+                    onClick={() => router.push(`/dashboard/${brand.id}?period=${currentPeriod}&category=${categoryType}`)}
                     className={`${brand.iconBg} ${brand.textColor} w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold shadow-sm hover:shadow-md transition-all ${
                       brandId === brand.id ? 'ring-2 ring-gray-400 ring-offset-2' : ''
                     }`}
                     title={brand.name}
                   >
-                    {brand.id === 'NON' ? 'MLB ACC' : brand.icon}
+                    {brand.icon}
                   </button>
                 ))}
               </div>

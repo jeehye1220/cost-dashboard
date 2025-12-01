@@ -53,6 +53,7 @@
     "smtp_port": 587,
     "sender_email": "",
     "sender_password": ""
-  }
+  },
+  "teams_webhook_url": "https://fnf365.webhook.office.com/webhookb2/dae107d8-c48d-418c-90a4-f45b4f86de0a@c0f5d9c6-f2df-4b78-85aa-5d4d82ce0cb5/IncomingWebhook/39ee961dbf2d4265828c25a2bcf95a2c/d26bf7ad-58fb-492b-9bcb-e848e38d503b/V2saYpfmij2WAcRwO5tC-UVP-_sJiyc9f1Nauj87f-mMM1"
 }
 

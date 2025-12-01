@@ -24,6 +24,12 @@ from typing import Dict, List, Optional
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import ctypes
+from ctypes import wintypes
+try:
+    import requests
+except ImportError:
+    requests = None
 
 # 로깅 설정
 LOG_DIR = Path('logs')
@@ -83,6 +89,75 @@ def send_email(config: Dict, subject: str, body: str, is_error: bool = False):
         logger.info(f"이메일 전송 완료: {recipient}")
     except Exception as e:
         logger.error(f"이메일 전송 실패: {e}")
+
+
+def show_windows_notification(title: str, message: str, is_error: bool = False):
+    """윈도우 팝업 알림 표시"""
+    try:
+        # Windows API 상수
+        MB_OK = 0x0
+        MB_ICONINFORMATION = 0x40
+        MB_ICONERROR = 0x10
+        MB_ICONWARNING = 0x30
+        
+        # 아이콘 선택
+        icon = MB_ICONERROR if is_error else MB_ICONINFORMATION
+        
+        # MessageBoxW 호출 (유니코드 지원)
+        ctypes.windll.user32.MessageBoxW(
+            0,  # 부모 윈도우 핸들 (없음)
+            message,  # 메시지 텍스트
+            title,  # 제목
+            MB_OK | icon
+        )
+        logger.info("윈도우 팝업 알림 표시 완료")
+    except Exception as e:
+        logger.error(f"윈도우 팝업 알림 실패: {e}")
+
+
+def send_teams_message(config: Dict, title: str, message: str, is_error: bool = False):
+    """Teams 메시지 전송"""
+    if requests is None:
+        logger.warning("requests 라이브러리가 설치되지 않아 Teams 메시지를 전송할 수 없습니다. 'pip install requests' 실행 필요")
+        return
+    
+    teams_webhook_url = config.get('teams_webhook_url', '')
+    
+    if not teams_webhook_url:
+        logger.warning("Teams Webhook URL이 설정되지 않아 알림을 전송하지 않습니다.")
+        return
+    
+    try:
+        # 성공/실패에 따라 색상 결정
+        theme_color = "FF0000" if is_error else "00FF00"  # 빨강(실패) / 초록(성공)
+        
+        # Teams 메시지 포맷 (Adaptive Card 형식)
+        payload = {
+            "@type": "MessageCard",
+            "@context": "https://schema.org/extensions",
+            "summary": title,
+            "themeColor": theme_color,
+            "title": title,
+            "sections": [
+                {
+                    "activityTitle": "대시보드 자동 업데이트",
+                    "text": message,
+                    "markdown": True
+                }
+            ]
+        }
+        
+        response = requests.post(
+            teams_webhook_url,
+            json=payload,
+            timeout=10
+        )
+        response.raise_for_status()
+        logger.info("Teams 메시지 전송 완료")
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Teams 메시지 전송 실패: {e}")
+    except Exception as e:
+        logger.error(f"Teams 메시지 전송 중 오류: {e}")
 
 
 def run_sql_to_csv():
@@ -663,6 +738,33 @@ def main():
 """
     
     send_email(config, subject, body, is_error=not success)
+    
+    # 윈도우 팝업 알림
+    popup_title = "[대시보드 자동 업데이트] 완료" if success else "[대시보드 자동 업데이트] 실패"
+    popup_message = f"""대시보드 자동 업데이트가 {'성공적으로 완료' if success else '실패'}되었습니다.
+
+시작 시간: {start_time.strftime('%Y-%m-%d %H:%M:%S')}
+종료 시간: {end_time.strftime('%Y-%m-%d %H:%M:%S')}
+소요 시간: {duration:.1f}초"""
+    
+    if not success:
+        popup_message += f"\n\n오류 내용:\n{chr(10).join(error_messages)}"
+    
+    show_windows_notification(popup_title, popup_message, is_error=not success)
+    
+    # Teams 메시지 전송
+    teams_title = "[대시보드 자동 업데이트] 완료" if success else "[대시보드 자동 업데이트] 실패"
+    teams_message = f"""**대시보드 자동 업데이트가 {'성공적으로 완료' if success else '실패'}되었습니다.**
+
+- 시작 시간: {start_time.strftime('%Y-%m-%d %H:%M:%S')}
+- 종료 시간: {end_time.strftime('%Y-%m-%d %H:%M:%S')}
+- 소요 시간: {duration:.1f}초
+- 로그 파일: `{LOG_FILE}`"""
+    
+    if not success:
+        teams_message += f"\n\n**오류 내용:**\n```\n{chr(10).join(error_messages)}\n```"
+    
+    send_teams_message(config, teams_title, teams_message, is_error=not success)
     
     if not success:
         sys.exit(1)
