@@ -572,10 +572,10 @@ def main():
             # 스타일 코드 필터링 (컬럼 인덱스 2가 스타일 코드)
             df['style_upper'] = df.iloc[:, 2].astype(str).str.upper().str.strip()
             
-            # DISCOVERY: DX, DM, DW로 시작하는 스타일 (26S 기간 데이터 포함)
-            df_discovery = df[df['style_upper'].str.match(r'^(DX|DM|DW)', na=False)].copy()
             # DISCOVERY-KIDS: DK로 시작하는 스타일
             df_kids = df[df['style_upper'].str.startswith('DK', na=False)].copy()
+            # DISCOVERY: DK로 시작하지 않는 나머지 모든 스타일
+            df_discovery = df[~df['style_upper'].str.startswith('DK', na=False)].copy()
             
             # DISCOVERY Summary 생성
             if len(df_discovery) > 0:
@@ -583,7 +583,7 @@ def main():
                 process_brand_data(df_discovery, df_fx, brand_code, season_code, prev_season_code, 
                                  season_folder, season, f'summary_{season.lower()}_{brand_code.lower()}.json')
             else:
-                print(f"\n[WARN] DISCOVERY 데이터가 없습니다. (DX로 시작하는 스타일 없음)")
+                print(f"\n[WARN] DISCOVERY 데이터가 없습니다. (DK로 시작하지 않는 스타일 없음)")
             
             # DISCOVERY-KIDS Summary 생성
             if len(df_kids) > 0:

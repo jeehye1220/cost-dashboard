@@ -196,10 +196,10 @@ async function aggregateByItem(
       return styleUpper.startsWith('DK');
     }
     
-    // DISCOVERY: dx/DX로 시작하는 스타일 (기존 DISCOVERY 브랜드)
+    // DISCOVERY: DK로 시작하지 않는 모든 스타일 (기존 DISCOVERY 브랜드)
     if (brandId === 'DISCOVERY' || (brandId.includes('DISCOVERY') && !brandId.includes('KIDS'))) {
       const styleUpper = (row.style || '').toUpperCase();
-      return styleUpper.startsWith('DX');
+      return !styleUpper.startsWith('DK');
     }
     
     // 다른 브랜드는 모두 포함
