@@ -23,7 +23,7 @@ const brands = [
   },
   {
     id: 'M-NON',
-    name: 'M NON',
+    name: 'MLB NON',
     icon: 'MLB',
     period: '25FW',
     color: 'slate',
@@ -37,7 +37,7 @@ const brands = [
   },
   {
     id: 'I-NON',
-    name: 'I NON',
+    name: 'MK NON',
     icon: 'MK',
     period: '25FW',
     color: 'slate',
@@ -51,7 +51,7 @@ const brands = [
   },
   {
     id: 'X-NON',
-    name: 'X NON',
+    name: 'DX NON',
     icon: 'DX',
     period: '25FW',
     color: 'slate',
@@ -219,7 +219,7 @@ const brands = [
   },
   {
     id: '26SS-M-NON',
-    name: 'M NON',
+    name: 'MLB NON',
     icon: 'MLB',
     period: '26SS',
     color: 'slate',
@@ -233,7 +233,7 @@ const brands = [
   },
   {
     id: '26SS-I-NON',
-    name: 'I NON',
+    name: 'MK NON',
     icon: 'MK',
     period: '26SS',
     color: 'slate',
@@ -247,7 +247,7 @@ const brands = [
   },
   {
     id: '26SS-X-NON',
-    name: 'X NON',
+    name: 'DX NON',
     icon: 'DX',
     period: '26SS',
     color: 'slate',
@@ -429,7 +429,7 @@ const brands = [
   },
   {
     id: '26FW-M-NON',
-    name: 'M NON',
+    name: 'MLB NON',
     icon: 'MLB',
     period: '26FW',
     color: 'slate',
@@ -443,7 +443,7 @@ const brands = [
   },
   {
     id: '26FW-I-NON',
-    name: 'I NON',
+    name: 'MK NON',
     icon: 'MK',
     period: '26FW',
     color: 'slate',
@@ -457,7 +457,7 @@ const brands = [
   },
   {
     id: '26FW-X-NON',
-    name: 'X NON',
+    name: 'DX NON',
     icon: 'DX',
     period: '26FW',
     color: 'slate',
@@ -704,6 +704,70 @@ export default function Home() {
     return amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
+  // NON 브랜드 ID에서 브랜드 코드 추출 (M, I, X)
+  const extractBrandCodeFromNON = (brandId: string): string | null => {
+    if (!brandId.includes('-NON')) return null;
+    
+    // 패턴: M-NON, I-NON, X-NON 또는 26SS-M-NON, 26FW-M-NON 등
+    const parts = brandId.split('-');
+    if (parts.length === 2) {
+      // M-NON 형식
+      return parts[0];
+    } else if (parts.length === 3) {
+      // 26SS-M-NON 형식 (두 번째가 브랜드 코드)
+      return parts[1];
+    }
+    return null;
+  };
+
+  // ACC 필터 시 NON 브랜드의 의류 브랜드 색상 반환
+  const getBrandColorClasses = (brand: typeof brands[0]): typeof brands[0] => {
+    // ACC 필터이고 NON 브랜드인 경우
+    if (categoryFilter === 'acc' && brand.id.includes('-NON')) {
+      const brandCode = extractBrandCodeFromNON(brand.id);
+      
+      if (brandCode === 'M') {
+        return {
+          ...brand,
+          color: 'blue',
+          bgColor: 'bg-blue-200',
+          hoverColor: 'hover:bg-blue-300',
+          borderColor: 'border-blue-300',
+          textColor: 'text-blue-700',
+          iconBg: 'bg-blue-300',
+          buttonBg: 'bg-blue-300',
+          buttonHover: 'hover:bg-blue-400',
+        };
+      } else if (brandCode === 'I') {
+        return {
+          ...brand,
+          color: 'red',
+          bgColor: 'bg-rose-200',
+          hoverColor: 'hover:bg-rose-300',
+          borderColor: 'border-rose-300',
+          textColor: 'text-rose-700',
+          iconBg: 'bg-rose-300',
+          buttonBg: 'bg-rose-300',
+          buttonHover: 'hover:bg-rose-400',
+        };
+      } else if (brandCode === 'X') {
+        return {
+          ...brand,
+          color: 'green',
+          bgColor: 'bg-emerald-200',
+          hoverColor: 'hover:bg-emerald-300',
+          borderColor: 'border-emerald-300',
+          textColor: 'text-emerald-700',
+          iconBg: 'bg-emerald-300',
+          buttonBg: 'bg-emerald-300',
+          buttonHover: 'hover:bg-emerald-400',
+        };
+      }
+    }
+    
+    // 의류 필터이거나 NON 브랜드가 아닌 경우 기존 색상 유지
+    return brand;
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -793,7 +857,11 @@ export default function Home() {
             } else {
               return isNON; // ACC: NON인 것들
             }
-          }).map((brand) => (
+          }).map((brand) => {
+            // ACC 필터 시 NON 브랜드 색상 동적 변경
+            const brandWithColor = getBrandColorClasses(brand);
+            
+            return (
             <div
               key={brand.id}
               className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200"
@@ -802,50 +870,32 @@ export default function Home() {
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 ${brand.iconBg} rounded-lg flex items-center justify-center ${brand.textColor} text-sm font-bold shadow-sm`}>
+                    <div className={`w-12 h-12 ${brandWithColor.iconBg} rounded-lg flex items-center justify-center ${brandWithColor.textColor} text-sm font-bold shadow-sm`}>
                       {brand.icon}
                     </div>
                     <h3 className="text-lg font-bold text-gray-800">{brand.name}</h3>
                   </div>
                   {brandSummaries[brand.id] && (() => {
-                    // 동적 처리: 당년 데이터가 없으면 전년 원가율 표시
+                    // 항상 조회기간 당년 원가율 표시 (데이터 없으면 0.0%)
                     const costRate25F = brandSummaries[brand.id]!.costRate25F_usd || 0;
                     const costRate24F = brandSummaries[brand.id]!.costRate24F_usd || 0;
-                    const costRateChange = brandSummaries[brand.id]!.costRateChange_usd || 0;
                     
-                    // 디버깅 로그 (NON 시즌만)
-                    if (brand.id?.includes('NON')) {
-                      console.log(`[${brand.id}] 원가율 데이터:`, {
-                        costRate24F_usd: costRate24F,
-                        costRate25F_usd: costRate25F,
-                        costRateChange_usd: costRateChange
-                      });
-                    }
-                    
-                    const displayCostRate = costRate25F > 0 ? costRate25F : costRate24F;
-                    const displayChange = costRate25F > 0 ? costRateChange : 0;
-                    const hasChange = costRate25F > 0;
-                    
-                    // 디버깅 로그 (NON 시즌만)
-                    if (brand.id?.includes('NON')) {
-                      console.log(`[${brand.id}] 표시할 원가율:`, {
-                        displayCostRate,
-                        displayChange,
-                        hasChange
-                      });
-                    }
+                    // 전년 대비 차이: 전년 데이터가 있을 때만 계산
+                    const displayCostRate = costRate25F;
+                    const displayChange = costRate24F > 0 ? costRate25F - costRate24F : null;
+                    const hasChange = displayChange !== null;
                     
                     return (
                       <div className="flex flex-col items-end">
                         <div className="text-xs text-gray-500 mb-2">전체원가율(USD)</div>
-                        <div className={`px-3 py-2 rounded-lg shadow-sm ${displayChange >= 0 ? 'bg-rose-50' : 'bg-blue-50'}`}>
+                        <div className={`px-3 py-2 rounded-lg shadow-sm ${hasChange && displayChange! >= 0 ? 'bg-rose-50' : hasChange && displayChange! < 0 ? 'bg-blue-50' : 'bg-gray-50'}`}>
                           <div className="flex flex-col items-end gap-0.5">
                             <div className="text-xl font-bold text-gray-800">
                               {formatNumber(displayCostRate)}%
                             </div>
                             {hasChange && (
-                              <div className={`text-sm font-semibold ${displayChange >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
-                                {displayChange >= 0 ? '+' : ''}{formatNumber(displayChange)}%p
+                              <div className={`text-sm font-semibold ${displayChange! >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
+                                {displayChange! >= 0 ? '+' : ''}{formatNumber(displayChange!)}%p
                               </div>
                             )}
                           </div>
@@ -1002,13 +1052,14 @@ export default function Home() {
                     e.stopPropagation();
                     handleBrandClick(brand.id);
                   }}
-                  className={`w-full mt-4 ${brand.buttonBg} ${brand.buttonHover} ${brand.textColor} font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md`}
+                  className={`w-full mt-4 ${brandWithColor.buttonBg} ${brandWithColor.buttonHover} ${brandWithColor.textColor} font-semibold py-2.5 px-4 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md`}
                 >
                   전체 대시보드 보기
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
       </main>

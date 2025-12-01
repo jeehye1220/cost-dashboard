@@ -513,7 +513,7 @@ export default function BrandDashboard() {
       buttonHover: 'hover:bg-indigo-400',
     },
     'M-NON': { 
-      name: 'M NON 25FW', 
+      name: 'MLB NON 25FW', 
       color: 'slate',
       headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
       headerText: 'text-slate-700',
@@ -526,7 +526,7 @@ export default function BrandDashboard() {
       buttonHover: 'hover:bg-slate-400',
     },
     'I-NON': { 
-      name: 'I NON 25FW', 
+      name: 'MK NON 25FW', 
       color: 'slate',
       headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
       headerText: 'text-slate-700',
@@ -539,7 +539,7 @@ export default function BrandDashboard() {
       buttonHover: 'hover:bg-slate-400',
     },
     'X-NON': { 
-      name: 'X NON 25FW', 
+      name: 'DX NON 25FW', 
       color: 'slate',
       headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
       headerText: 'text-slate-700',
@@ -552,7 +552,7 @@ export default function BrandDashboard() {
       buttonHover: 'hover:bg-slate-400',
     },
     '26SS-M-NON': { 
-      name: 'M NON 26SS', 
+      name: 'MLB NON 26SS', 
       color: 'slate',
       headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
       headerText: 'text-slate-700',
@@ -565,7 +565,7 @@ export default function BrandDashboard() {
       buttonHover: 'hover:bg-slate-400',
     },
     '26SS-I-NON': { 
-      name: 'I NON 26SS', 
+      name: 'MK NON 26SS', 
       color: 'slate',
       headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
       headerText: 'text-slate-700',
@@ -578,7 +578,7 @@ export default function BrandDashboard() {
       buttonHover: 'hover:bg-slate-400',
     },
     '26SS-X-NON': { 
-      name: 'X NON 26SS', 
+      name: 'DX NON 26SS', 
       color: 'slate',
       headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
       headerText: 'text-slate-700',
@@ -591,7 +591,7 @@ export default function BrandDashboard() {
       buttonHover: 'hover:bg-slate-400',
     },
     '26FW-M-NON': { 
-      name: 'M NON 26FW', 
+      name: 'MLB NON 26FW', 
       color: 'slate',
       headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
       headerText: 'text-slate-700',
@@ -604,7 +604,7 @@ export default function BrandDashboard() {
       buttonHover: 'hover:bg-slate-400',
     },
     '26FW-I-NON': { 
-      name: 'I NON 26FW', 
+      name: 'MK NON 26FW', 
       color: 'slate',
       headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
       headerText: 'text-slate-700',
@@ -617,7 +617,7 @@ export default function BrandDashboard() {
       buttonHover: 'hover:bg-slate-400',
     },
     '26FW-X-NON': { 
-      name: 'X NON 26FW', 
+      name: 'DX NON 26FW', 
       color: 'slate',
       headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
       headerText: 'text-slate-700',

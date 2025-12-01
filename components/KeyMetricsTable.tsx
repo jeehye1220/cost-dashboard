@@ -61,14 +61,29 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
     
     // NON 브랜드 처리
     if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
-      const brandCode = brandId === 'M-NON' ? 'M' : brandId === 'I-NON' ? 'I' : 'X';
-      return `${getBrandName(brandCode)} 25FW`;
+      // NON 브랜드 이름 매핑: M → MLB, I → MK, X → DX
+      const nonBrandMap: Record<string, string> = {
+        'M-NON': 'MLB NON',
+        'I-NON': 'MK NON',
+        'X-NON': 'DX NON',
+      };
+      return `${nonBrandMap[brandId]} 25FW`;
     } else if (brandId.startsWith('26SS-') && brandId.endsWith('-NON')) {
       const brandCode = brandId.replace('26SS-', '').replace('-NON', '');
-      return `${getBrandName(brandCode)} 26SS`;
+      const nonBrandMap: Record<string, string> = {
+        'M': 'MLB NON',
+        'I': 'MK NON',
+        'X': 'DX NON',
+      };
+      return `${nonBrandMap[brandCode] || getBrandName(brandCode)} 26SS`;
     } else if (brandId.startsWith('26FW-') && brandId.endsWith('-NON')) {
       const brandCode = brandId.replace('26FW-', '').replace('-NON', '');
-      return `${getBrandName(brandCode)} 26FW`;
+      const nonBrandMap: Record<string, string> = {
+        'M': 'MLB NON',
+        'I': 'MK NON',
+        'X': 'DX NON',
+      };
+      return `${nonBrandMap[brandCode] || getBrandName(brandCode)} 26FW`;
     }
     
     // brandId에서 브랜드 코드와 시즌 추출
