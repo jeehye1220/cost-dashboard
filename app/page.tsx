@@ -591,6 +591,8 @@ export default function Home() {
             fxRates = await loadExchangeRates(files.fx, brandId, '26SS', '25SS');
           } else if (brandId.startsWith('26FW-')) {
             fxRates = await loadExchangeRates(files.fx, brandId, '26FW', '25FW');
+          } else if (brandId.startsWith('25SS-')) {
+            fxRates = await loadExchangeRates(files.fx, brandId, '25SS', '24SS');
           } else if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
             // 25FW 기간의 NON 브랜드들
             fxRates = await loadExchangeRates(files.fx, brandId, '25FW', '24FW');
@@ -598,6 +600,8 @@ export default function Home() {
             fxRates = await loadExchangeRates(files.fx, brandId, '26SS', '25SS');
           } else if (brandId.startsWith('26FW-') && brandId.endsWith('-NON')) {
             fxRates = await loadExchangeRates(files.fx, brandId, '26FW', '25FW');
+          } else if (brandId.startsWith('25SS-') && brandId.endsWith('-NON')) {
+            fxRates = await loadExchangeRates(files.fx, brandId, '25SS', '24SS');
           } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'DISCOVERY-KIDS' || brandId === 'ST' || brandId === 'V') {
             // 25FW 기간 브랜드들 (M, I, X, ST, V) - 새 구조
             const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId === 'DISCOVERY-KIDS' ? 'DISCOVERY-KIDS' : brandId;
