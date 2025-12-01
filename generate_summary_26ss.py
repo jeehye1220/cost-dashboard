@@ -279,10 +279,51 @@ def calculate_total_stats(df: pd.DataFrame, df_fx: pd.DataFrame, brand_code: str
             return s[:-1]  # 25FW → 25F
         return s
     
-    # 전년 시즌 필터 (24S, 25S 등)
-    df_prev = df[df.iloc[:, 1].apply(normalize_season).isin([prev_season_code, prev_season_code + 'S', prev_season_code + 'SS'])]
-    # 당년 시즌 필터 (25S, 26S 등)
-    df_curr = df[df.iloc[:, 1].apply(normalize_season).isin([current_season_code, current_season_code + 'S', current_season_code + 'SS'])]
+    # 전년 시즌 필터 (24S, 25S 등) - SS/S, FW/F 모두 포함
+    # normalize_season이 '25SS' → '25S', '25S' → '25S'로 변환하므로
+    # prev_season_variants에는 정규화된 값만 포함
+    prev_season_variants = [prev_season_code]
+    # normalize_season 결과와 매칭되므로 추가 변형 불필요
+    
+    # 당년 시즌 필터 (25S, 26S 등) - SS/S, FW/F 모두 포함
+    # normalize_season이 '26SS' → '26S', '26S' → '26S'로 변환하므로
+    # curr_season_variants에는 정규화된 값과 원본 값 모두 포함
+    curr_season_variants = [current_season_code]
+    if current_season_code.endswith('S'):
+        # '26S'인 경우: '26S', '26SS' 모두 매칭되도록
+        # normalize_season이 '26SS' → '26S', '26S' → '26S'로 변환하므로
+        # '26S'만 포함하면 됨 (normalize_season 결과와 매칭)
+        pass  # current_season_code가 이미 '26S' 형식이므로 추가 변형 불필요
+    elif current_season_code.endswith('F'):
+        # '26F'인 경우: '26F', '26FW' 모두 매칭되도록
+        pass  # current_season_code가 이미 '26F' 형식이므로 추가 변형 불필요
+    
+    # 시즌 컬럼을 문자열로 변환하고 정규화
+    df_season_normalized = df.iloc[:, 1].astype(str).apply(normalize_season)
+    
+    # 디버깅: 필터링 전 데이터 확인
+    print(f"   [DEBUG] 필터링 전 전체 데이터 행 수: {len(df)}")
+    print(f"   [DEBUG] 필터링 전 시즌 고유 값: {df.iloc[:, 1].unique()}")
+    print(f"   [DEBUG] 필터링 전 정규화된 시즌 고유 값: {df_season_normalized.unique()}")
+    
+    # 필터링 적용
+    df_prev = df[df_season_normalized.isin(prev_season_variants)]
+    df_curr = df[df_season_normalized.isin(curr_season_variants)]
+    
+    # 디버깅: 필터링 결과 확인
+    print(f"   [DEBUG] 전년 시즌 필터: {prev_season_code} -> variants: {prev_season_variants}")
+    print(f"   [DEBUG] 전년 데이터 행 수: {len(df_prev)}")
+    if len(df_prev) > 0:
+        print(f"   [DEBUG] 전년 시즌 샘플 값: {df_prev.iloc[:, 1].unique()[:5]}")
+    print(f"   [DEBUG] 당년 시즌 필터: {current_season_code} -> variants: {curr_season_variants}")
+    print(f"   [DEBUG] 당년 데이터 행 수: {len(df_curr)}")
+    if len(df_curr) > 0:
+        print(f"   [DEBUG] 당년 시즌 샘플 값: {df_curr.iloc[:, 1].unique()[:5]}")
+    else:
+        # 필터링 실패 원인 분석
+        print(f"   [DEBUG] 원본 시즌 고유 값: {df.iloc[:, 1].unique()}")
+        print(f"   [DEBUG] 정규화된 시즌 고유 값: {df_season_normalized.unique()}")
+        print(f"   [DEBUG] 매칭 시도 variants: {curr_season_variants}")
     
     # 수량 계산
     qty_prev = df_prev.iloc[:, 7].sum()
@@ -369,15 +410,24 @@ def calculate_category_stats(df: pd.DataFrame, df_fx: pd.DataFrame, brand_code: 
             return s[:-1]  # 25FW → 25F
         return s
     
+    # 전년/당년 시즌 variants 생성
+    # normalize_season이 '25SS' → '25S', '25S' → '25S'로 변환하므로
+    # variants에는 정규화된 값만 포함
+    prev_season_variants = [prev_season_code]
+    curr_season_variants = [current_season_code]
+    
     for category in CATEGORY_ORDER:
         df_cat = df[df.iloc[:, 3] == category]
         
         if len(df_cat) == 0:
             continue
         
+        # 시즌 컬럼을 문자열로 변환하고 정규화
+        df_cat_season_normalized = df_cat.iloc[:, 1].astype(str).apply(normalize_season)
+        
         # 전년/당년 시즌 필터링 (동적)
-        df_prev = df_cat[df_cat.iloc[:, 1].apply(normalize_season).isin([prev_season_code, prev_season_code + 'S', prev_season_code + 'SS'])]
-        df_curr = df_cat[df_cat.iloc[:, 1].apply(normalize_season).isin([current_season_code, current_season_code + 'S', current_season_code + 'SS'])]
+        df_prev = df_cat[df_cat_season_normalized.isin(prev_season_variants)]
+        df_curr = df_cat[df_cat_season_normalized.isin(curr_season_variants)]
         
         # USD 기준
         kpi_prev_usd = calculate_season_kpi(df_prev, '전년', 'USD', df_fx, brand_code, prev_season_code)
@@ -522,8 +572,8 @@ def main():
             # 스타일 코드 필터링 (컬럼 인덱스 2가 스타일 코드)
             df['style_upper'] = df.iloc[:, 2].astype(str).str.upper().str.strip()
             
-            # DISCOVERY: DX로 시작하는 스타일
-            df_discovery = df[df['style_upper'].str.startswith('DX', na=False)].copy()
+            # DISCOVERY: DX, DM, DW로 시작하는 스타일 (26S 기간 데이터 포함)
+            df_discovery = df[df['style_upper'].str.match(r'^(DX|DM|DW)', na=False)].copy()
             # DISCOVERY-KIDS: DK로 시작하는 스타일
             df_kids = df[df['style_upper'].str.startswith('DK', na=False)].copy()
             
