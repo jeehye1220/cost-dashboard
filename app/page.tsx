@@ -472,6 +472,7 @@ const brands = [
 ];
 
 interface BrandSummary {
+  costRate24F_usd: number;
   costRate25F_usd: number;
   costRateChange_usd: number;
   qty25F: number;
@@ -528,6 +529,7 @@ export default function Home() {
   const [brandSummaries, setBrandSummaries] = useState<Record<string, BrandSummary | null>>({});
   const [loading, setLoading] = useState(true);
   const [expandedCostItems, setExpandedCostItems] = useState<Set<string>>(new Set());
+  const [categoryFilter, setCategoryFilter] = useState<'apparel' | 'acc'>('apparel');
 
   // URL 쿼리 파라미터 변경 감지
   useEffect(() => {
@@ -615,6 +617,7 @@ export default function Home() {
           
           if (data && data.total) {
             summaries[brandId] = {
+              costRate24F_usd: data.total.costRate24F_usd || 0,
               costRate25F_usd: data.total.costRate25F_usd || 0,
               costRateChange_usd: data.total.costRateChange_usd || 0,
               qty25F: data.total.qty25F || 0,
@@ -725,8 +728,32 @@ export default function Home() {
             <p className="text-gray-600 text-sm">분석할 브랜드를 클릭하여 상세 대시보드로 이동합니다</p>
           </div>
 
-          {/* 날짜 선택 */}
+          {/* 날짜 선택 및 카테고리 필터 */}
           <div className="flex items-center gap-3">
+            {/* 카테고리 필터 버튼 */}
+            <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
+              <button
+                onClick={() => setCategoryFilter('apparel')}
+                className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
+                  categoryFilter === 'apparel'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                의류
+              </button>
+              <button
+                onClick={() => setCategoryFilter('acc')}
+                className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${
+                  categoryFilter === 'acc'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800'
+                }`}
+              >
+                ACC
+              </button>
+            </div>
+            
             <div className="relative">
               <select
                 value={selectedPeriod}
@@ -755,7 +782,18 @@ export default function Home() {
 
         {/* 브랜드 카드 그리드 */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-12">
-          {brands.filter(brand => brand.period === selectedPeriod).map((brand) => (
+          {brands.filter(brand => {
+            // 기간 필터
+            if (brand.period !== selectedPeriod) return false;
+            
+            // 카테고리 필터
+            const isNON = brand.id.includes('-NON');
+            if (categoryFilter === 'apparel') {
+              return !isNON; // 의류: NON이 아닌 것들
+            } else {
+              return isNON; // ACC: NON인 것들
+            }
+          }).map((brand) => (
             <div
               key={brand.id}
               className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200"
@@ -769,21 +807,34 @@ export default function Home() {
                     </div>
                     <h3 className="text-lg font-bold text-gray-800">{brand.name}</h3>
                   </div>
-                  {brandSummaries[brand.id] && (
-                    <div className="flex flex-col items-end">
-                      <div className="text-xs text-gray-500 mb-2">전체원가율(USD)</div>
-                      <div className={`px-3 py-2 rounded-lg shadow-sm ${brandSummaries[brand.id]!.costRateChange_usd >= 0 ? 'bg-rose-50' : 'bg-blue-50'}`}>
-                        <div className="flex flex-col items-end gap-0.5">
-                          <div className="text-xl font-bold text-gray-800">
-                            {formatNumber(brandSummaries[brand.id]!.costRate25F_usd)}%
-                          </div>
-                          <div className={`text-sm font-semibold ${brandSummaries[brand.id]!.costRateChange_usd >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
-                            {brandSummaries[brand.id]!.costRateChange_usd >= 0 ? '+' : ''}{formatNumber(brandSummaries[brand.id]!.costRateChange_usd)}%p
+                  {brandSummaries[brand.id] && (() => {
+                    // 동적 처리: 당년 데이터가 없으면 전년 원가율 표시
+                    const displayCostRate = brandSummaries[brand.id]!.costRate25F_usd > 0 
+                      ? brandSummaries[brand.id]!.costRate25F_usd 
+                      : brandSummaries[brand.id]!.costRate24F_usd;
+                    const displayChange = brandSummaries[brand.id]!.costRate25F_usd > 0 
+                      ? brandSummaries[brand.id]!.costRateChange_usd 
+                      : 0;
+                    const hasChange = brandSummaries[brand.id]!.costRate25F_usd > 0;
+                    
+                    return (
+                      <div className="flex flex-col items-end">
+                        <div className="text-xs text-gray-500 mb-2">전체원가율(USD)</div>
+                        <div className={`px-3 py-2 rounded-lg shadow-sm ${displayChange >= 0 ? 'bg-rose-50' : 'bg-blue-50'}`}>
+                          <div className="flex flex-col items-end gap-0.5">
+                            <div className="text-xl font-bold text-gray-800">
+                              {formatNumber(displayCostRate)}%
+                            </div>
+                            {hasChange && (
+                              <div className={`text-sm font-semibold ${displayChange >= 0 ? 'text-red-600' : 'text-blue-600'}`}>
+                                {displayChange >= 0 ? '+' : ''}{formatNumber(displayChange)}%p
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                 </div>
                 {brandSummaries[brand.id] && (
                   <div className="flex gap-2">
