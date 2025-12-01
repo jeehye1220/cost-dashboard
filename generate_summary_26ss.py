@@ -504,8 +504,8 @@ def main():
         print(f"브랜드 {brand_code} 처리 중...")
         print(f"{'=' * 60}")
         
-        # 파일명 결정: 25FW → 25F, 26FW → 26F로 변환
-        file_season = season_code if season_code in ['25F', '26F', '24F'] else season
+        # 파일명 결정: SS/S, FW/F는 동일하므로 항상 season_code(S/F 형식) 사용
+        file_season = season_code  # 항상 S/F 형식으로 통일
         csv_file = f'public/COST RAW/{season_folder}/{brand_code}_{file_season}.csv'
         print(f"CSV 파일: {csv_file}")
         

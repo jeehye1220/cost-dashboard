@@ -27,12 +27,12 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
 
   const { categories, total } = summary;
 
-  // 시즌 판별 (EnhancedStoryCards와 동일한 로직)
-  const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
-  const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
-  const isDISCOVERY = total.qty24F > 1200000 && total.qty24F < 1400000;
-  const isFWSS = is25FW || isKIDS || isDISCOVERY;
-  const isNonSeason = !isFWSS;
+  // 하드코딩된 시즌 판별 로직 제거 - summary JSON의 필드명은 항상 24F(전년), 25F(당년)로 통일됨
+  // JSON 구조상 모든 시즌이 동일한 필드명을 사용하므로 추가 판별 불필요
+  // 카테고리 데이터가 있고 SHOES, BAG, HEADWEAR 같은 NON 시즌 카테고리가 있으면 NON 시즌으로 판단
+  const hasNonCategories = categories.some((cat: any) => 
+    ['Shoes', 'Bag', 'Headwear'].includes(cat.category)
+  );
 
   // 전체 레이더 차트 데이터 (5각형: 원부자재, 아트웍, 공임, 마진, 경비)
   const createRadarData = (data: any) => [
@@ -78,7 +78,7 @@ const CategoryComparison: React.FC<CategoryComparisonProps> = ({ summary }) => {
 
   // 카테고리별 레이더 데이터
   // MLB NON 시즌은 summary.categories에서 직접 가져오고, FW/SS 시즌은 CATEGORIES 사용
-  const categoryRadarData = isNonSeason
+  const categoryRadarData = hasNonCategories
     ? (() => {
         // 모든 카테고리 데이터 생성
         const allCategoryData = categories.map((categoryData: any) => {

@@ -6,25 +6,61 @@ import { CATEGORIES } from '@/lib/csvParser';
 
 interface EnhancedStoryCardsProps {
   summary: any;
+  brandId?: string;
 }
 
-const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
+const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary, brandId }) => {
+  // 디버깅: summary 객체 전체 확인
+  console.log('[EnhancedStoryCards] 렌더링 시작:', {
+    brandId,
+    summaryExists: !!summary,
+    summaryTotalExists: !!summary?.total,
+    summaryKeys: summary ? Object.keys(summary) : [],
+    summaryTotalKeys: summary?.total ? Object.keys(summary.total) : []
+  });
+  
   // 데이터가 없어도 카드는 표시 (기본값으로 표시)
   if (!summary || !summary.total) {
-    return null; // 또는 기본 구조를 표시할 수도 있음
+    console.warn('[EnhancedStoryCards] summary 또는 summary.total이 없습니다:', { 
+      summary, 
+      brandId,
+      summaryType: typeof summary,
+      summaryIsNull: summary === null,
+      summaryIsUndefined: summary === undefined
+    });
+    return (
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">원가율 카드 대시보드</h2>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center text-yellow-800">
+          <p className="font-semibold">데이터를 불러오는 중이거나 데이터가 없습니다.</p>
+          <p className="text-sm mt-2">브랜드: {brandId}</p>
+        </div>
+      </div>
+    );
   }
 
   const { total, categories } = summary;
   
+  // 디버깅: 데이터 확인
+  if (brandId?.includes('NON')) {
+    console.log('[EnhancedStoryCards] 데이터 확인:', {
+      brandId,
+      costRate24F_usd: total.costRate24F_usd,
+      costRate25F_usd: total.costRate25F_usd,
+      qty24F: total.qty24F,
+      qty25F: total.qty25F,
+      categoriesCount: categories?.length || 0,
+      totalKeys: Object.keys(total)
+    });
+  }
+  
   // categories가 없으면 빈 배열로 처리
   const safeCategories = categories || [];
 
-  // 시즌 판별
-  const is25FW = total.qty24F > 3000000 && total.qty24F < 4000000;
-  const isKIDS = total.qty24F > 600000 && total.qty24F < 700000;
-  const isDISCOVERY = total.qty24F > 1200000 && total.qty24F < 1400000;
-  const isNON = !is25FW && !isKIDS && !isDISCOVERY; // MLB NON 시즌
-  const isFWSS = is25FW || isKIDS || isDISCOVERY; // FW/SS 시즌
+  // 하드코딩된 시즌 판별 로직 제거 - brandId 기반으로 NON 시즌 판별
+  // NON 시즌 판별: brandId에 -NON이 포함되어 있거나, categories에 Shoes, Bag, Headwear가 있는 경우
+  const isNON = brandId?.includes('-NON') || 
+                safeCategories.some((cat: any) => ['Shoes', 'Bag', 'Headwear'].includes(cat.category));
 
   // 발주비중 계산 함수
   const calculateOrderShare = (catData: any) => {
@@ -99,7 +135,7 @@ const EnhancedStoryCards: React.FC<EnhancedStoryCardsProps> = ({ summary }) => {
       }).filter((cat: any) => cat.data !== null);
     }
 
-    if (isFWSS) {
+    if (!isNON) {
       // FW/SS 시즌: Outer, Inner, Bottom 무조건 표시 + (Wear_etc 있으면 Wear_etc, 없으면 Acc_etc)
       const requiredCategories = ['Outer', 'Inner', 'Bottom'];
       const selected = allCategoryData.filter((cat: any) => requiredCategories.includes(cat.id));

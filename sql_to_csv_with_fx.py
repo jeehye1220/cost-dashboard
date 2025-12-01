@@ -599,15 +599,21 @@ def save_csv_by_brand_season(df: pd.DataFrame):
             # 현재 시즌 데이터
             current_season_df = brand_df[brand_df['시즌'] == season].copy()
             
-            # 시즌 코드 정규화 (파일명용: 26S → 26SS, 25S → 25SS 등)
+            # 시즌 코드 정규화 (파일명용: SS/S, FW/F는 동일하므로 항상 S/F 형식으로 통일)
             normalized_season = season
-            if season == '26S':
-                normalized_season = '26SS'
-            elif season == '25S':
-                normalized_season = '25SS'
-            elif season == '24S':
-                normalized_season = '24SS'
-            # 26SS, 25SS, 24SS는 이미 정규화된 형태이므로 그대로 사용
+            if season in ['26SS', '26S']:
+                normalized_season = '26S'  # 26SS → 26S로 통일
+            elif season in ['25SS', '25S']:
+                normalized_season = '25S'  # 25SS → 25S로 통일
+            elif season in ['24SS', '24S']:
+                normalized_season = '24S'  # 24SS → 24S로 통일
+            elif season in ['26FW', '26F']:
+                normalized_season = '26F'  # 26FW → 26F로 통일
+            elif season in ['25FW', '25F']:
+                normalized_season = '25F'  # 25FW → 25F로 통일
+            elif season in ['24FW', '24F']:
+                normalized_season = '24F'  # 24FW → 24F로 통일
+            # 이미 S/F 형식이면 그대로 사용
             
             # 전년 시즌 데이터 (있는 경우)
             if prev_season:

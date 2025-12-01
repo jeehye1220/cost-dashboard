@@ -87,6 +87,20 @@ function getBrandInsightFilePath(brandId?: string, season?: string): string | nu
     return '/insights_discovery_kids.csv';
   }
   
+  // NON 브랜드 인사이트 파일 처리 (DISCOVERY-KIDS 이후, parseBrandId 이전에 체크)
+  if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+    // 25FW 기간의 NON 브랜드들
+    return `/COST RAW/25FW/${brandId.charAt(0)}_insight_25fw_non.csv`;
+  } else if (brandId?.startsWith('26SS-') && brandId?.endsWith('-NON')) {
+    // 26SS 기간의 NON 브랜드들 (예: 26SS-M-NON)
+    const brandCode = brandId.replace('26SS-', '').replace('-NON', '');
+    return `/COST RAW/26SS/${brandCode}_insight_26ss_non.csv`;
+  } else if (brandId?.startsWith('26FW-') && brandId?.endsWith('-NON')) {
+    // 26FW 기간의 NON 브랜드들 (예: 26FW-M-NON)
+    const brandCode = brandId.replace('26FW-', '').replace('-NON', '');
+    return `/COST RAW/26FW/${brandCode}_insight_26fw_non.csv`;
+  }
+  
   const brandInfo = parseBrandId(brandId);
   
   // 브랜드별 인사이트 파일이 있는 경우 (25SS-*, 26SS-*, 26FW-*)
@@ -131,7 +145,18 @@ export async function loadInsightsFromCSV(season: string, brandId?: string): Pro
     let filePath = getBrandInsightFilePath(brandId, season);
     
     // 브랜드별 파일이 없으면 기존 방식으로 시즌 기반 파일 찾기
+    // 단, NON 브랜드는 MLB 25FW 인사이트를 로드하지 않도록 제외
     if (!filePath) {
+      // NON 브랜드인 경우 fallback에서 MLB 25FW 인사이트를 로드하지 않음
+      const isNonBrand = brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON' ||
+                         (brandId?.endsWith('-NON') && (brandId.startsWith('26SS-') || brandId.startsWith('26FW-')));
+      
+      if (isNonBrand) {
+        // NON 브랜드는 파일이 없으면 null 반환 (빈 상태 표시)
+        console.warn(`NON brand insights file not found: brandId=${brandId}, season=${season}`);
+        return null;
+      }
+      
       const fileMap: { [key: string]: string } = {
         '25FW': '/insights_25fw.csv',
         '25F': '/insights_25fw.csv',      // F = FW

@@ -22,9 +22,37 @@ const brands = [
     buttonHover: 'hover:bg-blue-400',
   },
   {
-    id: 'NON',
-    name: 'MLB ACC',
+    id: 'M-NON',
+    name: 'M NON',
     icon: 'MLB',
+    period: '25FW',
+    color: 'slate',
+    bgColor: 'bg-slate-200',
+    hoverColor: 'hover:bg-slate-300',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-700',
+    iconBg: 'bg-slate-300',
+    buttonBg: 'bg-slate-300',
+    buttonHover: 'hover:bg-slate-400',
+  },
+  {
+    id: 'I-NON',
+    name: 'I NON',
+    icon: 'MK',
+    period: '25FW',
+    color: 'slate',
+    bgColor: 'bg-slate-200',
+    hoverColor: 'hover:bg-slate-300',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-700',
+    iconBg: 'bg-slate-300',
+    buttonBg: 'bg-slate-300',
+    buttonHover: 'hover:bg-slate-400',
+  },
+  {
+    id: 'X-NON',
+    name: 'X NON',
+    icon: 'DX',
     period: '25FW',
     color: 'slate',
     bgColor: 'bg-slate-200',
@@ -188,6 +216,48 @@ const brands = [
     iconBg: 'bg-indigo-300',
     buttonBg: 'bg-indigo-300',
     buttonHover: 'hover:bg-indigo-400',
+  },
+  {
+    id: '26SS-M-NON',
+    name: 'M NON',
+    icon: 'MLB',
+    period: '26SS',
+    color: 'slate',
+    bgColor: 'bg-slate-200',
+    hoverColor: 'hover:bg-slate-300',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-700',
+    iconBg: 'bg-slate-300',
+    buttonBg: 'bg-slate-300',
+    buttonHover: 'hover:bg-slate-400',
+  },
+  {
+    id: '26SS-I-NON',
+    name: 'I NON',
+    icon: 'MK',
+    period: '26SS',
+    color: 'slate',
+    bgColor: 'bg-slate-200',
+    hoverColor: 'hover:bg-slate-300',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-700',
+    iconBg: 'bg-slate-300',
+    buttonBg: 'bg-slate-300',
+    buttonHover: 'hover:bg-slate-400',
+  },
+  {
+    id: '26SS-X-NON',
+    name: 'X NON',
+    icon: 'DX',
+    period: '26SS',
+    color: 'slate',
+    bgColor: 'bg-slate-200',
+    hoverColor: 'hover:bg-slate-300',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-700',
+    iconBg: 'bg-slate-300',
+    buttonBg: 'bg-slate-300',
+    buttonHover: 'hover:bg-slate-400',
   },
   {
     id: '25SS-M',
@@ -357,6 +427,48 @@ const brands = [
     buttonBg: 'bg-indigo-300',
     buttonHover: 'hover:bg-indigo-400',
   },
+  {
+    id: '26FW-M-NON',
+    name: 'M NON',
+    icon: 'MLB',
+    period: '26FW',
+    color: 'slate',
+    bgColor: 'bg-slate-200',
+    hoverColor: 'hover:bg-slate-300',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-700',
+    iconBg: 'bg-slate-300',
+    buttonBg: 'bg-slate-300',
+    buttonHover: 'hover:bg-slate-400',
+  },
+  {
+    id: '26FW-I-NON',
+    name: 'I NON',
+    icon: 'MK',
+    period: '26FW',
+    color: 'slate',
+    bgColor: 'bg-slate-200',
+    hoverColor: 'hover:bg-slate-300',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-700',
+    iconBg: 'bg-slate-300',
+    buttonBg: 'bg-slate-300',
+    buttonHover: 'hover:bg-slate-400',
+  },
+  {
+    id: '26FW-X-NON',
+    name: 'X NON',
+    icon: 'DX',
+    period: '26FW',
+    color: 'slate',
+    bgColor: 'bg-slate-200',
+    hoverColor: 'hover:bg-slate-300',
+    borderColor: 'border-slate-300',
+    textColor: 'text-slate-700',
+    iconBg: 'bg-slate-300',
+    buttonBg: 'bg-slate-300',
+    buttonHover: 'hover:bg-slate-400',
+  },
 ];
 
 interface BrandSummary {
@@ -435,7 +547,6 @@ export default function Home() {
       // 각 브랜드별 summary 파일 및 FX 파일 매핑
       const brandFiles: Record<string, { summary: string; fx: string }> = {
         '25FW': { summary: 'COST RAW/25FW/summary_25fw_m.json', fx: 'COST RAW/FX.csv' },
-        'NON': { summary: 'summary.json', fx: 'FX 251111.csv' },
         'KIDS': { summary: 'COST RAW/25FW/summary_25fw_i.json', fx: 'COST RAW/FX.csv' },
         'DISCOVERY': { summary: 'COST RAW/25FW/summary_25fw_x.json', fx: 'COST RAW/FX.csv' },
         'DISCOVERY-KIDS': { summary: 'COST RAW/25FW/summary_25fw_x_kids.json', fx: 'COST RAW/FX.csv' },
@@ -459,6 +570,15 @@ export default function Home() {
         '26FW-DISCOVERY-KIDS': { summary: 'COST RAW/26FW/summary_26fw_x_kids.json', fx: 'COST RAW/FX.csv' },
         '26FW-ST': { summary: 'COST RAW/26FW/summary_26fw_st.json', fx: 'COST RAW/FX.csv' },
         '26FW-V': { summary: 'COST RAW/26FW/summary_26fw_v.json', fx: 'COST RAW/FX.csv' },
+        'M-NON': { summary: 'COST RAW/25FW/summary_25fw_m_non.json', fx: 'COST RAW/FX_NON.csv' },
+        'I-NON': { summary: 'COST RAW/25FW/summary_25fw_i_non.json', fx: 'COST RAW/FX_NON.csv' },
+        'X-NON': { summary: 'COST RAW/25FW/summary_25fw_x_non.json', fx: 'COST RAW/FX_NON.csv' },
+        '26SS-M-NON': { summary: 'COST RAW/26SS/summary_26ss_m_non.json', fx: 'COST RAW/FX_NON.csv' },
+        '26SS-I-NON': { summary: 'COST RAW/26SS/summary_26ss_i_non.json', fx: 'COST RAW/FX_NON.csv' },
+        '26SS-X-NON': { summary: 'COST RAW/26SS/summary_26ss_x_non.json', fx: 'COST RAW/FX_NON.csv' },
+        '26FW-M-NON': { summary: 'COST RAW/26FW/summary_26fw_m_non.json', fx: 'COST RAW/FX_NON.csv' },
+        '26FW-I-NON': { summary: 'COST RAW/26FW/summary_26fw_i_non.json', fx: 'COST RAW/FX_NON.csv' },
+        '26FW-X-NON': { summary: 'COST RAW/26FW/summary_26fw_x_non.json', fx: 'COST RAW/FX_NON.csv' },
       };
 
       for (const [brandId, files] of Object.entries(brandFiles)) {
@@ -471,8 +591,13 @@ export default function Home() {
             fxRates = await loadExchangeRates(files.fx, brandId, '26SS', '25SS');
           } else if (brandId.startsWith('26FW-')) {
             fxRates = await loadExchangeRates(files.fx, brandId, '26FW', '25FW');
-          } else if (brandId.startsWith('25SS-')) {
-            fxRates = await loadExchangeRates(files.fx, brandId, '25SS', '24SS');
+          } else if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+            // 25FW 기간의 NON 브랜드들
+            fxRates = await loadExchangeRates(files.fx, brandId, '25FW', '24FW');
+          } else if (brandId.startsWith('26SS-') && brandId.endsWith('-NON')) {
+            fxRates = await loadExchangeRates(files.fx, brandId, '26SS', '25SS');
+          } else if (brandId.startsWith('26FW-') && brandId.endsWith('-NON')) {
+            fxRates = await loadExchangeRates(files.fx, brandId, '26FW', '25FW');
           } else if (brandId === '25FW' || brandId === 'KIDS' || brandId === 'DISCOVERY' || brandId === 'DISCOVERY-KIDS' || brandId === 'ST' || brandId === 'V') {
             // 25FW 기간 브랜드들 (M, I, X, ST, V) - 새 구조
             const brandCode = brandId === '25FW' ? 'M' : brandId === 'KIDS' ? 'I' : brandId === 'DISCOVERY' ? 'X' : brandId === 'DISCOVERY-KIDS' ? 'DISCOVERY-KIDS' : brandId;

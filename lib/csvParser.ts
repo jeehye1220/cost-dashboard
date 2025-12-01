@@ -114,6 +114,13 @@ async function aggregateByItem(
     // DISCOVERY-KIDS는 환율 조회 시 'X' 브랜드 코드 사용 (25SS-DISCOVERY-KIDS, 26SS-DISCOVERY-KIDS 등 포함)
     if (brandId === 'DISCOVERY-KIDS' || brandId.includes('DISCOVERY-KIDS')) {
       brandCode = 'X';
+    } else if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+      // 25FW 기간의 NON 브랜드들
+      brandCode = brandId.charAt(0); // 'M-NON' → 'M', 'I-NON' → 'I', 'X-NON' → 'X'
+    } else if (brandId.endsWith('-NON') && (brandId.startsWith('26SS-') || brandId.startsWith('26FW-'))) {
+      // 26SS-M-NON, 26FW-M-NON 같은 형식
+      const parts = brandId.split('-');
+      brandCode = parts[1]; // '26SS-M-NON' → ['26SS', 'M', 'NON'] → 'M'
     } else if (brandId === 'DISCOVERY' || (brandId.includes('DISCOVERY') && !brandId.includes('KIDS'))) {
       // DISCOVERY도 'X' 브랜드 코드 사용
       brandCode = 'X';
@@ -129,6 +136,8 @@ async function aggregateByItem(
   
   // 시즌 필터링을 위한 헬퍼 함수
   const isPrevSeason = (season: string): boolean => {
+    // "전년(24N)" 형식 처리
+    if (season.startsWith('전년')) return true;
     if (season === '전년') return true;
     if (!prevSeason) return false;
     // prevSeason이 '24SS'면 '24SS', '24S' 모두 포함
@@ -149,6 +158,8 @@ async function aggregateByItem(
   };
   
   const isCurrSeason = (season: string): boolean => {
+    // "당년(25N)" 형식 처리
+    if (season.startsWith('당년')) return true;
     if (season === '당년') return true;
     if (!currentSeason) return false;
     // currentSeason이 '25SS'면 '25SS', '25S' 모두 포함
@@ -228,9 +239,18 @@ async function aggregateByItem(
   });
   
   // 디버깅: 필터링 결과 로그
-  if (brandId && brandId.includes('DISCOVERY-KIDS')) {
-    console.log(`[DISCOVERY-KIDS 필터링] 전체: ${totalCount}개, 필터링 후: ${filteredCount}개, 브랜드ID: ${brandId}, 현재시즌: ${currentSeason}, 전년시즌: ${prevSeason}`);
-    console.log(`[DISCOVERY-KIDS 필터링] 아이템 그룹 수: ${itemMap.size}`);
+  if (brandId && (brandId.includes('DISCOVERY-KIDS') || brandId.includes('NON'))) {
+    console.log(`[필터링] 전체: ${totalCount}개, 필터링 후: ${filteredCount}개, 브랜드ID: ${brandId}, 현재시즌: ${currentSeason}, 전년시즌: ${prevSeason}`);
+    console.log(`[필터링] 아이템 그룹 수: ${itemMap.size}`);
+    
+    // 시즌별 데이터 개수 확인
+    let prevCount = 0;
+    let currCount = 0;
+    for (const group of itemMap.values()) {
+      prevCount += group.dataPrev.length;
+      currCount += group.dataCurr.length;
+    }
+    console.log(`[필터링] 전년 데이터: ${prevCount}개, 당년 데이터: ${currCount}개`);
   }
   
   // 환율 캐시: 카테고리별 환율을 한 번만 조회하고 재사용
@@ -238,7 +258,7 @@ async function aggregateByItem(
   const getCachedFxRate = async (category: string): Promise<number> => {
     const cacheKey = `${brandCode}_${prevSeasonCode}_${category || '의류'}`;
     if (!fxRateCache.has(cacheKey)) {
-      const rate = await getExchangeRateFromFx(brandCode, prevSeasonCode, category);
+      const rate = await getExchangeRateFromFx(brandCode, prevSeasonCode, category, fxFileName);
       fxRateCache.set(cacheKey, rate);
     }
     return fxRateCache.get(cacheKey)!;
@@ -423,10 +443,11 @@ function mapCategoryToFxCategory(category: string): string {
 export async function getExchangeRateFromFx(
   brandCode: string,
   seasonCode: string,
-  category?: string
+  category?: string,
+  fxFileName: string = 'COST RAW/FX.csv'
 ): Promise<number> {
   try {
-    const response = await fetch('/COST RAW/FX.csv');
+    const response = await fetch(`/${fxFileName}`);
     const csvText = await response.text();
     const lines = csvText.split('\n').filter(line => line.trim());
     
@@ -550,6 +571,13 @@ export async function loadExchangeRates(
         // DISCOVERY-KIDS는 먼저 체크하여 'X' 브랜드 코드 사용 (25SS-DISCOVERY-KIDS, 26SS-DISCOVERY-KIDS 등 포함)
         if (brandId === 'DISCOVERY-KIDS' || brandId.includes('DISCOVERY-KIDS')) {
           brandCode = 'X';
+        } else if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+          // 25FW 기간의 NON 브랜드들
+          brandCode = brandId.charAt(0); // 'M-NON' → 'M', 'I-NON' → 'I', 'X-NON' → 'X'
+        } else if (brandId.endsWith('-NON') && (brandId.startsWith('26SS-') || brandId.startsWith('26FW-'))) {
+          // 26SS-M-NON, 26FW-M-NON 같은 형식
+          const parts = brandId.split('-');
+          brandCode = parts[1]; // '26SS-M-NON' → ['26SS', 'M', 'NON'] → 'M'
         } else if (isNewSeasonFormat(brandId)) {
           // 26SS-M, 25FW-M 같은 형식
           brandCode = extractBrandCode(brandId);
@@ -570,7 +598,55 @@ export async function loadExchangeRates(
         brandCode = 'M';
       }
       
-      // 시즌 코드 변환
+      // FX_NON.csv 파일인지 확인
+      const isFxNonFile = fxFileName.includes('FX_NON') || fxFileName.includes('fx_non');
+      
+      if (isFxNonFile) {
+        // FX_NON.csv 구조: 브랜드,기간,시즌,환율
+        // 기간 컬럼: "전년", "당년"
+        // 시즌 컬럼: "25F", "25S", "26F", "26S"
+        const currSeasonCode = convertSeasonCode(currentSeason); // 25FW → 25F
+        
+        let prevRate = 0.0;
+        let currRate = 0.0;
+        
+        // CSV 파싱 (헤더 스킵) - Papa.parse 사용
+        const parseResult = Papa.parse(csvText, {
+          header: true,
+          skipEmptyLines: true,
+        });
+        
+        console.log(`[FX_NON] 조회 시작: 브랜드=${brandCode}, 시즌=${currSeasonCode}`);
+        
+        for (const row of parseResult.data as any[]) {
+          const rowBrand = (row['브랜드'] || '').trim();
+          const rowPeriod = (row['기간'] || '').trim();
+          const rowSeason = (row['시즌'] || '').trim();
+          const rateStr = (row['환율'] || '0').toString().trim();
+          const rate = parseFloat(rateStr) || 0;
+          
+          // 전년 환율 조회: 기간=전년, 시즌=currentSeasonCode
+          if (rowBrand === brandCode && rowPeriod === '전년' && rowSeason === currSeasonCode && rate > 0) {
+            prevRate = rate;
+            console.log(`[FX_NON] 전년 환율 찾음: ${rowBrand}, 기간=${rowPeriod}, 시즌=${rowSeason}, 환율=${rate}`);
+          }
+          
+          // 당년 환율 조회: 기간=당년, 시즌=currentSeasonCode
+          if (rowBrand === brandCode && rowPeriod === '당년' && rowSeason === currSeasonCode && rate > 0) {
+            currRate = rate;
+            console.log(`[FX_NON] 당년 환율 찾음: ${rowBrand}, 기간=${rowPeriod}, 시즌=${rowSeason}, 환율=${rate}`);
+          }
+        }
+        
+        console.log(`[FX_NON] 최종 결과: 브랜드=${brandCode}, 시즌=${currSeasonCode}, 전년=${prevRate}, 당년=${currRate}`);
+        
+        return {
+          prev: prevRate || 1300.0,
+          curr: currRate || 1300.0
+        };
+      }
+      
+      // 기존 FX.csv 구조: 브랜드,시즌,카테고리,환율
       const prevSeasonCode = convertSeasonCode(prevSeason); // 25SS → 25S
       const currSeasonCode = convertSeasonCode(currentSeason); // 26SS → 26S
       
@@ -671,16 +747,31 @@ export async function loadCostData(
 export async function loadSummaryData(fileName: string = 'summary.json') {
   try {
     console.log(`[loadSummaryData] 시작: fileName=${fileName}`);
-    const response = await fetch(`/${fileName}`);
+    const filePath = `/${fileName}`;
+    console.log(`[loadSummaryData] 파일 경로: ${filePath}`);
+    const response = await fetch(filePath);
     if (!response.ok) {
-      console.error(`[loadSummaryData] HTTP 오류: ${response.status} ${response.statusText}`);
+      console.error(`[loadSummaryData] HTTP 오류: ${response.status} ${response.statusText}, 파일: ${filePath}`);
+      const text = await response.text();
+      console.error(`[loadSummaryData] 응답 내용: ${text.substring(0, 200)}`);
       return null;
     }
     const data = await response.json();
-    console.log(`[loadSummaryData] 로드 완료: ${fileName}`, data?.total ? '데이터 있음' : '데이터 없음');
+    if (data?.total) {
+      console.log(`[loadSummaryData] 로드 완료: ${fileName}`);
+      console.log(`[loadSummaryData] 데이터 확인: qty24F=${data.total.qty24F}, qty25F=${data.total.qty25F}, costRate24F_usd=${data.total.costRate24F_usd}, costRate25F_usd=${data.total.costRate25F_usd}`);
+      console.log(`[loadSummaryData] categories 개수: ${data.categories?.length || 0}`);
+    } else {
+      console.warn(`[loadSummaryData] 데이터 없음: ${fileName}`, data);
+      console.warn(`[loadSummaryData] data 구조:`, Object.keys(data || {}));
+    }
     return data;
   } catch (error) {
     console.error(`[loadSummaryData] ${fileName} 로드 실패:`, error);
+    if (error instanceof Error) {
+      console.error(`[loadSummaryData] 오류 메시지: ${error.message}`);
+      console.error(`[loadSummaryData] 오류 스택: ${error.stack}`);
+    }
     return null;
   }
 }

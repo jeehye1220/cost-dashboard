@@ -44,11 +44,14 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
     } else if (brandId.startsWith('26FW-')) {
       seasonType = '26FW';
     }
+  } else if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+    // 25FW 기간의 NON 브랜드들
+    seasonType = '25FW';
+  } else if (brandId?.startsWith('26SS-') && brandId?.endsWith('-NON')) {
+    seasonType = '26SS';
+  } else if (brandId?.startsWith('26FW-') && brandId?.endsWith('-NON')) {
+    seasonType = '26FW';
   }
-  
-  const is25FW = seasonType === '25FW';
-  const isKIDS = seasonType === 'KIDS';
-  const isDISCOVERY = seasonType === 'DISCOVERY';
   
   // CSV에서 로드된 인사이트 데이터
   const [csvInsights, setCsvInsights] = useState<any>(null);
@@ -150,236 +153,23 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
       };
     }
     
-    // CSV 데이터가 없으면 기본 데이터 사용 (fallback)
-    if (isKIDS) {
-      // MLB KIDS 시즌 텍스트
-      return {
-        usd: {
-          title: 'USD 기준: TAG 가격 상승으로 원가율 개선 ⚠️',
-          mainChange: `-0.5%p 개선`,
-          items: [
-            {
-              icon: '🔍',
-              title: '"경쟁이 아닌 비용 개선" 구조',
-              change: `Price Effect`,
-              description: `평균원가 USD: 19.90 → 20.91 (+5.1%) 상승. TAG USD: 91.8 → 98.5 (+7.3%) 상승. 즉, 가격 자체는 높아졌으나 TAG가 더 크게 올라, 가격 효과(Price Effect)에 의해 원가율 개선(▼0.5%p).`
-            },
-            {
-              icon: '🔍',
-              title: '믹스효과 + 평균TAG 상승으로 방어',
-              change: `Mix Effect`,
-              description: `Outer 비중 ↑ (28→29%), 고TAG 제품 믹스 확대로 평균 원가율 방어. 고가제품 믹스로 인한 전체 평균 개선효과로, 제조효율 개선이 원가 기여의 일부를 흡수.`
-            }
-          ],
-          summary: `TAG 상승(+7.3%)과 고가 제품 믹스 개선으로 원가율 개선. 단, 실질적인 제조 효율 향상보다 가격설정 재구조화 및 판가 상승 전략의 성과.`
-        },
-        krw: {
-          title: '환율·제조원가 동반 상승으로 악화 ⚠️',
-          mainChange: (() => {
-            const change = total.costRate25F_krw - total.costRate25F_usd;
-            return change > 0 ? `+${change.toFixed(1)}%p 악화` : change < 0 ? `-${Math.abs(change).toFixed(1)}%p 개선` : `0.0%p 동일`;
-          })(),
-          items: [
-            {
-              icon: '💱',
-              title: '환율 효과',
-              change: `+${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p`,
-              description: `환율 상승(+9.4%, 1,321원→1,446원)으로 USD 기준 효과 상쇄 상실. 당년 USD 원가율 ${total.costRate25F_usd.toFixed(1)}%에서 당년 KRW 원가율 ${total.costRate25F_krw.toFixed(1)}%로 환율 효과 ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화.`
-            },
-            {
-              icon: '🍊',
-              title: '제조원가 상승',
-              change: `+5.1%`,
-              description: `평균원가 19.90→20.91 USD (+5.1%). 공임단가 +13.4% (4.71→5.34). 아트웍단가 +31.7% (1.04→1.37). 원부자재단가 거의 변동 없음 (11.37→11.33). 즉, 제조단계에서는 실질적 절감 없음. 오히려 가격 인상이 투입됨.`
-            }
-          ],
-          summary: `TAG 상승으로 USD 원가율은 개선되었으나, 공임·아트 등 제조원가 +5.1% 상승. 여기에 환율 상승(+9.4%)까지 더해져 KRW 기준 실질 악화`
-        }
-      };
-    } else if (isDISCOVERY) {
-      // DISCOVERY 시즌 텍스트
-      return {
-        usd: {
-          title: 'USD 기준: 원가율 상승 ⚠️',
-          mainChange: `+0.5%p 악화`,
-          items: [
-            {
-              icon: '📦',
-              title: '원부자재 단가 상승',
-              change: `+0.8%p`,
-              description: `고가 소재(다운, 기능성 원단 등) 사용 비중 확대로 소재비 비중 14.4% → 15.2%로 상승. 평균원가 $34.12 → $35.11 (+2.9%) 증가했으나 TAG는 $169.33 → $169.84 (+0.3%)로 거의 변화 없어 원가율 악화.`
-            },
-            {
-              icon: '🏷️',
-              title: '공임비 절감',
-              change: `▼ 0.1%p`,
-              description: `공임비율 4.5% → 4.4%로 소폭 감소. Inner/Bottom 카테고리에서 봉제 효율화 성과 있으나, Outer(다운류) 공임단가 상승으로 기여도 제한됨.`
-            },
-            {
-              icon: '💸',
-              title: '경비율 절감',
-              change: `▼ 0.2%p`,
-              description: `아트웍·간접비용 효율화로 경비율 0.9% → 0.7%로 개선. 생산수량 23.4% 증가(134만→166만개)로 고정비 분산 효과.`
-            }
-          ],
-          summary: `TAG 거의 정체(+0.3%) 상황에서 원부자재 단가 상승(+0.8%p)이 공임·경비 절감 효과(-0.3%p)를 상쇄하며 USD 원가율 +0.5%p 악화. "TAG 동결 + 소재비 급등" 구조.`
-        },
-        krw: {
-          title: 'KRW 기준: 환율로 추가 악화 ⚠️',
-          mainChange: (() => {
-            const change = total.costRate25F_krw - total.costRate25F_usd;
-            return change > 0 ? `+${change.toFixed(1)}%p 악화` : change < 0 ? `-${Math.abs(change).toFixed(1)}%p 개선` : `0.0%p 동일`;
-          })(),
-          items: [
-            {
-              icon: '💱',
-              title: '환율 효과',
-              change: `+${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p`,
-              description: `환율 1,350 → 1,400원(+3.7%) 상승으로 KRW 기준 추가 부담. 당년 USD 원가율 ${total.costRate25F_usd.toFixed(1)}%에서 당년 KRW 원가율 ${total.costRate25F_krw.toFixed(1)}%로 환율 효과 ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화.`
-            },
-            {
-              icon: '🔥',
-              title: 'Outer 카테고리 집중 타격',
-              change: `58% 비중`,
-              description: `Outer가 전체 생산의 58%(96만개) 차지. Outer 원가율 22.4% → 24.0% (+1.6%p) 급등으로 전체 원가율 상승 주도. 다운 소재 + 환율 이중 악재.`
-            }
-          ],
-          summary: `TAG 상승 없이 원자재 단가만 급등하며 USD 기준 악화. 여기에 환율 3.7% 상승이 더해져 KRW 기준 실손익 크게 압박. TAG 인상 전략 부재가 치명적.`
-        }
-      };
-    } else if (is25FW) {
-      // 25FW 시즌 텍스트 (CSV 인사이트 우선, 없으면 동적 계산)
-      // USD mainChange 계산 (CSV에 없으면 동적 계산, 상승=악화 빨간색, 하락=개선 초록색)
-      const usdMainChange = csvInsights?.usd?.mainChange || 
-        (isUsdImproved ? `-${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
-         isUsdWorsened ? `+${usdCostRateChange.toFixed(1)}%p 악화` : 
-         `0.0%p 동일`);
-      
-      return {
-        usd: {
-          title: csvInsights?.usd?.title || (isUsdImproved ? 'USD 기준: 원가율 개선' : isUsdWorsened ? 'USD 기준: 원가율 악화' : 'USD 기준: 원가율 유지'),
-          mainChange: usdMainChange,
-          items: csvInsights?.usd?.items || [
-            {
-              icon: '🎨',
-              title: '소재단가 절감',
-              change: `▼ 0.9%p`,
-              description: `구스/덕 충전재 80/20, 90/10 믹스 변경으로 규조적 단가 절감 달성. 협상이 아닌 소재 전략 개선이 주된 요인`
-            },
-            {
-              icon: '💼',
-              title: '벤더마진 축소',
-              change: `▼ 0.1%p`,
-              description: `거래조건 재설상으로 벤더 마진 –0.1%p 회수. 협상 통계력 회복 및 협상력 강화 효과`
-            },
-            {
-              icon: '⚡',
-              title: '공정 개선 (Inner)',
-              change: `▼ 0.46 USD`,
-              description: `봉제 단순화로 공임 –0.46 USD 절감. 효율 모델로 검증된 타 카테고리 확산 기반 확보`
-            }
-          ],
-          summary: csvInsights?.usd?.summary || `소재 믹스 개선과 공임 효율화로 절감 효과를 달성했으나, 전체 평균 품목 단가 상승이 실질 개선폭 제한`
-        },
-        krw: {
-          title: csvInsights?.krw?.title || (isKrwImproved ? 'KRW 기준: 환율 효과로 개선' : isKrwWorsened ? 'KRW 기준: 환율 영향으로 악화' : 'KRW 기준: 환율 영향 없음'),
-          mainChange: csvInsights?.krw?.mainChange || (() => {
-            const change = total.costRate25F_krw - total.costRate25F_usd;
-            return change > 0 ? `+${change.toFixed(1)}%p 악화` : change < 0 ? `-${Math.abs(change).toFixed(1)}%p 개선` : `0.0%p 동일`;
-          })(),
-          items: csvInsights?.krw?.items || [
-            {
-              icon: '💱',
-              title: '환율 효과',
-              change: `+${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p`,
-              description: `환율 상승(+11%)으로 USD 개선 효과 완전 상쇄. 당년 USD 원가율 ${total.costRate25F_usd.toFixed(1)}%에서 당년 KRW 원가율 ${total.costRate25F_krw.toFixed(1)}%로 환율 효과 ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화.`
-            },
-            {
-              icon: '👟',
-              title: 'Outer 비중 확대',
-              change: '리스크 ↑',
-              description: `고공임 제품 비중 59% → 62%로 확대되며 원가율은 상승했으나, 주력 고마진 아이템 중심의 믹스 효과로 매출 기여도 큼`
-            },
-            {
-              icon: '🎀',
-              title: '공임비 상승(Outer)',
-              change: `+0.7%p`,
-              description: `Outer 공임 4.3% → 4.9% (+0.7%p). 동계 나이론-고임군 위주 병렬 투입 가더로 강화된 기대`
-            }
-          ],
-          summary: csvInsights?.krw?.summary || `소재·공임 효율 개선했으나, 환율과 믹스 구조 변화로 실손익 방어에 제한된 시즌.`
-        }
-      };
-    } else {
-      // NON 시즌 텍스트
-      return {
-        usd: {
-          title: isUsdImproved ? 'USD 기준: 원가율 개선' : isUsdWorsened ? 'USD 기준: 원가율 악화' : 'USD 기준: 원가율 유지',
-          mainChange: `-${Math.abs(total.costRate25F_usd - total.costRate24F_usd).toFixed(1)}%p 개선`,
-          items: [
-            {
-              icon: '🎨',
-              title: '원부자재 효율화',
-              change: `▼ 0.2%p`,
-              description: `원부자재 단가 8.9% → 8.7%, 대량생산(758만개) 체제 전환으로 규모의 경제 달성 및 협상력 강화`
-            },
-            {
-              icon: '💼',
-              title: '마진율 최적화',
-              change: `▼ 0.2%p`,
-              description: `벤더 마진 1.5% → 1.3%, 생산량 증가(+170.8%)로 공급망 단가 협상 구조 개선`
-            },
-            {
-              icon: '⚡',
-              title: '경비율 절감',
-              change: `▼ 0.6%p`,
-              description: `물량 증가에 따른 고정비 분산 효과 및 물류적 운영으로 경비율 1.0% → 0.4% 축소`
-            },
-            {
-              icon: '✨',
-              title: 'TAG 상승률 통한 생산단가 방어',
-              change: '',
-              description: `생산단가 $8.00 → $9.24(+15.5%) 상승에도 TAG +23.2% 증 상세, 고가품 믹스 효과로 원 가율 방어`
-            }
-          ],
-          summary: `TAG 상승과 원가 절감의 동시효과로 USD 기준 원가율 –1.1%p 개선. 생산단가 인상 압력 속에서도 가격 믹스 전략으로 구조적 개선 달성`
-        },
-        krw: {
-          title: isKrwImproved ? 'KRW 기준: 환율 효과로 개선' : isKrwWorsened ? 'KRW 기준: 환율 영향으로 악화' : 'KRW 기준: 환율 영향 없음',
-          mainChange: (() => {
-            const change = total.costRate25F_krw - total.costRate25F_usd;
-            return change > 0 ? `+${change.toFixed(1)}%p 악화` : change < 0 ? `-${Math.abs(change).toFixed(1)}%p 개선` : `0.0%p 동일`;
-          })(),
-          items: [
-            {
-              icon: '💱',
-              title: '환율 효과',
-              change: `+${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p`,
-              description: `환율 1,288원 → 1,420원(+10.2%)으로 USD 개선 효과 상쇄. 당년 USD 원가율 ${total.costRate25F_usd.toFixed(1)}%에서 당년 KRW 원가율 ${total.costRate25F_krw.toFixed(1)}%로 환율 효과 ${(total.costRate25F_krw - total.costRate25F_usd).toFixed(1)}%p 악화.`
-            },
-            {
-              icon: '👟',
-              title: 'Shoes 카테고리 집중',
-              change: '리스크',
-              description: `Shoes 원가율 18.8% → 16.8% 개선, 하지만 환율 상승으로 KRW 실적 반영 시 이익 전환 제한`
-            },
-            {
-              icon: '📊',
-              title: '생산단가 상승 영향',
-              change: `+15.5%`,
-              description: `단가 +15.5% 상승으로 원화 환가 부담 확대, TAG 효과는 달러 상쇄에 그침`
-            },
-            {
-              icon: '✨',
-              title: '제품 믹스 효과로 원부자재 평균단가 상승',
-              change: '',
-              description: `카테고리별 단가는 대부분 하락했으나, 고단가(신발·가방) 비중 확대로 전체 평균단가는 상승. 카단가(제조혁신 영향) 비중 축소 결정이 큼`
-            }
-          ],
-          summary: `USD 기준으로 +TAG 효과로 원가율이 개선되나, 환율 상승(+10.2%)이 KRW 실손 이익을 잠식하여 +1.5%p 악화. 환율 환율 리스크 관리 및 환헤 단가 협상력 강화 필요. 혁심 과제`
-        }
-      };
-    }
+    // 하드코딩된 fallback 완전 제거 - CSV 인사이트가 없으면 빈 상태 반환
+    return {
+      usd: {
+        title: getUsdTitle(),
+        mainChange: isUsdImproved ? `-${Math.abs(usdCostRateChange).toFixed(1)}%p 개선` : 
+                   isUsdWorsened ? `+${usdCostRateChange.toFixed(1)}%p 악화` : 
+                   `0.0%p 동일`,
+        items: [],
+        summary: '',
+      },
+      krw: {
+        title: getKrwTitle(),
+        mainChange: krwChangeText,
+        items: [],
+        summary: '',
+      },
+    };
   };
 
   const initialTexts = getInitialTexts();

@@ -38,11 +38,8 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
   // 탭 이름 동적 생성 (brandId 기반)
   const getTabName = () => {
     if (!brandId) {
-      // brandId가 없으면 qty24F 기준으로 판별 (기존 로직)
-      if (total.qty24F > 3000000 && total.qty24F < 4000000) return 'MLB 25FW';
-      if (total.qty24F > 600000 && total.qty24F < 700000) return 'MLB KIDS';
-      if (total.qty24F > 1200000 && total.qty24F < 1400000) return 'DISCOVERY';
-      return 'MLB NON';
+      // brandId가 없으면 기본값 반환
+      return 'MLB';
     }
     
     // DISCOVERY-KIDS 처리 (모든 시즌 동일하게)
@@ -62,6 +59,18 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
       return `DISCOVERY KIDS ${season}`;
     }
     
+    // NON 브랜드 처리
+    if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+      const brandCode = brandId === 'M-NON' ? 'M' : brandId === 'I-NON' ? 'I' : 'X';
+      return `${getBrandName(brandCode)} 25FW`;
+    } else if (brandId.startsWith('26SS-') && brandId.endsWith('-NON')) {
+      const brandCode = brandId.replace('26SS-', '').replace('-NON', '');
+      return `${getBrandName(brandCode)} 26SS`;
+    } else if (brandId.startsWith('26FW-') && brandId.endsWith('-NON')) {
+      const brandCode = brandId.replace('26FW-', '').replace('-NON', '');
+      return `${getBrandName(brandCode)} 26FW`;
+    }
+    
     // brandId에서 브랜드 코드와 시즌 추출
     let brandCode = '';
     let season = '';
@@ -79,10 +88,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
       else brandCode = brandId;
     } else {
       // 알 수 없는 경우 기본값
-      if (total.qty24F > 3000000 && total.qty24F < 4000000) return 'MLB 25FW';
-      if (total.qty24F > 600000 && total.qty24F < 700000) return 'MLB KIDS';
-      if (total.qty24F > 1200000 && total.qty24F < 1400000) return 'DISCOVERY';
-      return 'MLB NON';
+      return 'MLB';
     }
     
     const brandName = getBrandName(brandCode);
@@ -118,35 +124,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
   const totalCost25F_USD = total.avgCost25F_usd * total.qty25F;
   const costAmountYoY = totalCost24F_USD > 0 ? ((totalCost25F_USD / totalCost24F_USD) * 100) : 0; // 비율 (예: 103.5%)
   
-  // 탭별 초기 분석 멘트
-  const getDefaultInsights = () => {
-    if (tabName === 'MLB KIDS') {
-      return {
-        title: `핵심 성과: 생산수량 ${total.qtyYoY?.toFixed(1)}% 감소, TAG +${(total.tagYoY_usd-100).toFixed(1)}% 상승으로 생산단가 +${(total.costYoY_usd-100).toFixed(1)}% 증가에도 USD 원가율 ${Math.abs(total.costRateChange_usd).toFixed(1)}%p 개선`,
-        volume: `생산수량 ${(total.qty24F/10000).toFixed(1)}만개 → ${(total.qty25F/10000).toFixed(1)}만개 (${total.qtyYoY?.toFixed(1)}%) 감소. 시장 축소 또는 전략적 물량 조정으로 추정됨.`,
-        tag: `평균TAG $${(total.avgTag25F_usd - total.avgTag24F_usd).toFixed(2)} 상승(+${(total.tagYoY_usd-100).toFixed(1)}%)으로 원가율 방어. TAG 상승 전략이 원가 인상 압력을 상쇄하여 USD 원가율 ${Math.abs(total.costRateChange_usd).toFixed(1)}%p 개선 달성. 원가M/U ${mu24F.toFixed(2)}→${mu25F.toFixed(2)} (+${(mu25F-mu24F).toFixed(2)})로 수익성 개선됨.`,
-        fx: `환율 +${fxYoY.toFixed(1)}% 상승(${fxPrev.toFixed(2)}→${fxCurr.toFixed(2)}원)으로 KRW 기준 생산단가 +${(total.costYoY_krw-100).toFixed(1)}% 급증. USD 기준 원가율 개선 효과가 환율 악화로 상쇄되어 KRW 원가율 +${total.costRateChange_krw.toFixed(1)}%p 악화.`,
-        conclusion: `KIDS는 물량 감소(-${(100-total.qtyYoY).toFixed(1)}%)에도 TAG 인상 전략(+${(total.tagYoY_usd-100).toFixed(1)}%)으로 USD 기준 원가율을 개선했으나, 환율 급등(+${fxYoY.toFixed(1)}%)으로 KRW 실손익은 압박받는 구조. 물량 회복이 핵심 과제.`
-      };
-    } else if (tabName === 'DISCOVERY') {
-      return {
-        title: `원자재 가격 상승과 환율 악재가 동시에 작용하며 원가 경쟁력 악화. 소재 조달 전략 및 공임비 강화 시급.`,
-        volume: `원부자재 단가 상승: 고가 소재(다운, 기능성 원단 등) 사용 비중 확대로 글로벌 원자재 시세 상승이 맞물려 단가 상승. 소재비 비중 14.42% → 15.20%로 확대. 단, Outer(다운류) 공임비 효율화로 일부 기여도 감소.`,
-        tag: `공임비 절감: 협동 아이템(박터, 트리밍)에서 공임비 6.90 → 6.83 USD/PCS로 감소. 단, Outer(다운류) 공임비 효율화(14.42→15.20%)로 기여도 감소.`,
-        fx: `환율 효과: 환율 ${fxPrev.toFixed(2)} → ${fxCurr.toFixed(2)}(+${fxYoY.toFixed(1)}%) 상승으로 KRW 환가율 추가 상승. 원물인조로 환가율 +${(total.costRateChange_krw - total.costRateChange_usd).toFixed(1)}%p 악화. - 기준환율 관리 필요.`,
-        conclusion: `환율의 추가 부담: USD 기준 ${total.costRate25F_usd.toFixed(1)}% 원가율에 환율 상승(+${fxYoY.toFixed(1)}%)이 물리며 KRW 기준 ${total.costRate25F_krw.toFixed(1)}%로 상승인조로 환가율 +${(total.costRateChange_krw - total.costRateChange_usd).toFixed(1)}%p 추가 악화. Outer 카테고리 환율 영향 집중(${(58).toFixed(0)}% 비중). 다운원면 등 Outer가 전체 생산의 ${(17).toFixed(0)} USD 원물 변동에 가장 민감. 추가 환율 악화 구간에서 충수지 감소 방어 계획 필수.`
-      };
-    } else {
-      // 기존 25FW, NON 시즌
-      return {
-        title: `핵심 성과: 생산수량 ${total.qtyYoY?.toFixed(1)}% 증가, TAG +${tagAmountYoY.toFixed(1)}% 상승으로 생산단가 +${(total.costYoY_usd-100).toFixed(1)}% 증가에도 USD 원가율 ${Math.abs(total.costRateChange_usd).toFixed(1)}%p 개선`,
-        volume: `생산수량 ${(total.qty24F/10000).toFixed(1)}만개 → ${(total.qty25F/10000).toFixed(1)}만개 (+${total.qtyYoY?.toFixed(1)}%) 증가로 스케일 메리트 확보. 총판매가는 ${tagAmountYoY.toFixed(1)}% 증가하여 고가 제품 믹스 확대 전략 확인됨.`,
-        tag: `평균TAG $${(total.avgTag25F_usd - total.avgTag24F_usd).toFixed(2)} 상승(+${(total.tagYoY_usd-100).toFixed(1)}%)으로 원가율 ${Math.abs(total.costRateChange_usd).toFixed(1)}%p 개선 달성. 원가M/U ${mu24F.toFixed(2)}→${mu25F.toFixed(2)} (+${(mu25F-mu24F).toFixed(2)})로 수익성 개선됨.`,
-        fx: `환율 +${fxYoY.toFixed(1)}% 상승(${fxPrev.toFixed(2)}→${fxCurr.toFixed(2)}원)으로 KRW 기준 생산단가 +${(total.costYoY_krw-100).toFixed(1)}% 급증. USD 기준 원가율 개선 효과가 환율 악화로 상쇄되어 KRW 원가율 +${total.costRateChange_krw.toFixed(1)}%p 악화.`,
-        conclusion: `${tabName}은 대량생산(+${total.qtyYoY?.toFixed(1)}%)과 고가 믹스 전략으로 USD 기준 원가율을 방어했으나, 생산단가 인상(+${(total.costYoY_usd-100).toFixed(1)}%)과 환율 급등(+${fxYoY.toFixed(1)}%)으로 KRW 실손익은 압박받는 구조. 향후 생산단가 절감이 핵심 과제.`
-      };
-    }
-  };
+  // 하드코딩된 getDefaultInsights 함수 제거 - CSV에서만 로드
   
   // CSV에서 인사이트 로드 (데이터가 유효할 때만)
   React.useEffect(() => {
@@ -160,6 +138,13 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
     if (brandId?.startsWith('25SS-') || brandId?.startsWith('26SS-') || brandId?.startsWith('26FW-')) {
       seasonType = brandId.startsWith('25SS-') ? '25SS' : 
                    brandId.startsWith('26SS-') ? '26SS' : '26FW';
+    } else if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+      // 25FW 기간의 NON 브랜드들
+      seasonType = '25FW';
+    } else if (brandId?.startsWith('26SS-') && brandId?.endsWith('-NON')) {
+      seasonType = '26SS';
+    } else if (brandId?.startsWith('26FW-') && brandId?.endsWith('-NON')) {
+      seasonType = '26FW';
     }
     
     loadInsightsFromCSV(seasonType, brandId).then(data => {
@@ -173,9 +158,14 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
           conclusion: data.metricsConclusion || '',
         });
       } else {
-        // CSV에 없으면 기본값 사용 (하드코딩된 값)
-        const defaultInsights = getDefaultInsights();
-        setInsights(defaultInsights);
+        // CSV에 없으면 빈 상태 유지 (하드코딩 제거)
+        setInsights({
+          title: '',
+          volume: '',
+          tag: '',
+          fx: '',
+          conclusion: '',
+        });
       }
     });
   }, [tabName, total.qty24F, brandId, summary]);

@@ -49,6 +49,13 @@ export default function BrandDashboard() {
       } else if (brandId.startsWith('25SS-') || brandId.startsWith('26SS-') || brandId.startsWith('26FW-')) {
         actualSeasonType = brandId.startsWith('25SS-') ? '25SS' : 
                           brandId.startsWith('26SS-') ? '26SS' : '26FW';
+      } else if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+        // 25FW 기간의 NON 브랜드들
+        actualSeasonType = '25FW';
+      } else if (brandId.startsWith('26SS-') && brandId.endsWith('-NON')) {
+        actualSeasonType = '26SS';
+      } else if (brandId.startsWith('26FW-') && brandId.endsWith('-NON')) {
+        actualSeasonType = '26FW';
       } else if (brandId.includes('DISCOVERY-KIDS')) {
         // 25SS-DISCOVERY-KIDS, 26SS-DISCOVERY-KIDS, 26FW-DISCOVERY-KIDS
         if (brandId.startsWith('25SS-')) {
@@ -149,7 +156,7 @@ export default function BrandDashboard() {
     'KIDS': { '25FW': 'KIDS', '25SS': '25SS-I', '26SS': '26SS-I', '26FW': '26FW-I' },
     'DISCOVERY': { '25FW': 'DISCOVERY', '25SS': '25SS-X', '26SS': '26SS-X', '26FW': '26FW-X' },
     'DISCOVERY-KIDS': { '25FW': 'DISCOVERY-KIDS', '25SS': '25SS-DISCOVERY-KIDS', '26SS': '26SS-DISCOVERY-KIDS', '26FW': '26FW-DISCOVERY-KIDS' },
-    'NON': { '25FW': 'NON', '25SS': '', '26SS': '', '26FW': '' }, // NON은 25FW만
+    'NON': { '25FW': 'NON', '25SS': '', '26SS': '26SS-NON', '26FW': '26FW-NON' },
   };
 
   // 기간 선택 핸들러
@@ -505,6 +512,123 @@ export default function BrandDashboard() {
       buttonBg: 'bg-indigo-300',
       buttonHover: 'hover:bg-indigo-400',
     },
+    'M-NON': { 
+      name: 'M NON 25FW', 
+      color: 'slate',
+      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
+      headerText: 'text-slate-700',
+      headerTextHover: 'hover:text-slate-800',
+      infoBg: 'bg-slate-200',
+      infoBorder: 'border-slate-300',
+      infoTitle: 'text-slate-700',
+      infoText: 'text-slate-700',
+      buttonBg: 'bg-slate-300',
+      buttonHover: 'hover:bg-slate-400',
+    },
+    'I-NON': { 
+      name: 'I NON 25FW', 
+      color: 'slate',
+      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
+      headerText: 'text-slate-700',
+      headerTextHover: 'hover:text-slate-800',
+      infoBg: 'bg-slate-200',
+      infoBorder: 'border-slate-300',
+      infoTitle: 'text-slate-700',
+      infoText: 'text-slate-700',
+      buttonBg: 'bg-slate-300',
+      buttonHover: 'hover:bg-slate-400',
+    },
+    'X-NON': { 
+      name: 'X NON 25FW', 
+      color: 'slate',
+      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
+      headerText: 'text-slate-700',
+      headerTextHover: 'hover:text-slate-800',
+      infoBg: 'bg-slate-200',
+      infoBorder: 'border-slate-300',
+      infoTitle: 'text-slate-700',
+      infoText: 'text-slate-700',
+      buttonBg: 'bg-slate-300',
+      buttonHover: 'hover:bg-slate-400',
+    },
+    '26SS-M-NON': { 
+      name: 'M NON 26SS', 
+      color: 'slate',
+      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
+      headerText: 'text-slate-700',
+      headerTextHover: 'hover:text-slate-800',
+      infoBg: 'bg-slate-200',
+      infoBorder: 'border-slate-300',
+      infoTitle: 'text-slate-700',
+      infoText: 'text-slate-700',
+      buttonBg: 'bg-slate-300',
+      buttonHover: 'hover:bg-slate-400',
+    },
+    '26SS-I-NON': { 
+      name: 'I NON 26SS', 
+      color: 'slate',
+      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
+      headerText: 'text-slate-700',
+      headerTextHover: 'hover:text-slate-800',
+      infoBg: 'bg-slate-200',
+      infoBorder: 'border-slate-300',
+      infoTitle: 'text-slate-700',
+      infoText: 'text-slate-700',
+      buttonBg: 'bg-slate-300',
+      buttonHover: 'hover:bg-slate-400',
+    },
+    '26SS-X-NON': { 
+      name: 'X NON 26SS', 
+      color: 'slate',
+      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
+      headerText: 'text-slate-700',
+      headerTextHover: 'hover:text-slate-800',
+      infoBg: 'bg-slate-200',
+      infoBorder: 'border-slate-300',
+      infoTitle: 'text-slate-700',
+      infoText: 'text-slate-700',
+      buttonBg: 'bg-slate-300',
+      buttonHover: 'hover:bg-slate-400',
+    },
+    '26FW-M-NON': { 
+      name: 'M NON 26FW', 
+      color: 'slate',
+      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
+      headerText: 'text-slate-700',
+      headerTextHover: 'hover:text-slate-800',
+      infoBg: 'bg-slate-200',
+      infoBorder: 'border-slate-300',
+      infoTitle: 'text-slate-700',
+      infoText: 'text-slate-700',
+      buttonBg: 'bg-slate-300',
+      buttonHover: 'hover:bg-slate-400',
+    },
+    '26FW-I-NON': { 
+      name: 'I NON 26FW', 
+      color: 'slate',
+      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
+      headerText: 'text-slate-700',
+      headerTextHover: 'hover:text-slate-800',
+      infoBg: 'bg-slate-200',
+      infoBorder: 'border-slate-300',
+      infoTitle: 'text-slate-700',
+      infoText: 'text-slate-700',
+      buttonBg: 'bg-slate-300',
+      buttonHover: 'hover:bg-slate-400',
+    },
+    '26FW-X-NON': { 
+      name: 'X NON 26FW', 
+      color: 'slate',
+      headerBg: 'bg-gradient-to-r from-slate-300 to-slate-200',
+      headerText: 'text-slate-700',
+      headerTextHover: 'hover:text-slate-800',
+      infoBg: 'bg-slate-200',
+      infoBorder: 'border-slate-300',
+      infoTitle: 'text-slate-700',
+      infoText: 'text-slate-700',
+      buttonBg: 'bg-slate-300',
+      buttonHover: 'hover:bg-slate-400',
+    },
   }[brandId] || { 
     name: 'Unknown', 
     color: 'gray',
@@ -521,13 +645,13 @@ export default function BrandDashboard() {
 
   useEffect(() => {
     const loadData = async () => {
+      // 브랜드에 따라 다른 CSV 파일 로드
+      let csvFileName: string = '';
+      let fxFileName: string = '';
+      let summaryFileName: string = '';
+      
       try {
         setLoading(true);
-        
-        // 브랜드에 따라 다른 CSV 파일 로드
-        let csvFileName: string;
-        let fxFileName: string;
-        let summaryFileName: string;
         
         switch (brandId) {
           case '25FW':
@@ -566,32 +690,32 @@ export default function BrandDashboard() {
             summaryFileName = 'COST RAW/25FW/summary_25fw_v.json';
             break;
           case '26SS-M':
-            csvFileName = 'COST RAW/26SS/M_26SS.csv';
+            csvFileName = 'COST RAW/26SS/M_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/26SS/summary_26ss_m.json';
             break;
           case '26SS-I':
-            csvFileName = 'COST RAW/26SS/I_26SS.csv';
+            csvFileName = 'COST RAW/26SS/I_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/26SS/summary_26ss_i.json';
             break;
           case '26SS-X':
-            csvFileName = 'COST RAW/26SS/X_26SS.csv';
+            csvFileName = 'COST RAW/26SS/X_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/26SS/summary_26ss_x.json';
             break;
           case '26SS-DISCOVERY-KIDS':
-            csvFileName = 'COST RAW/26SS/X_26SS.csv';
+            csvFileName = 'COST RAW/26SS/X_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/26SS/summary_26ss_x_kids.json';
             break;
           case '26SS-ST':
-            csvFileName = 'COST RAW/26SS/ST_26SS.csv';
+            csvFileName = 'COST RAW/26SS/ST_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/26SS/summary_26ss_st.json';
             break;
           case '26SS-V':
-            csvFileName = 'COST RAW/26SS/V_26SS.csv';
+            csvFileName = 'COST RAW/26SS/V_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/26SS/summary_26ss_v.json';
             break;
@@ -619,6 +743,51 @@ export default function BrandDashboard() {
             csvFileName = 'COST RAW/25S/ST_25S.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/25S/summary_25s_st.json';
+            break;
+          case 'M-NON':
+            csvFileName = 'COST RAW/25FW/M_25F_NON.csv';
+            fxFileName = 'COST RAW/FX_NON.csv';
+            summaryFileName = 'COST RAW/25FW/summary_25fw_m_non.json';
+            break;
+          case 'I-NON':
+            csvFileName = 'COST RAW/25FW/I_25F_NON.csv';
+            fxFileName = 'COST RAW/FX_NON.csv';
+            summaryFileName = 'COST RAW/25FW/summary_25fw_i_non.json';
+            break;
+          case 'X-NON':
+            csvFileName = 'COST RAW/25FW/X_25F_NON.csv';
+            fxFileName = 'COST RAW/FX_NON.csv';
+            summaryFileName = 'COST RAW/25FW/summary_25fw_x_non.json';
+            break;
+          case '26SS-M-NON':
+            csvFileName = 'COST RAW/26SS/M_26S_NON.csv';
+            fxFileName = 'COST RAW/FX_NON.csv';
+            summaryFileName = 'COST RAW/26SS/summary_26ss_m_non.json';
+            break;
+          case '26SS-I-NON':
+            csvFileName = 'COST RAW/26SS/I_26S_NON.csv';
+            fxFileName = 'COST RAW/FX_NON.csv';
+            summaryFileName = 'COST RAW/26SS/summary_26ss_i_non.json';
+            break;
+          case '26SS-X-NON':
+            csvFileName = 'COST RAW/26SS/X_26S_NON.csv';
+            fxFileName = 'COST RAW/FX_NON.csv';
+            summaryFileName = 'COST RAW/26SS/summary_26ss_x_non.json';
+            break;
+          case '26FW-M-NON':
+            csvFileName = 'COST RAW/26FW/M_26F_NON.csv';
+            fxFileName = 'COST RAW/FX_NON.csv';
+            summaryFileName = 'COST RAW/26FW/summary_26fw_m_non.json';
+            break;
+          case '26FW-I-NON':
+            csvFileName = 'COST RAW/26FW/I_26F_NON.csv';
+            fxFileName = 'COST RAW/FX_NON.csv';
+            summaryFileName = 'COST RAW/26FW/summary_26fw_i_non.json';
+            break;
+          case '26FW-X-NON':
+            csvFileName = 'COST RAW/26FW/X_26F_NON.csv';
+            fxFileName = 'COST RAW/FX_NON.csv';
+            summaryFileName = 'COST RAW/26FW/summary_26fw_x_non.json';
             break;
           case '25SS-V':
             csvFileName = 'COST RAW/25S/V_25S.csv';
@@ -678,6 +847,13 @@ export default function BrandDashboard() {
           // 25FW-{brandCode} 형식으로 만들어서 일관성 유지 (DISCOVERY-KIDS는 그대로 전달)
           const brandIdForLoad = brandId === 'DISCOVERY-KIDS' ? 'DISCOVERY-KIDS' : `25FW-${brandCode}`;
           costDataPromise = loadCostData(csvFileName, fxFileName, brandIdForLoad, '25FW', '24FW');
+        } else if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+          // 25FW 기간의 NON 브랜드들
+          costDataPromise = loadCostData(csvFileName, fxFileName, brandId, '25FW', '24FW');
+        } else if (brandId.startsWith('26SS-') && brandId.endsWith('-NON')) {
+          costDataPromise = loadCostData(csvFileName, fxFileName, brandId, '26SS', '25SS');
+        } else if (brandId.startsWith('26FW-') && brandId.endsWith('-NON')) {
+          costDataPromise = loadCostData(csvFileName, fxFileName, brandId, '26FW', '25FW');
         } else {
           costDataPromise = loadCostData(csvFileName, fxFileName);
         }
@@ -696,22 +872,49 @@ export default function BrandDashboard() {
           // 25FW-{brandCode} 형식으로 만들어서 일관성 유지 (DISCOVERY-KIDS는 그대로 전달)
           const brandIdForFx = brandId === 'DISCOVERY-KIDS' ? 'DISCOVERY-KIDS' : `25FW-${brandCode}`;
           fxRatesPromise = loadExchangeRates(fxFileName, brandIdForFx, '25FW', '24FW');
+        } else if (brandId === 'M-NON' || brandId === 'I-NON' || brandId === 'X-NON') {
+          // 25FW 기간의 NON 브랜드들
+          fxRatesPromise = loadExchangeRates(fxFileName, brandId, '25FW', '24FW');
+        } else if (brandId.startsWith('26SS-') && brandId.endsWith('-NON')) {
+          fxRatesPromise = loadExchangeRates(fxFileName, brandId, '26SS', '25SS');
+        } else if (brandId.startsWith('26FW-') && brandId.endsWith('-NON')) {
+          fxRatesPromise = loadExchangeRates(fxFileName, brandId, '26FW', '25FW');
         } else {
-          // 기존 브랜드는 기존 방식 유지 (NON 등)
+          // 기존 브랜드는 기존 방식 유지
           fxRatesPromise = loadExchangeRates(fxFileName);
         }
         
         // 병렬 로딩 실행
+        console.log(`[NON 시즌 데이터 로딩] 브랜드: ${brandId}, CSV: ${csvFileName}, Summary: ${summaryFileName}, FX: ${fxFileName}`);
         const [costData, summaryData, fxRates] = await Promise.all([
           costDataPromise,
           loadSummaryData(summaryFileName),
           fxRatesPromise
         ]);
         
+        console.log(`[NON 시즌 데이터 로딩 완료] 브랜드: ${brandId}, CostData: ${costData?.length || 0}개, Summary: ${summaryData ? '있음' : '없음'}, FX: ${fxRates ? '있음' : '없음'}`);
+        
+        if (summaryData?.total) {
+          console.log(`[Summary 데이터 확인] qty24F=${summaryData.total.qty24F}, qty25F=${summaryData.total.qty25F}, costRate24F_usd=${summaryData.total.costRate24F_usd}, costRate25F_usd=${summaryData.total.costRate25F_usd}`);
+        } else {
+          console.error(`[Summary 데이터 없음] summaryData:`, summaryData);
+          console.error(`[Summary 파일 경로] ${summaryFileName}`);
+        }
+        console.log(`[FX Rates 확인] prev=${fxRates?.prev}, curr=${fxRates?.curr}`);
+        
         setItems(costData);
         
-        const enrichedSummary = {
+        // summaryData가 null이면 빈 객체로 처리
+        const enrichedSummary = summaryData ? {
           ...summaryData,
+          fx: {
+            prev: fxRates.prev,
+            curr: fxRates.curr,
+            fileName: fxFileName
+          }
+        } : {
+          total: null,
+          categories: [],
           fx: {
             prev: fxRates.prev,
             curr: fxRates.curr,
@@ -719,12 +922,17 @@ export default function BrandDashboard() {
           }
         };
         
+        console.log(`[enrichedSummary 설정] summaryData 존재: ${!!summaryData}, total 존재: ${!!enrichedSummary?.total}, categories 개수: ${enrichedSummary?.categories?.length || 0}`);
+        if (enrichedSummary?.total) {
+          console.log(`[enrichedSummary total 데이터] qty24F=${enrichedSummary.total.qty24F}, qty25F=${enrichedSummary.total.qty25F}, costRate24F_usd=${enrichedSummary.total.costRate24F_usd}`);
+        }
         setSummary(enrichedSummary);
         
         setLoading(false);
       } catch (err) {
-        console.error('데이터 로드 오류:', err);
-        setError('데이터를 불러오는데 실패했습니다.');
+        console.error(`[NON 시즌 데이터 로드 오류] 브랜드: ${brandId}`, err);
+        console.error('파일 경로:', { csvFileName, summaryFileName, fxFileName });
+        setError(`데이터를 불러오는데 실패했습니다: ${err instanceof Error ? err.message : String(err)}`);
         setLoading(false);
       }
     };
@@ -1053,17 +1261,37 @@ export default function BrandDashboard() {
 
         {/* 워터폴 차트 */}
         <div className="mb-4">
-          <WaterfallChart summary={summary} brandId={brandId} />
+          {summary ? (
+            <WaterfallChart summary={summary} brandId={brandId} />
+          ) : (
+            <div className="bg-white rounded-xl shadow-md p-6 text-center text-gray-500">
+              데이터를 불러오는 중...
+            </div>
+          )}
         </div>
 
         {/* 주요 지표 비교 & 원가율 변동 요약 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-          <KeyMetricsTable summary={summary} brandId={brandId} />
-          <CostRateSummaryTable summary={summary} />
+          {summary ? (
+            <>
+              <KeyMetricsTable summary={summary} brandId={brandId} />
+              <CostRateSummaryTable summary={summary} brandId={brandId} />
+            </>
+          ) : (
+            <div className="col-span-2 bg-white rounded-xl shadow-md p-6 text-center text-gray-500">
+              데이터를 불러오는 중...
+            </div>
+          )}
         </div>
 
         {/* 원가율 카드 - 새로운 디자인 */}
-        <EnhancedStoryCards summary={summary} />
+        {summary ? (
+          <EnhancedStoryCards summary={summary} brandId={brandId} />
+        ) : (
+          <div className="bg-white rounded-xl shadow-md p-6 text-center text-gray-500 mb-4">
+            데이터를 불러오는 중...
+          </div>
+        )}
 
         {/* 카테고리 비교 */}
         <CategoryComparison summary={summary} />

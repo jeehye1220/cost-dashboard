@@ -24,6 +24,27 @@
       "generate_insights": true,
       "season_folder": "26FW",
       "season_code": "26F"
+    },
+    "25FW_NON": {
+      "brands": ["M", "I", "X"],
+      "generate_insights": true,
+      "season_folder": "25FW",
+      "season_code": "25F",
+      "is_non_season": true
+    },
+    "26SS_NON": {
+      "brands": ["M", "I", "X"],
+      "generate_insights": true,
+      "season_folder": "26SS",
+      "season_code": "26S",
+      "is_non_season": true
+    },
+    "26FW_NON": {
+      "brands": ["M", "I", "X"],
+      "generate_insights": true,
+      "season_folder": "26FW",
+      "season_code": "26F",
+      "is_non_season": true
     }
   },
   "email": {
