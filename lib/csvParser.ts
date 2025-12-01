@@ -625,14 +625,14 @@ export async function loadExchangeRates(
           const rateStr = (row['환율'] || '0').toString().trim();
           const rate = parseFloat(rateStr) || 0;
           
-          // 전년 환율 조회: 기간=전년, 시즌=currentSeasonCode
-          if (rowBrand === brandCode && rowPeriod === '전년' && rowSeason === currSeasonCode && rate > 0) {
+          // 전년 환율 조회: 기간=전년, 시즌=currentSeasonCode (환율 0도 허용)
+          if (rowBrand === brandCode && rowPeriod === '전년' && rowSeason === currSeasonCode) {
             prevRate = rate;
             console.log(`[FX_NON] 전년 환율 찾음: ${rowBrand}, 기간=${rowPeriod}, 시즌=${rowSeason}, 환율=${rate}`);
           }
           
-          // 당년 환율 조회: 기간=당년, 시즌=currentSeasonCode
-          if (rowBrand === brandCode && rowPeriod === '당년' && rowSeason === currSeasonCode && rate > 0) {
+          // 당년 환율 조회: 기간=당년, 시즌=currentSeasonCode (환율 0도 허용)
+          if (rowBrand === brandCode && rowPeriod === '당년' && rowSeason === currSeasonCode) {
             currRate = rate;
             console.log(`[FX_NON] 당년 환율 찾음: ${rowBrand}, 기간=${rowPeriod}, 시즌=${rowSeason}, 환율=${rate}`);
           }
@@ -640,9 +640,10 @@ export async function loadExchangeRates(
         
         console.log(`[FX_NON] 최종 결과: 브랜드=${brandCode}, 시즌=${currSeasonCode}, 전년=${prevRate}, 당년=${currRate}`);
         
+        // FX_NON.csv에서 환율이 0이면 0으로 반환 (1300.0 기본값 사용 안 함)
         return {
-          prev: prevRate || 1300.0,
-          curr: currRate || 1300.0
+          prev: prevRate,
+          curr: currRate
         };
       }
       

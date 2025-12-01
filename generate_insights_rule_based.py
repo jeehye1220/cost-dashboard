@@ -19,27 +19,61 @@ from typing import Dict, List, Any
 
 # FX 파일 경로
 FX_FILE = 'public/COST RAW/FX.csv'
+FX_NON_FILE = 'public/COST RAW/FX_NON.csv'
 
 
-def load_fx_rates(brand_code: str, season_code: str) -> Dict[str, float]:
-    """FX.csv에서 환율 정보 로드"""
-    try:
-        df_fx = pd.read_csv(FX_FILE, encoding='utf-8-sig')
+def load_fx_rates(brand_code: str, season_code: str, is_non_season: bool = False) -> Dict[str, float]:
+    """FX.csv 또는 FX_NON.csv에서 환율 정보 로드"""
+    if is_non_season:
+        # FX_NON.csv 구조: 브랜드,기간,시즌,환율
+        try:
+            df_fx = pd.read_csv(FX_NON_FILE, encoding='utf-8-sig')
+            
+            prev_rate = 0.0
+            curr_rate = 0.0
+            
+            # 전년 환율 조회
+            prev_filtered = df_fx[
+                (df_fx['브랜드'] == brand_code) &
+                (df_fx['기간'] == '전년') &
+                (df_fx['시즌'] == season_code)
+            ]
+            if len(prev_filtered) > 0:
+                prev_rate = float(prev_filtered.iloc[0]['환율'])
+            
+            # 당년 환율 조회
+            curr_filtered = df_fx[
+                (df_fx['브랜드'] == brand_code) &
+                (df_fx['기간'] == '당년') &
+                (df_fx['시즌'] == season_code)
+            ]
+            if len(curr_filtered) > 0:
+                curr_rate = float(curr_filtered.iloc[0]['환율'])
+            
+            # FX_NON.csv에서 환율이 0이면 0으로 반환 (1300.0 기본값 사용 안 함)
+            return {'prev': prev_rate, 'curr': curr_rate}
+        except Exception as e:
+            print(f"[WARN] FX_NON.csv 파일 로드 실패: {e}")
+            return {'prev': 0.0, 'curr': 0.0}
+    else:
+        # 기존 FX.csv 로드
+        try:
+            df_fx = pd.read_csv(FX_FILE, encoding='utf-8-sig')
+            
+            # 카테고리는 '의류'로 고정
+            filtered = df_fx[
+                (df_fx['브랜드'] == brand_code) &
+                (df_fx['시즌'] == season_code) &
+                (df_fx['카테고리'] == '의류')
+            ]
+            
+            if len(filtered) > 0:
+                rate = float(filtered.iloc[0]['환율'])
+                return {'prev': rate, 'curr': rate}  # 전년/당년 동일 시즌 코드면 같은 환율
+        except Exception as e:
+            print(f"[WARN] FX 파일 로드 실패: {e}")
         
-        # 카테고리는 '의류'로 고정
-        filtered = df_fx[
-            (df_fx['브랜드'] == brand_code) &
-            (df_fx['시즌'] == season_code) &
-            (df_fx['카테고리'] == '의류')
-        ]
-        
-        if len(filtered) > 0:
-            rate = float(filtered.iloc[0]['환율'])
-            return {'prev': rate, 'curr': rate}  # 전년/당년 동일 시즌 코드면 같은 환율
-    except Exception as e:
-        print(f"[WARN] FX 파일 로드 실패: {e}")
-    
-    return {'prev': 1300.0, 'curr': 1300.0}
+        return {'prev': 1300.0, 'curr': 1300.0}
 
 
 def get_previous_season(season: str) -> str:
@@ -371,14 +405,24 @@ def generate_kids_insights_only(season: str, season_folder: str):
     return True
 
 
-def generate_insights_for_brand(brand_code: str, season: str, season_folder: str):
+def generate_insights_for_brand(brand_code: str, season: str, season_folder: str, is_non_season: bool = False):
     """브랜드별 인사이트 생성"""
     print(f"\n{'=' * 60}")
-    print(f"브랜드 {brand_code} 인사이트 생성 중...")
+    print(f"브랜드 {brand_code} 인사이트 생성 중... (NON 시즌: {is_non_season})")
     print(f"{'=' * 60}")
     
-    # SUMMARY JSON 로드
-    summary_file = f'public/COST RAW/{season_folder}/summary_{season.lower()}_{brand_code.lower()}.json'
+    # NON 시즌 감지 (시즌명에 _NON 포함 여부)
+    if not is_non_season:
+        is_non_season = '_NON' in season or season.endswith('_NON')
+    
+    # SUMMARY JSON 파일 경로 결정
+    if is_non_season:
+        # NON 시즌: summary_{season_folder}_{brand}_non.json
+        summary_file = f'public/COST RAW/{season_folder}/summary_{season_folder.lower()}_{brand_code.lower()}_non.json'
+    else:
+        # 일반 시즌: summary_{season}_{brand}.json
+        summary_file = f'public/COST RAW/{season_folder}/summary_{season.lower()}_{brand_code.lower()}.json'
+    
     if not os.path.exists(summary_file):
         print(f"[ERROR] SUMMARY 파일이 없습니다: {summary_file}")
         return False
@@ -389,13 +433,13 @@ def generate_insights_for_brand(brand_code: str, season: str, season_folder: str
     total = summary.get('total', {})
     
     # 환율 정보 로드
-    prev_season = get_previous_season(season)
-    prev_season_code = convert_season_format(prev_season) if prev_season else convert_season_format(season)
-    curr_season_code = convert_season_format(season)
+    prev_season = get_previous_season(season.replace('_NON', ''))
+    prev_season_code = convert_season_format(prev_season) if prev_season else convert_season_format(season.replace('_NON', ''))
+    curr_season_code = convert_season_format(season.replace('_NON', ''))
     
-    fx_rates_prev = load_fx_rates(brand_code, prev_season_code)
-    fx_rates_curr = load_fx_rates(brand_code, curr_season_code)
-    fx_rates = {'prev': fx_rates_prev['curr'], 'curr': fx_rates_curr['curr']}
+    fx_rates_prev = load_fx_rates(brand_code, prev_season_code, is_non_season)
+    fx_rates_curr = load_fx_rates(brand_code, curr_season_code, is_non_season)
+    fx_rates = {'prev': fx_rates_prev['prev'], 'curr': fx_rates_curr['curr']}
     
     # 인사이트 생성
     insights = {
@@ -435,8 +479,14 @@ def generate_insights_for_brand(brand_code: str, season: str, season_folder: str
     insights['executive_summary'] = generate_executive_summary(total, season, fx_rates)
     
     # CSV 파일 저장
+    # NON 시즌 인사이트 파일 경로 결정
+    if is_non_season:
+        output_file = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season_folder.lower()}_non.csv'
+    else:
+        output_file = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}.csv'
+    
     # X 브랜드인 경우 두 개의 파일 생성 (DISCOVERY, DISCOVERY-KIDS)
-    if brand_code == 'X':
+    if brand_code == 'X' and not is_non_season:
         # DISCOVERY용 파일
         output_file_discovery = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}.csv'
         create_insights_csv(insights, output_file_discovery)
@@ -482,7 +532,7 @@ def generate_insights_for_brand(brand_code: str, season: str, season_folder: str
             output_file_kids = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}_kids.csv'
             create_insights_csv(insights_kids, output_file_kids)
     else:
-        output_file = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}.csv'
+        # NON 시즌이거나 일반 브랜드인 경우
         create_insights_csv(insights, output_file)
     
     return True
@@ -500,17 +550,21 @@ def main():
     
     season = args.season.upper()
     
+    # NON 시즌 감지
+    is_non_season = '_NON' in season or season.endswith('_NON')
+    base_season = season.replace('_NON', '') if is_non_season else season
+    
     # 시즌 폴더명 결정
-    if season in ['26SS', '26S']:
+    if base_season in ['26SS', '26S']:
         season_folder = '26SS'
-    elif season in ['25SS', '25S']:
+    elif base_season in ['25SS', '25S']:
         season_folder = '25S'
-    elif season in ['25FW', '25F']:
+    elif base_season in ['25FW', '25F']:
         season_folder = '25FW'
-    elif season in ['26FW', '26F']:
+    elif base_season in ['26FW', '26F']:
         season_folder = '26FW'
     else:
-        season_folder = season
+        season_folder = base_season
     
     print("=" * 60)
     print("규칙 기반 인사이트 생성 스크립트")
@@ -536,12 +590,12 @@ def main():
     
     brands = args.brands if isinstance(args.brands, list) else [args.brands]
     
-    print(f"\n시즌: {season}")
+    print(f"\n시즌: {season} (NON 시즌: {is_non_season})")
     print(f"브랜드: {', '.join(brands)}")
     
     success_count = 0
     for brand in brands:
-        if generate_insights_for_brand(brand, season, season_folder):
+        if generate_insights_for_brand(brand, season, season_folder, is_non_season):
             success_count += 1
     
     print("\n" + "=" * 60)
