@@ -322,22 +322,31 @@ def generate_executive_summary(total: Dict[str, Any], season: str, fx_rates: Dic
 
 def create_insights_csv(insights: Dict[str, Any], output_file: str):
     """인사이트를 CSV 파일로 저장"""
-    csv_lines = ['section,key,value']
-    
-    # 각 인사이트 항목을 CSV 형식으로 변환
-    for key, value in insights.items():
-        if isinstance(value, list):
-            for i, item in enumerate(value, 1):
-                csv_lines.append(f"{key},{i},{item}")
-        else:
-            csv_lines.append(f"{key},,{value}")
-    
-    # CSV 파일 저장
-    os.makedirs(os.path.dirname(output_file), exist_ok=True)
-    with open(output_file, 'w', encoding='utf-8-sig', newline='') as f:
-        f.write('\n'.join(csv_lines))
-    
-    print(f"[OK] 인사이트 CSV 저장 완료: {output_file}")
+    try:
+        csv_lines = ['section,key,value']
+        
+        # 각 인사이트 항목을 CSV 형식으로 변환
+        for key, value in insights.items():
+            if isinstance(value, list):
+                for i, item in enumerate(value, 1):
+                    csv_lines.append(f"{key},{i},{item}")
+            else:
+                # 값에 쉼표나 줄바꿈이 있으면 따옴표로 감싸기
+                value_str = str(value).replace('"', '""')  # 따옴표 이스케이프
+                if ',' in value_str or '\n' in value_str or '"' in str(value):
+                    csv_lines.append(f"{key},,\"{value_str}\"")
+                else:
+                    csv_lines.append(f"{key},,{value_str}")
+        
+        # CSV 파일 저장
+        os.makedirs(os.path.dirname(output_file), exist_ok=True)
+        with open(output_file, 'w', encoding='utf-8-sig', newline='') as f:
+            f.write('\n'.join(csv_lines))
+        
+        print(f"[OK] 인사이트 CSV 저장 완료: {output_file}")
+    except Exception as e:
+        print(f"[ERROR] 인사이트 CSV 저장 실패: {output_file}, 오류: {e}")
+        raise
 
 
 def generate_kids_insights_only(season: str, season_folder: str):
@@ -485,7 +494,7 @@ def generate_insights_for_brand(brand_code: str, season: str, season_folder: str
     else:
         output_file = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}.csv'
     
-    # X 브랜드인 경우 두 개의 파일 생성 (DISCOVERY, DISCOVERY-KIDS)
+    # X 브랜드인 경우 두 개의 파일 생성 (DISCOVERY, DISCOVERY-KIDS) - NON 시즌 제외
     if brand_code == 'X' and not is_non_season:
         # DISCOVERY용 파일
         output_file_discovery = f'public/COST RAW/{season_folder}/{brand_code}_insight_{season.lower()}.csv'
