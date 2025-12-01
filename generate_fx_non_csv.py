@@ -331,9 +331,9 @@ def calculate_exchange_rates(df: pd.DataFrame, season: str = None) -> Dict[str, 
         usd_raw = pd.to_numeric(usd_orders['본사협의단가_금액(USD)_원자재'], errors='coerce')
         krw_raw = pd.to_numeric(usd_orders['본사협의단가_T_금액(KRW)_원자재'], errors='coerce')
         
-        # 값이 정확히 같거나 거의 같은 경우 (반올림 오차 고려: 차이 <= 1)
+        # 값이 정확히 같거나 거의 같은 경우 (반올림 오차 고려: 차이 <= 5)
         diff = abs(usd_raw - krw_raw)
-        same_value_mask = ((usd_raw == krw_raw) | (diff <= 1.0)) & pd.notna(usd_raw) & pd.notna(krw_raw) & (usd_raw != 0)
+        same_value_mask = ((usd_raw == krw_raw) | (diff <= 5.0)) & pd.notna(usd_raw) & pd.notna(krw_raw) & (usd_raw != 0)
         krw_treated_pos = usd_orders[same_value_mask]['PO'].unique().tolist()
         
         print(f"[DEBUG] 동적으로 KRW로 취급할 PO: {len(krw_treated_pos)}개")

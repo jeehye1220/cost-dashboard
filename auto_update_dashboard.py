@@ -206,6 +206,89 @@ def generate_insights_26ss(brands: List[str]):
     return generate_insights_for_season('26SS', brands)
 
 
+def generate_non_csv(season: str):
+    """NON 시즌 CSV 생성"""
+    logger.info("=" * 60)
+    logger.info(f"[NON CSV 생성] {season} 시즌 CSV 생성 시작")
+    logger.info("=" * 60)
+    
+    try:
+        result = subprocess.run(
+            ['python', 'generate_mlb_non_csv.py', '--season', season],
+            capture_output=True,
+            text=True,
+            encoding='utf-8'
+        )
+        
+        if result.returncode == 0:
+            logger.info(f"{season} NON 시즌 CSV 생성 완료")
+            logger.info(result.stdout)
+            return True
+        else:
+            logger.error(f"{season} NON 시즌 CSV 생성 실패: {result.stderr}")
+            return False
+    except Exception as e:
+        logger.error(f"{season} NON 시즌 CSV 생성 중 오류: {e}")
+        return False
+
+
+def generate_non_fx_csv():
+    """NON 시즌 환율 CSV 생성 (한 번만 실행)"""
+    logger.info("=" * 60)
+    logger.info("[NON 환율 CSV 생성] FX_NON.csv 생성 시작")
+    logger.info("=" * 60)
+    
+    try:
+        result = subprocess.run(
+            ['python', 'generate_fx_non_csv.py'],
+            capture_output=True,
+            text=True,
+            encoding='utf-8'
+        )
+        
+        if result.returncode == 0:
+            logger.info("FX_NON.csv 생성 완료")
+            logger.info(result.stdout)
+            return True
+        else:
+            logger.error(f"FX_NON.csv 생성 실패: {result.stderr}")
+            return False
+    except Exception as e:
+        logger.error(f"FX_NON.csv 생성 중 오류: {e}")
+        return False
+
+
+def generate_summary_non(season: str, brands: List[str]):
+    """NON 시즌 브랜드별 SUMMARY JSON 생성"""
+    logger.info("=" * 60)
+    logger.info(f"[NON SUMMARY 생성] {season} 시즌 SUMMARY JSON 생성 시작")
+    logger.info("=" * 60)
+    
+    success_count = 0
+    
+    for brand in brands:
+        logger.info(f"\n{season} NON 브랜드 {brand} 처리 중...")
+        
+        try:
+            result = subprocess.run(
+                ['python', 'generate_summary_mlb_non.py', '--season', season, '--brand', brand],
+                capture_output=True,
+                text=True,
+                encoding='utf-8'
+            )
+            
+            if result.returncode == 0:
+                logger.info(f"{season} NON 브랜드 {brand} SUMMARY 생성 완료")
+                success_count += 1
+            else:
+                logger.error(f"{season} NON 브랜드 {brand} SUMMARY 생성 실패: {result.stderr}")
+        except Exception as e:
+            logger.error(f"{season} NON 브랜드 {brand} 처리 중 오류: {e}")
+    
+    logger.info(f"\n{season} NON SUMMARY 생성 완료: {success_count}/{len(brands)}")
+    return success_count == len(brands)
+
+
 def git_commit_and_push(config: Dict) -> bool:
     """생성된 파일을 Git에 커밋하고 푸시"""
     logger.info("=" * 60)
@@ -315,40 +398,64 @@ def verify_files(config: Dict) -> bool:
     for season_key, season_config in seasons.items():
         season_folder = season_config.get('season_folder', season_key)
         brands = season_config.get('brands', [])
+        is_non_season = season_config.get('is_non_season', False)
         
         for brand in brands:
-            # CSV 파일 확인
-            csv_file = Path(f'public/COST RAW/{season_folder}/{brand}_{season_config.get("season_code", season_key)}.csv')
-            if not csv_file.exists():
-                logger.warning(f"CSV 파일 없음: {csv_file}")
-                all_ok = False
-            
-            # SUMMARY JSON 확인
-            summary_file = Path(f'public/COST RAW/{season_folder}/summary_{season_key.lower()}_{brand.lower()}.json')
-            if not summary_file.exists():
-                logger.warning(f"SUMMARY JSON 없음: {summary_file}")
-                all_ok = False
-            
-            # X 브랜드인 경우 DISCOVERY-KIDS Summary 파일도 확인
-            if brand == 'X':
-                summary_file_kids = Path(f'public/COST RAW/{season_folder}/summary_{season_key.lower()}_{brand.lower()}_kids.json')
-                if not summary_file_kids.exists():
-                    logger.warning(f"DISCOVERY-KIDS SUMMARY JSON 없음: {summary_file_kids}")
-                    all_ok = False
-            
-            # 인사이트 CSV 확인 (26SS만)
-            if season_config.get('generate_insights', False):
-                insight_file = Path(f'public/COST RAW/{season_folder}/{brand}_insight_{season_key.lower()}.csv')
-                if not insight_file.exists():
-                    logger.warning(f"인사이트 CSV 없음: {insight_file}")
+            if is_non_season:
+                # NON 시즌 파일 확인
+                season_code = season_config.get('season_code', season_key)
+                # CSV 파일 확인 (NON 시즌)
+                csv_file = Path(f'public/COST RAW/{season_folder}/{brand}_{season_code}_NON.csv')
+                if not csv_file.exists():
+                    logger.warning(f"NON CSV 파일 없음: {csv_file}")
                     all_ok = False
                 
-                # X 브랜드인 경우 DISCOVERY-KIDS 인사이트 파일도 확인
-                if brand == 'X':
-                    insight_file_kids = Path(f'public/COST RAW/{season_folder}/{brand}_insight_{season_key.lower()}_kids.csv')
-                    if not insight_file_kids.exists():
-                        logger.warning(f"DISCOVERY-KIDS 인사이트 CSV 없음: {insight_file_kids}")
+                # SUMMARY JSON 확인 (NON 시즌)
+                summary_file = Path(f'public/COST RAW/{season_folder}/summary_{season_key.lower()}_{brand.lower()}_non.json')
+                if not summary_file.exists():
+                    logger.warning(f"NON SUMMARY JSON 없음: {summary_file}")
+                    all_ok = False
+                
+                # 인사이트 CSV 확인 (NON 시즌, 설정된 경우)
+                if season_config.get('generate_insights', False):
+                    insight_file = Path(f'public/COST RAW/{season_folder}/{brand}_insight_{season_key.lower()}_non.csv')
+                    if not insight_file.exists():
+                        logger.warning(f"NON 인사이트 CSV 없음: {insight_file}")
                         all_ok = False
+            else:
+                # 일반 시즌 파일 확인
+                # CSV 파일 확인
+                csv_file = Path(f'public/COST RAW/{season_folder}/{brand}_{season_config.get("season_code", season_key)}.csv')
+                if not csv_file.exists():
+                    logger.warning(f"CSV 파일 없음: {csv_file}")
+                    all_ok = False
+                
+                # SUMMARY JSON 확인
+                summary_file = Path(f'public/COST RAW/{season_folder}/summary_{season_key.lower()}_{brand.lower()}.json')
+                if not summary_file.exists():
+                    logger.warning(f"SUMMARY JSON 없음: {summary_file}")
+                    all_ok = False
+                
+                # X 브랜드인 경우 DISCOVERY-KIDS Summary 파일도 확인
+                if brand == 'X':
+                    summary_file_kids = Path(f'public/COST RAW/{season_folder}/summary_{season_key.lower()}_{brand.lower()}_kids.json')
+                    if not summary_file_kids.exists():
+                        logger.warning(f"DISCOVERY-KIDS SUMMARY JSON 없음: {summary_file_kids}")
+                        all_ok = False
+                
+                # 인사이트 CSV 확인 (26SS만)
+                if season_config.get('generate_insights', False):
+                    insight_file = Path(f'public/COST RAW/{season_folder}/{brand}_insight_{season_key.lower()}.csv')
+                    if not insight_file.exists():
+                        logger.warning(f"인사이트 CSV 없음: {insight_file}")
+                        all_ok = False
+                    
+                    # X 브랜드인 경우 DISCOVERY-KIDS 인사이트 파일도 확인
+                    if brand == 'X':
+                        insight_file_kids = Path(f'public/COST RAW/{season_folder}/{brand}_insight_{season_key.lower()}_kids.csv')
+                        if not insight_file_kids.exists():
+                            logger.warning(f"DISCOVERY-KIDS 인사이트 CSV 없음: {insight_file_kids}")
+                            all_ok = False
     
     if all_ok:
         logger.info("모든 파일 검증 완료")
@@ -386,8 +493,53 @@ def main():
             success = False
             error_messages.append("SQL → CSV 생성 실패")
         
-        # 2. 각 시즌별 SUMMARY 생성
+        # NON 시즌과 일반 시즌 분리
+        non_seasons = {}
+        regular_seasons = {}
+        
         for season_key, season_config in seasons.items():
+            if season_config.get('is_non_season', False):
+                non_seasons[season_key] = season_config
+            else:
+                regular_seasons[season_key] = season_config
+        
+        # 2. NON 시즌 처리 (환율 CSV는 한 번만 생성)
+        if non_seasons:
+            logger.info("=" * 60)
+            logger.info("[NON 시즌 처리 시작]")
+            logger.info("=" * 60)
+            
+            # 2-1. NON 시즌 환율 CSV 생성 (한 번만)
+            if not generate_non_fx_csv():
+                success = False
+                error_messages.append("NON 시즌 환율 CSV 생성 실패")
+            
+            # 2-2. 각 NON 시즌별 처리
+            for season_key, season_config in non_seasons.items():
+                brands = season_config.get('brands', [])
+                
+                # 시즌 코드 추출 (25FW_NON -> 25FW)
+                base_season = season_key.replace('_NON', '')
+                
+                # NON 시즌 CSV 생성
+                if not generate_non_csv(base_season):
+                    success = False
+                    error_messages.append(f"{season_key} CSV 생성 실패")
+                
+                # NON 시즌 SUMMARY 생성
+                if not generate_summary_non(base_season, brands):
+                    success = False
+                    error_messages.append(f"{season_key} SUMMARY 생성 실패")
+                
+                # NON 시즌 인사이트 생성 (설정된 경우)
+                if season_config.get('generate_insights', False):
+                    logger.info(f"{season_key} 인사이트 생성 (규칙 기반)")
+                    if not generate_insights_for_season(season_key, brands):
+                        success = False
+                        error_messages.append(f"{season_key} 인사이트 생성 실패")
+        
+        # 3. 일반 시즌 처리
+        for season_key, season_config in regular_seasons.items():
             brands = season_config.get('brands', [])
             
             if season_key == '25FW':
@@ -417,7 +569,7 @@ def main():
                     success = False
                     error_messages.append(f"{season_key} SUMMARY 생성 실패")
             
-            # 3. 인사이트 생성 (설정된 시즌만)
+            # 4. 인사이트 생성 (설정된 시즌만)
             if season_config.get('generate_insights', False):
                 # 25FW의 경우 M, I, X 제외 (하지만 DISCOVERY-KIDS는 별도 생성)
                 if season_key == '25FW':
@@ -458,10 +610,10 @@ def main():
                         success = False
                         error_messages.append(f"{season_key} 인사이트 생성 실패")
         
-        # 4. 파일 검증
+        # 5. 파일 검증
         verify_files(config)
         
-        # 5. Git 커밋 및 푸시 (성공한 경우만)
+        # 6. Git 커밋 및 푸시 (성공한 경우만)
         if success:
             if not git_commit_and_push(config):
                 logger.warning("Git 커밋/푸시 실패했지만 계속 진행합니다.")
