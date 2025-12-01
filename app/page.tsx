@@ -1013,21 +1013,21 @@ export default function Home() {
                       </div>
                       <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm">
                         <div className="text-xs text-gray-500 mb-1.5 font-medium">평균TAG (KRW)</div>
-                        <div className="text-lg font-bold text-gray-900">
+                        <div className="text-base font-bold text-gray-900">
                           {brandSummaries[brand.id]!.avgTag25F_krw.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </div>
                       </div>
                       <div className="col-span-2">
-                        <div className="flex items-end gap-4">
-                          <div className="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm">
-                            <div className="text-xs text-gray-500 mb-1.5 font-medium">평균원가(USD)</div>
-                            <div className="text-lg font-bold text-gray-900">
+                        <div className="flex items-stretch gap-4">
+                          <div className="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm h-full flex flex-col justify-center">
+                            <div className="text-xs text-gray-500 font-medium">평균원가(USD)</div>
+                            <div className="mt-1 text-base font-bold text-gray-900">
                               ${formatNumber(brandSummaries[brand.id]!.avgCost25F_usd, 2)}
                             </div>
                           </div>
-                          <div className="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm">
-                            <div className="text-xs text-gray-500 mb-1.5 font-medium">환율</div>
-                            <div className="text-lg font-bold text-gray-900">
+                          <div className="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm h-full flex flex-col justify-center">
+                            <div className="text-xs text-gray-500 font-medium">환율</div>
+                            <div className="mt-1 text-base font-bold text-gray-900 whitespace-nowrap">
                               {brandSummaries[brand.id]!.fxPrev.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} →{' '}
                               {brandSummaries[brand.id]!.fxCurr.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}{' '}
                               <span className="ml-1 text-sm text-gray-600 font-semibold">
