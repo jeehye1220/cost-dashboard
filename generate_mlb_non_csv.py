@@ -350,6 +350,38 @@ def load_fx_non_prev_rate(brand: str, season_code: str) -> float:
         return 0.0
 
 
+def load_fx_non_rate(brand: str, period: str, season_code: str) -> float:
+    """
+    FX_NON.csv에서 브랜드/기간/시즌별 환율 조회
+    
+    Args:
+        brand: 브랜드 코드 (M, I, X)
+        period: 기간 ('전년' 또는 '당년')
+        season_code: 시즌 코드 (25F, 25S, 26F, 26S)
+    
+    Returns:
+        환율 (float), 없으면 0.0
+    """
+    fx_file = 'public/COST RAW/FX_NON.csv'
+    try:
+        if not os.path.exists(fx_file):
+            return 0.0
+        
+        df_fx = pd.read_csv(fx_file, encoding='utf-8-sig')
+        
+        # 환율 조회 (기간, 브랜드, 시즌 매칭)
+        mask = (df_fx['브랜드'] == brand) & (df_fx['기간'] == period) & (df_fx['시즌'] == season_code)
+        matched = df_fx[mask]
+        
+        if len(matched) > 0:
+            rate = float(matched.iloc[0]['환율'])
+            return rate
+        else:
+            return 0.0
+    except Exception as e:
+        return 0.0
+
+
 def get_fx_rate(df_fx: pd.DataFrame, brand: str, season_code: str, category: str = '의류') -> float:
     """FX.csv에서 브랜드/시즌/카테고리 조합으로 환율 조회"""
     if df_fx is None or df_fx.empty:
@@ -516,11 +548,25 @@ def calculate_exchange_rates(df: pd.DataFrame, season: str = None) -> Dict[str, 
 # ============================================
 # 환율 적용 및 데이터 변환
 # ============================================
-def apply_exchange_rates(df: pd.DataFrame, exchange_rates: Dict[str, float]) -> pd.DataFrame:
+def apply_exchange_rates(df: pd.DataFrame, exchange_rates: Dict[str, float], season: str = None) -> pd.DataFrame:
     """
     환율을 적용하여 KRW 발주 항목을 USD로 변환
+    KRW 발주인 경우: SQL에서 계산된 USD 값을 무시하고, FX_NON.csv의 환율로 KRW 값을 변환
     """
     df_result = df.copy()
+    
+    # 시즌 코드 변환 (FX_NON.csv 조회용)
+    season_upper = season.upper() if season else ''
+    if season_upper in ['25FW', '25F']:
+        fx_season_code = '25F'
+    elif season_upper in ['25SS', '25S']:
+        fx_season_code = '25S'
+    elif season_upper in ['26SS', '26S']:
+        fx_season_code = '26S'
+    elif season_upper in ['26FW', '26F']:
+        fx_season_code = '26F'
+    else:
+        fx_season_code = None
     
     # KRW 필드를 USD 필드로 변환할 컬럼 매핑
     krw_to_usd_mapping = {
@@ -544,71 +590,77 @@ def apply_exchange_rates(df: pd.DataFrame, exchange_rates: Dict[str, float]) -> 
     
     print("\n[INFO] 환율 적용 중...")
     
+    # period에 따라 시즌 코드를 다르게 조회하는 함수
+    def get_season_code_for_period(period: str, base_season_code: str) -> str:
+        """
+        period에 따라 시즌 코드를 반환
+        - period가 "전년"이면 이전 시즌 코드 사용 (25F → 24F, 25S → 24S, 26F → 25F, 26S → 25S)
+        - period가 "당년"이면 현재 시즌 코드 사용
+        """
+        if period == '전년':
+            # 이전 시즌 코드 계산
+            if base_season_code == '25F':
+                return '24F'
+            elif base_season_code == '25S':
+                return '24S'
+            elif base_season_code == '26F':
+                return '25F'
+            elif base_season_code == '26S':
+                return '25S'
+            else:
+                return base_season_code
+        elif period == '당년':
+            # 현재 시즌 코드 사용
+            return base_season_code
+        else:
+            return base_season_code
+    
     for idx, row in df_result.iterrows():
         period = row['기간']
         brand = row['브랜드']
         currency = row['발주통화']
         
-        # 환율 키
-        rate_key = f"{period}_{brand}"
-        rate = exchange_rates.get(rate_key, 0.0)
+        # period에 따라 시즌 코드 결정
+        lookup_season_code = get_season_code_for_period(period, fx_season_code) if fx_season_code else None
+        
+        # 모든 발주(USD/KRW)에 대해 KRW 컬럼을 환율로 나눠서 USD 컬럼에 계산
+        # FX_NON.csv에서 환율 조회
+        rate = load_fx_non_rate(brand, period, lookup_season_code) if lookup_season_code else 0.0
+        
+        if rate == 0:
+            # FX_NON.csv에서 조회 실패 시 exchange_rates에서 조회 (fallback)
+            rate_key = f"{period}_{brand}"
+            rate = exchange_rates.get(rate_key, 0.0)
+        
         if rate == 0:
             continue  # 환율이 0이면 변환하지 않음
         
-        # KRW 발주인 경우 USD 필드 채우기
-        if currency == 'KRW':
-            for krw_col, usd_col in krw_to_usd_mapping.items():
-                if krw_col in df_result.columns:
-                    krw_value = pd.to_numeric(row[krw_col], errors='coerce')
-                    if pd.notna(krw_value) and krw_value != 0:
-                        usd_value = krw_value / rate
-                        if usd_col in df_result.columns:
-                            # 기존 값이 있으면 더하기
-                            existing = pd.to_numeric(df_result.at[idx, usd_col], errors='coerce')
-                            if pd.isna(existing):
-                                df_result.at[idx, usd_col] = usd_value
-                            else:
-                                df_result.at[idx, usd_col] = existing + usd_value
-            
-            for krw_col, usd_col in krw_total_to_usd_mapping.items():
-                if krw_col in df_result.columns:
-                    krw_value = pd.to_numeric(row[krw_col], errors='coerce')
-                    if pd.notna(krw_value) and krw_value != 0:
-                        usd_value = krw_value / rate
-                        if usd_col in df_result.columns:
-                            existing = pd.to_numeric(df_result.at[idx, usd_col], errors='coerce')
-                            if pd.isna(existing):
-                                df_result.at[idx, usd_col] = usd_value
-                            else:
-                                df_result.at[idx, usd_col] = existing + usd_value
+        # 모든 발주에 대해 SQL에서 계산된 USD 단가 컬럼을 먼저 0으로 초기화
+        for usd_col in krw_to_usd_mapping.values():
+            if usd_col in df_result.columns:
+                df_result.at[idx, usd_col] = 0.0
         
-        # USD 발주인 경우 (USD)본사공급자재 계산
-        elif currency == 'USD':
-            # (KRW)본사공급자재 값을 환율로 나눠서 (USD)본사공급자재에 채우기
-            krw_supply_col = '본사협의단가_T_금액(KRW)_본사공급자재'
-            usd_supply_col = '(USD)본사공급자재'
-            
-            if krw_supply_col in df_result.columns and rate > 0:
-                krw_supply_value = pd.to_numeric(row[krw_supply_col], errors='coerce')
-                if pd.notna(krw_supply_value) and krw_supply_value != 0:
-                    usd_supply_value = krw_supply_value / rate
-                    if usd_supply_col in df_result.columns:
-                        df_result.at[idx, usd_supply_col] = usd_supply_value
-                    
-                    # USD_재료계에도 반영 (수량 곱하기)
-                    usd_material_col = 'USD_재료계(원/부/택/본공)_총금액(단가×수량)'
-                    if usd_material_col in df_result.columns:
-                        existing = pd.to_numeric(df_result.at[idx, usd_material_col], errors='coerce')
-                        if pd.isna(existing):
-                            existing = 0
-                        # 발주수량 가져오기
-                        qty = pd.to_numeric(row.get('발주수량', 0), errors='coerce')
-                        if pd.isna(qty) or qty <= 0:
-                            qty = pd.to_numeric(row.get('수량', 0), errors='coerce')
-                        if pd.isna(qty) or qty <= 0:
-                            qty = 1
-                        # 기존 값에 (USD)본사공급자재 × 수량 추가
-                        df_result.at[idx, usd_material_col] = existing + (usd_supply_value * qty)
+        # KRW 값을 USD로 변환 (모든 발주에 대해)
+        for krw_col, usd_col in krw_to_usd_mapping.items():
+            if krw_col in df_result.columns and usd_col in df_result.columns:
+                krw_value = pd.to_numeric(row[krw_col], errors='coerce')
+                if pd.notna(krw_value) and krw_value != 0:
+                    usd_value = krw_value / rate
+                    df_result.at[idx, usd_col] = usd_value
+        
+        # 모든 발주에 대해 SQL에서 계산된 USD 총금액 컬럼을 먼저 0으로 초기화
+        for usd_col in krw_total_to_usd_mapping.values():
+            if usd_col in df_result.columns:
+                df_result.at[idx, usd_col] = 0.0
+        
+        # 총금액도 변환 (모든 발주에 대해)
+        for krw_col, usd_col in krw_total_to_usd_mapping.items():
+            if krw_col in df_result.columns and usd_col in df_result.columns:
+                krw_value = pd.to_numeric(row[krw_col], errors='coerce')
+                if pd.notna(krw_value) and krw_value != 0:
+                    usd_value = krw_value / rate
+                    df_result.at[idx, usd_col] = usd_value
+        
     
     return df_result
 
@@ -779,99 +831,6 @@ def map_to_m24s_format(df: pd.DataFrame, season: str, exchange_rates: Dict[str, 
     return df_result
 
 
-# ============================================
-# 환율 적용 및 데이터 변환
-# ============================================
-def apply_exchange_rates(df: pd.DataFrame, exchange_rates: Dict[str, float]) -> pd.DataFrame:
-    """
-    환율을 적용하여 KRW 발주 항목을 USD로 변환
-    """
-    df_result = df.copy()
-    
-    # KRW 필드를 USD 필드로 변환할 컬럼 매핑
-    krw_to_usd_mapping = {
-        '본사협의단가_T_금액(KRW)_원자재': '본사협의단가_금액(USD)_원자재',
-        '본사협의단가_T_금액(KRW)_아트웍': '본사협의단가_금액(USD)_아트웍',
-        '본사협의단가_T_금액(KRW)_부자재': '본사협의단가_금액(USD)_부자재',
-        '본사협의단가_T_금액(KRW)_택/라벨': '본사협의단가_금액(USD)_택/라벨',
-        '본사협의단가_T_금액(KRW)_공임': '본사협의단가_금액(USD)_공임',
-        '본사협의단가_T_금액(KRW)_본사공급자재': '(USD)본사공급자재',
-        '본사협의단가_T_금액(KRW)_정상마진': '본사협의단가_금액(USD)_정상마진',
-        '본사협의단가_T_금액(KRW)_기타마진/경비': '본사협의단가_금액(USD)_기타마진/경비',
-    }
-    
-    krw_total_to_usd_mapping = {
-        'KRW_재료계(원/부/택/본공)_총금액(단가×수량)': 'USD_재료계(원/부/택/본공)_총금액(단가×수량)',
-        'KRW_아트웍_총금액(단가×수량)': 'USD_아트웍_총금액(단가×수량)',
-        'KRW_공임_총금액(단가×수량)': 'USD_공임_총금액(단가×수량)',
-        'KRW_정상마진_총금액(단가×수량)': 'USD_정상마진_총금액(단가×수량)',
-        'KRW_경비_총금액(단가×수량)': 'USD_경비_총금액(단가×수량)',
-    }
-    
-    print("\n[INFO] 환율 적용 중...")
-    
-    for idx, row in df_result.iterrows():
-        period = row['기간']
-        brand = row['브랜드']
-        currency = row['발주통화']
-        
-        # 환율 키
-        rate_key = f"{period}_{brand}"
-        rate = exchange_rates.get(rate_key, 0.0)
-        if rate == 0:
-            continue  # 환율이 0이면 변환하지 않음
-        
-        # KRW 발주인 경우 USD 필드 채우기
-        if currency == 'KRW':
-            for krw_col, usd_col in krw_to_usd_mapping.items():
-                if krw_col in df_result.columns:
-                    krw_value = pd.to_numeric(row[krw_col], errors='coerce')
-                    if pd.notna(krw_value) and krw_value != 0:
-                        usd_value = krw_value / rate
-                        if usd_col in df_result.columns:
-                            # 기존 값이 있으면 더하기
-                            existing = pd.to_numeric(df_result.at[idx, usd_col], errors='coerce')
-                            if pd.isna(existing):
-                                existing = 0
-                            df_result.at[idx, usd_col] = existing + usd_value
-                        else:
-                            df_result.at[idx, usd_col] = usd_value
-            
-            # 총금액 필드도 변환
-            for krw_col, usd_col in krw_total_to_usd_mapping.items():
-                if krw_col in df_result.columns:
-                    krw_value = pd.to_numeric(row[krw_col], errors='coerce')
-                    if pd.notna(krw_value) and krw_value != 0:
-                        usd_value = krw_value / rate
-                        if usd_col in df_result.columns:
-                            existing = pd.to_numeric(df_result.at[idx, usd_col], errors='coerce')
-                            if pd.isna(existing):
-                                existing = 0
-                            df_result.at[idx, usd_col] = existing + usd_value
-        
-        # USD 발주인 경우: (USD)본사공급자재 = (KRW)본사공급자재 / 환율
-        if currency == 'USD' and '본사협의단가_T_금액(KRW)_본사공급자재' in df_result.columns:
-            krw_supply = pd.to_numeric(row['본사협의단가_T_금액(KRW)_본사공급자재'], errors='coerce')
-            if pd.notna(krw_supply) and krw_supply != 0:
-                usd_supply = krw_supply / rate
-                if '(USD)본사공급자재' in df_result.columns:
-                    existing = pd.to_numeric(df_result.at[idx, '(USD)본사공급자재'], errors='coerce')
-                    if pd.isna(existing):
-                        existing = 0
-                    df_result.at[idx, '(USD)본사공급자재'] = existing + usd_supply
-                
-                # USD_재료계에도 반영
-                if 'USD_재료계(원/부/택/본공)_총금액(단가×수량)' in df_result.columns:
-                    existing = pd.to_numeric(df_result.at[idx, 'USD_재료계(원/부/택/본공)_총금액(단가×수량)'], errors='coerce')
-                    if pd.isna(existing):
-                        existing = 0
-                    # 발주수량 * 단가로 계산
-                    qty = pd.to_numeric(row['발주수량'], errors='coerce')
-                    if pd.notna(qty) and qty > 0:
-                        df_result.at[idx, 'USD_재료계(원/부/택/본공)_총금액(단가×수량)'] = existing + (usd_supply * qty)
-    
-    print("[OK] 환율 적용 완료")
-    return df_result
 
 
 # ============================================
@@ -966,8 +925,8 @@ def main():
             exchange_rates = calculate_exchange_rates(df, season)
             print(f"[INFO] 환율 계산 완료: {exchange_rates}")
             
-            # 환율 적용
-            df = apply_exchange_rates(df, exchange_rates)
+            # 환율 적용 (KRW 발주는 FX_NON.csv에서 환율 조회)
+            df = apply_exchange_rates(df, exchange_rates, season)
             
             # CSV 형식으로 변환
             df = map_to_m24s_format(df, season, exchange_rates)
