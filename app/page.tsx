@@ -809,13 +809,31 @@ export default function Home() {
                   </div>
                   {brandSummaries[brand.id] && (() => {
                     // 동적 처리: 당년 데이터가 없으면 전년 원가율 표시
-                    const displayCostRate = brandSummaries[brand.id]!.costRate25F_usd > 0 
-                      ? brandSummaries[brand.id]!.costRate25F_usd 
-                      : brandSummaries[brand.id]!.costRate24F_usd;
-                    const displayChange = brandSummaries[brand.id]!.costRate25F_usd > 0 
-                      ? brandSummaries[brand.id]!.costRateChange_usd 
-                      : 0;
-                    const hasChange = brandSummaries[brand.id]!.costRate25F_usd > 0;
+                    const costRate25F = brandSummaries[brand.id]!.costRate25F_usd || 0;
+                    const costRate24F = brandSummaries[brand.id]!.costRate24F_usd || 0;
+                    const costRateChange = brandSummaries[brand.id]!.costRateChange_usd || 0;
+                    
+                    // 디버깅 로그 (NON 시즌만)
+                    if (brand.id?.includes('NON')) {
+                      console.log(`[${brand.id}] 원가율 데이터:`, {
+                        costRate24F_usd: costRate24F,
+                        costRate25F_usd: costRate25F,
+                        costRateChange_usd: costRateChange
+                      });
+                    }
+                    
+                    const displayCostRate = costRate25F > 0 ? costRate25F : costRate24F;
+                    const displayChange = costRate25F > 0 ? costRateChange : 0;
+                    const hasChange = costRate25F > 0;
+                    
+                    // 디버깅 로그 (NON 시즌만)
+                    if (brand.id?.includes('NON')) {
+                      console.log(`[${brand.id}] 표시할 원가율:`, {
+                        displayCostRate,
+                        displayChange,
+                        hasChange
+                      });
+                    }
                     
                     return (
                       <div className="flex flex-col items-end">
