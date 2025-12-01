@@ -310,6 +310,14 @@ def get_fx_rate(df_fx: pd.DataFrame, brand: str, season_code: str, category: str
             rate = pd.to_numeric(matched.iloc[0]['환율'], errors='coerce')
             if pd.notna(rate) and rate > 0:
                 return float(rate)
+            else:
+                print(f"[DEBUG] FX 환율 조회: 브랜드={brand_code}, 시즌={season_code}, 카테고리={category}, rate={rate} (NaN 또는 0)")
+        else:
+            # 디버깅: 조회 실패 시 로그 출력
+            print(f"[DEBUG] FX 환율 조회 실패: 브랜드={brand_code}, 시즌={season_code}, 카테고리={category}")
+            # 사용 가능한 시즌 코드 확인
+            available_seasons = df_fx[df_fx['브랜드'] == brand_code]['시즌'].unique()
+            print(f"[DEBUG] 사용 가능한 시즌 코드: {available_seasons}")
         
         return 0.0
     except Exception as e:
@@ -374,54 +382,59 @@ def calculate_exchange_rates(df: pd.DataFrame, season: str = None) -> Dict[str, 
         elif '시즌' in df.columns:
             df_period = df[df['시즌'].str.startswith(period, na=False)]
         else:
-            continue
+            df_period = pd.DataFrame()  # 빈 DataFrame으로 초기화
         
-        if len(df_period) == 0:
-            continue
-        
-        for brand in ['M', 'I', 'X']:
-            # 브랜드별 환율 계산 방식
-            if brand == 'M':
-                # M 브랜드: USD 발주 데이터 필요
-                # 동적으로 찾은 PO 리스트 사용
-                krw_po_list = krw_treated_pos
-                
-                df_brand = df_period[
-                    (df_period['브랜드'] == brand) & 
-                    (df_period['발주통화'] == 'USD') &
-                    (~df_period['PO'].isin(krw_po_list))
-                ]
-                
-                if len(df_brand) == 0:
-                    exchange_rates[f"{period}_{brand}"] = 0.0
-                    continue
-                # M 브랜드: 공임 기준으로 계산 (PO별 집계 후 합산)
-                # PO별로 집계
-                df_po_agg = df_brand.groupby('PO').agg({
-                    'KRW_공임_총금액(단가×수량)': 'sum',
-                    'USD_공임_총금액(단가×수량)': 'sum'
-                }).reset_index()
-                
-                # PO별 집계 후 합산
-                krw_total = df_po_agg['KRW_공임_총금액(단가×수량)'].sum()
-                usd_total = df_po_agg['USD_공임_총금액(단가×수량)'].sum()
-                
-                if usd_total > 0:
-                    rate = krw_total / usd_total
+        # I, X 브랜드는 데이터가 없어도 FX.csv에서 직접 조회
+        for brand in ['I', 'X']:
+            season_code = convert_season_code(season, period)
+            if season_code:
+                rate = get_fx_rate(df_fx, brand, season_code, '의류')
+                if rate > 0:
                     exchange_rates[f"{period}_{brand}"] = rate
+                    print(f"[INFO] 환율 조회 (FX.csv 의류): {period}_{brand} = {rate:.2f} (브랜드={brand}, 시즌={season_code})")
                 else:
+                    print(f"[WARN] {period}_{brand}: FX.csv에서 환율을 찾을 수 없습니다. 브랜드={brand}, 시즌={season_code}")
                     exchange_rates[f"{period}_{brand}"] = 0.0
             else:
-                # I, X 브랜드: FX.csv에서 의류 환율 조회 (USD 발주 데이터 없어도 조회 시도)
-                season_code = convert_season_code(season, period)
-                if season_code:
-                    rate = get_fx_rate(df_fx, brand, season_code, '의류')
-                    if rate > 0:
-                        exchange_rates[f"{period}_{brand}"] = rate
-                    else:
-                        exchange_rates[f"{period}_{brand}"] = 0.0
-                else:
-                    exchange_rates[f"{period}_{brand}"] = 0.0
+                print(f"[WARN] {period}_{brand}: 시즌 코드 변환 실패 (season={season}, period={period})")
+                exchange_rates[f"{period}_{brand}"] = 0.0
+        
+        # M 브랜드는 데이터가 있을 때만 계산
+        if len(df_period) == 0:
+            print(f"[DEBUG] {period} 기간 데이터 없음 (season={season}), M 브랜드 환율 0.0")
+            exchange_rates[f"{period}_M"] = 0.0
+            continue
+        
+        # M 브랜드: USD 발주 데이터 필요
+        # 동적으로 찾은 PO 리스트 사용
+        krw_po_list = krw_treated_pos
+        
+        df_brand = df_period[
+            (df_period['브랜드'] == 'M') & 
+            (df_period['발주통화'] == 'USD') &
+            (~df_period['PO'].isin(krw_po_list))
+        ]
+        
+        if len(df_brand) == 0:
+            exchange_rates[f"{period}_M"] = 0.0
+            continue
+        
+        # M 브랜드: 공임 기준으로 계산 (PO별 집계 후 합산)
+        # PO별로 집계
+        df_po_agg = df_brand.groupby('PO').agg({
+            'KRW_공임_총금액(단가×수량)': 'sum',
+            'USD_공임_총금액(단가×수량)': 'sum'
+        }).reset_index()
+        
+        # PO별 집계 후 합산
+        krw_total = df_po_agg['KRW_공임_총금액(단가×수량)'].sum()
+        usd_total = df_po_agg['USD_공임_총금액(단가×수량)'].sum()
+        
+        if usd_total > 0:
+            rate = krw_total / usd_total
+            exchange_rates[f"{period}_M"] = rate
+        else:
+            exchange_rates[f"{period}_M"] = 0.0
     
     return exchange_rates
 
