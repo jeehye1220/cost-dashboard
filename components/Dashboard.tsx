@@ -58,6 +58,14 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
     }
   }, [items]);
 
+  // MLB NON 시즌인지 확인 (카테고리에 SHOES, BAG, HEADWEAR가 있으면 NON 시즌)
+  const isNonSeason = React.useMemo(() => {
+    const categorySet = new Set(items.map(item => item.category));
+    return Array.from(categorySet).some(cat => 
+      ['Shoes', 'Bag', 'Headwear'].includes(cat)
+    );
+  }, [items]);
+
   // 히트맵 색상 계산 (증감에 따라)
   // 빨간색: 증가(+), 파란색: 감소(-)
   const getHeatmapColor = (value: number): string => {
@@ -91,11 +99,22 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
     return CATEGORIES.find(c => c.id === categoryId);
   };
 
-  // 필터링된 아이템 (전년 또는 당년 수량이 0인 것 제외)
-  const filteredItems = (selectedCategory === '전체' 
-    ? items 
-    : items.filter(item => item.category === selectedCategory)
-  ).filter(item => item.qty24F > 0 && item.qty25F > 0);
+  // 필터링된 아이템
+  // NON 시즌인 경우: qty24F > 0 || qty25F > 0 (둘 중 하나라도 있으면 표시)
+  // 일반 시즌인 경우: qty24F > 0 && qty25F > 0 (둘 다 있어야 표시)
+  const filteredItems = React.useMemo(() => {
+    const categoryFiltered = selectedCategory === '전체' 
+      ? items 
+      : items.filter(item => item.category === selectedCategory);
+    
+    if (isNonSeason) {
+      // NON 시즌: 전년 또는 당년 데이터가 하나라도 있으면 표시
+      return categoryFiltered.filter(item => item.qty24F > 0 || item.qty25F > 0);
+    } else {
+      // 일반 시즌: 전년과 당년 데이터가 모두 있어야 표시
+      return categoryFiltered.filter(item => item.qty24F > 0 && item.qty25F > 0);
+    }
+  }, [items, selectedCategory, isNonSeason]);
 
   // 정렬
   const sortedItems = [...filteredItems].sort((a, b) => {
