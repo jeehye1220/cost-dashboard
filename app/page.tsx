@@ -1080,21 +1080,23 @@ export default function Home() {
                                   </div>
                                 </div>
                                 <div className="mt-2.5 pt-2.5 border-t border-gray-100">
-                                  <div className="flex items-center gap-3 text-xs">
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-gray-500 font-medium">전년</span>
-                                      <span className="text-gray-700 font-semibold">${formatNumber(item.prev, 2)}</span>
+                                  <div className="flex items-center justify-between text-xs">
+                                    <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-gray-500 font-medium w-8">전년</span>
+                                        <span className="text-gray-700 font-semibold w-16 text-right">${formatNumber(item.prev, 2)}</span>
+                                      </div>
+                                      <span className="text-gray-300 mx-1">→</span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-gray-500 font-medium w-8">당년</span>
+                                        <span className="text-gray-900 font-bold w-16 text-right">${formatNumber(item.curr, 2)}</span>
+                                      </div>
                                     </div>
-                                    <span className="text-gray-300">→</span>
-                                    <div className="flex items-center gap-1.5">
-                                      <span className="text-gray-500 font-medium">당년</span>
-                                      <span className="text-gray-900 font-bold">${formatNumber(item.curr, 2)}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 ml-[4.5rem]">
-                                      <span className={`font-semibold ${change >= 0 ? 'text-rose-600' : 'text-blue-600'}`}>
+                                    <div className="flex items-center gap-2">
+                                      <span className={`font-semibold w-16 text-right ${change >= 0 ? 'text-rose-600' : 'text-blue-600'}`}>
                                         ${change >= 0 ? '+' : ''}{formatNumber(change, 2)}
                                       </span>
-                                      <span className={`font-medium px-2 py-0.5 rounded ${
+                                      <span className={`font-medium px-2 py-0.5 rounded min-w-[3.5rem] text-center ${
                                         change >= 0 ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700'
                                       }`}>
                                         {formatNumber(yoy, 1)}%
