@@ -912,7 +912,7 @@ export default function Home() {
         </div>
 
         {/* 브랜드 카드 그리드 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-8 md:px-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 px-8 md:px-12">
           {brands.filter(brand => {
             // 기간 필터
             if (brand.period !== selectedPeriod) return false;
@@ -934,13 +934,13 @@ export default function Home() {
               className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden border border-gray-200/50 group hover:-translate-y-1"
             >
               {/* 카드 헤더 */}
-              <div className="p-5 border-b border-gray-200/50 bg-gradient-to-br from-gray-50 to-white">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-14 h-14 ${brandWithColor.iconBg} rounded-xl flex items-center justify-center ${brandWithColor.textColor} text-base font-bold shadow-md group-hover:scale-110 transition-transform duration-300`}>
+              <div className="p-4 border-b border-gray-200/50 bg-gradient-to-br from-gray-50 to-white">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2.5">
+                    <div className={`w-12 h-12 ${brandWithColor.iconBg} rounded-xl flex items-center justify-center ${brandWithColor.textColor} text-sm font-bold shadow-md group-hover:scale-110 transition-transform duration-300`}>
                       {brand.icon}
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 group-hover:text-gray-900 transition-colors">{brand.name}</h3>
+                    <h3 className="text-base font-bold text-gray-800 group-hover:text-gray-900 transition-colors">{brand.name}</h3>
                   </div>
                   {brandSummaries[brand.id] && (() => {
                     // 항상 조회기간 당년 원가율 표시 (데이터 없으면 0.0%)
@@ -953,15 +953,15 @@ export default function Home() {
                     const hasChange = displayChange !== null;
                     
                     return (
-                      <div className="flex flex-col items-end">
-                        <div className="text-xs text-gray-500 mb-2 font-medium">전체원가율(USD)</div>
-                        <div className={`px-4 py-3 rounded-xl shadow-md border-2 ${hasChange && displayChange! >= 0 ? 'bg-gradient-to-br from-rose-50 to-rose-100 border-rose-200' : hasChange && displayChange! < 0 ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200' : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200'}`}>
-                          <div className="flex flex-col items-end gap-1">
-                            <div className="text-2xl font-bold text-gray-900">
+                        <div className="flex flex-col items-end">
+                        <div className="text-xs text-gray-500 mb-1.5 font-medium">전체원가율(USD)</div>
+                        <div className={`px-3 py-2 rounded-xl shadow-md border-2 ${hasChange && displayChange! >= 0 ? 'bg-gradient-to-br from-rose-50 to-rose-100 border-rose-200' : hasChange && displayChange! < 0 ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200' : 'bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200'}`}>
+                          <div className="flex flex-col items-end gap-0.5">
+                            <div className="text-xl font-bold text-gray-900">
                               {formatNumber(displayCostRate)}%
                             </div>
                             {hasChange && (
-                              <div className={`text-sm font-bold px-2 py-0.5 rounded-md ${displayChange! >= 0 ? 'bg-rose-200 text-rose-700' : 'bg-blue-200 text-blue-700'}`}>
+                              <div className={`text-xs font-bold px-1.5 py-0.5 rounded-md ${displayChange! >= 0 ? 'bg-rose-200 text-rose-700' : 'bg-blue-200 text-blue-700'}`}>
                                 {displayChange! >= 0 ? '+' : ''}{formatNumber(displayChange!)}%p
                               </div>
                             )}
@@ -972,15 +972,15 @@ export default function Home() {
                   })()}
                 </div>
                 {brandSummaries[brand.id] && (
-                  <div className="flex gap-2 mt-3">
-                    <span className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-sm ${
+                  <div className="flex gap-1.5 mt-2">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-sm ${
                       brandSummaries[brand.id]!.qtyYoY > 100 
                         ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 border border-blue-300' 
                         : 'bg-gradient-to-r from-rose-100 to-rose-200 text-rose-700 border border-rose-300'
                     }`}>
                       총생산수량 YOY {Math.round(brandSummaries[brand.id]!.qtyYoY)}%
                     </span>
-                    <span className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-sm ${
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-sm ${
                       brandSummaries[brand.id]!.tagYoY_krw > 100 
                         ? 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 border border-blue-300' 
                         : 'bg-gradient-to-r from-rose-100 to-rose-200 text-rose-700 border border-rose-300'
@@ -992,7 +992,7 @@ export default function Home() {
               </div>
 
               {/* 카드 본문 */}
-              <div className="p-5 bg-white">
+              <div className="p-4 bg-white">
                 {loading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-blue-600 mx-auto"></div>
@@ -1001,36 +1001,36 @@ export default function Home() {
                 ) : brandSummaries[brand.id] ? (
                   <div className="mb-4">
                     {/* 주요 지표 그리드 */}
-                    <div className="grid grid-cols-2 gap-4 mb-5">
-                      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm">
-                        <div className="text-xs text-gray-500 mb-1.5 font-medium">총 생산수량</div>
-                        <div className="text-lg font-bold text-gray-900">
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-2.5 border border-gray-200/50 shadow-sm">
+                        <div className="text-xs text-gray-500 mb-1 font-medium">총 생산수량</div>
+                        <div className="text-base font-bold text-gray-900">
                           {formatQty(brandSummaries[brand.id]!.qty25F)}
-                          <span className="ml-2 text-sm text-gray-600 font-semibold">
+                          <span className="ml-1.5 text-xs text-gray-600 font-semibold">
                             ({Math.round(brandSummaries[brand.id]!.qtyYoY)}%)
                           </span>
                         </div>
                       </div>
-                      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm">
-                        <div className="text-xs text-gray-500 mb-1.5 font-medium">평균TAG (KRW)</div>
-                        <div className="text-base font-bold text-gray-900">
+                      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl p-2.5 border border-gray-200/50 shadow-sm">
+                        <div className="text-xs text-gray-500 mb-1 font-medium">평균TAG (KRW)</div>
+                        <div className="text-sm font-bold text-gray-900">
                           {brandSummaries[brand.id]!.avgTag25F_krw.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </div>
                       </div>
                       <div className="col-span-2">
-                        <div className="flex items-stretch gap-4">
-                          <div className="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm h-full flex flex-col justify-center">
+                        <div className="flex items-stretch gap-3">
+                          <div className="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-2.5 border border-gray-200/50 shadow-sm h-full flex flex-col justify-center">
                             <div className="text-xs text-gray-500 font-medium">평균원가(USD)</div>
-                            <div className="mt-1 text-base font-bold text-gray-900">
+                            <div className="mt-0.5 text-sm font-bold text-gray-900">
                               ${formatNumber(brandSummaries[brand.id]!.avgCost25F_usd, 2)}
                             </div>
                           </div>
-                          <div className="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-3 border border-gray-200/50 shadow-sm h-full flex flex-col justify-center">
+                          <div className="flex-1 bg-gradient-to-br from-gray-50 to-white rounded-xl p-2.5 border border-gray-200/50 shadow-sm h-full flex flex-col justify-center">
                             <div className="text-xs text-gray-500 font-medium">환율</div>
-                            <div className="mt-1 text-base font-bold text-gray-900 whitespace-nowrap">
+                            <div className="mt-0.5 text-sm font-bold text-gray-900 whitespace-nowrap">
                               {brandSummaries[brand.id]!.fxPrev.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })} →{' '}
                               {brandSummaries[brand.id]!.fxCurr.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}{' '}
-                              <span className="ml-1 text-sm text-gray-600 font-semibold">
+                              <span className="ml-1 text-xs text-gray-600 font-semibold">
                                 ({brandSummaries[brand.id]!.fxPrev > 0 ? Math.round((brandSummaries[brand.id]!.fxCurr / brandSummaries[brand.id]!.fxPrev) * 100) : 0}%)
                               </span>
                             </div>
@@ -1040,25 +1040,25 @@ export default function Home() {
                     </div>
 
                     {/* 원가 상세보기 */}
-                    <div className="border-t border-gray-200/50 pt-4">
+                    <div className="border-t border-gray-200/50 pt-3">
                       <button
                         onClick={() => toggleCostDetails(brand.id)}
-                        className="w-full flex items-center justify-between text-left hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 rounded-xl px-4 py-3 transition-all duration-200 border border-gray-200/50 hover:border-gray-300 hover:shadow-sm"
+                        className="w-full flex items-center justify-between text-left hover:bg-gradient-to-r hover:from-gray-50 hover:to-gray-100 rounded-xl px-3 py-2 transition-all duration-200 border border-gray-200/50 hover:border-gray-300 hover:shadow-sm"
                       >
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-700 font-semibold">원가 상세보기</span>
-                          <span className="text-xs text-gray-500 bg-gray-100 px-2.5 py-1 rounded-full font-medium border border-gray-200">USD 기준</span>
+                          <span className="text-xs text-gray-700 font-semibold">원가 상세보기</span>
+                          <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full font-medium border border-gray-200">USD 기준</span>
                         </div>
                         {expandedCostItems.has(brand.id) ? (
-                          <ChevronUp className="w-5 h-5 text-gray-500" />
+                          <ChevronUp className="w-4 h-4 text-gray-500" />
                         ) : (
-                          <ChevronDown className="w-5 h-5 text-gray-500" />
+                          <ChevronDown className="w-4 h-4 text-gray-500" />
                         )}
                       </button>
                       
                       {/* 상세 원가 항목 */}
                       {expandedCostItems.has(brand.id) && (
-                        <div className="mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
                           {[
                             { name: '원부자재', prev: brandSummaries[brand.id]!.material24F_usd, curr: brandSummaries[brand.id]!.material25F_usd, icon: '📦' },
                             { name: '아트웍', prev: brandSummaries[brand.id]!.artwork24F_usd, curr: brandSummaries[brand.id]!.artwork25F_usd, icon: '🎨' },
@@ -1071,34 +1071,36 @@ export default function Home() {
                             return (
                               <div 
                                 key={item.name} 
-                                className="bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-xl p-4 border border-gray-200/50 hover:shadow-lg transition-all hover:border-gray-300 hover:-translate-y-0.5"
+                                className="bg-white rounded-lg p-3 border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200"
                               >
-                                <div className="flex items-center justify-between mb-3">
-                                  <div className="flex items-center gap-3">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
                                     <span className="text-lg">{item.icon}</span>
-                                    <span className="text-sm text-gray-700 font-bold">{item.name}</span>
-                                  </div>
-                                  <div className={`px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm border ${
-                                    change >= 0 
-                                      ? 'bg-gradient-to-r from-rose-100 to-rose-200 text-rose-700 border-rose-300' 
-                                      : 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 border-blue-300'
-                                  }`}>
-                                    {change >= 0 ? '+' : ''}${formatNumber(change, 2)}
+                                    <span className="text-sm font-semibold text-gray-800">{item.name}</span>
                                   </div>
                                 </div>
-                                <div className="flex items-center justify-between bg-white/50 rounded-lg p-2.5">
-                                  <div className="flex items-center gap-2.5 text-xs text-gray-600">
-                                    <span className="font-semibold text-gray-700">전년</span>
-                                    <span className="text-gray-500 font-medium">${formatNumber(item.prev, 2)}</span>
-                                    <span className="text-gray-400">→</span>
-                                    <span className="font-semibold text-gray-700">당년</span>
-                                    <span className="text-gray-900 font-bold">${formatNumber(item.curr, 2)}</span>
+                                <div className="mt-2.5 pt-2.5 border-t border-gray-100">
+                                  <div className="flex items-center gap-3 text-xs">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-gray-500 font-medium">전년</span>
+                                      <span className="text-gray-700 font-semibold">${formatNumber(item.prev, 2)}</span>
+                                    </div>
+                                    <span className="text-gray-300">→</span>
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-gray-500 font-medium">당년</span>
+                                      <span className="text-gray-900 font-bold">${formatNumber(item.curr, 2)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 ml-[4.5rem]">
+                                      <span className={`font-semibold ${change >= 0 ? 'text-rose-600' : 'text-blue-600'}`}>
+                                        ${change >= 0 ? '+' : ''}{formatNumber(change, 2)}
+                                      </span>
+                                      <span className={`font-medium px-2 py-0.5 rounded ${
+                                        change >= 0 ? 'bg-rose-50 text-rose-700' : 'bg-blue-50 text-blue-700'
+                                      }`}>
+                                        {formatNumber(yoy, 1)}%
+                                      </span>
+                                    </div>
                                   </div>
-                                  <span className={`text-xs font-bold px-2 py-1 rounded-md ${
-                                    change >= 0 ? 'bg-rose-100 text-rose-700' : 'bg-blue-100 text-blue-700'
-                                  }`}>
-                                    ({formatNumber(yoy, 1)}%)
-                                  </span>
                                 </div>
                               </div>
                             );
@@ -1121,7 +1123,7 @@ export default function Home() {
                     e.stopPropagation();
                     handleBrandClick(brand.id);
                   }}
-                  className={`w-full mt-5 ${brandWithColor.buttonBg} ${brandWithColor.buttonHover} ${brandWithColor.textColor} font-bold py-3.5 px-4 rounded-xl transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-[1.02] transform border-2 ${brandWithColor.borderColor} hover:border-opacity-80`}
+                  className={`w-full mt-4 ${brandWithColor.buttonBg} ${brandWithColor.buttonHover} ${brandWithColor.textColor} font-bold py-2.5 px-3 rounded-xl transition-all duration-200 shadow-lg hover:shadow-2xl hover:scale-[1.02] transform border-2 ${brandWithColor.borderColor} hover:border-opacity-80 text-sm`}
                 >
                   전체 대시보드 보기
                 </button>
