@@ -851,7 +851,7 @@ export default function Home() {
                   <div className="flex items-center gap-2">
                     <Info className="w-4 h-4 text-blue-600" />
                     <span className="text-sm font-medium text-gray-700">
-                      ACC: 전년 {periodDetails[selectedPeriod].nSeason.prev} / 당년 {periodDetails[selectedPeriod].nSeason.curr} (입고일 기준)
+                      ACC: 전년 {periodDetails[selectedPeriod].nSeason.prev} / 당년 {periodDetails[selectedPeriod].nSeason.curr} (합의납기일 기준)
                     </span>
                   </div>
                 </div>
