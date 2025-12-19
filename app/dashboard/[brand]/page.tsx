@@ -765,7 +765,7 @@ export default function BrandDashboard() {
             summaryFileName = 'COST RAW/25FW/summary_25fw_x.json';
             break;
           case 'DISCOVERY-KIDS':
-            csvFileName = 'COST RAW/25FW/X_25F.csv';
+            csvFileName = 'COST RAW/25FW/X_25F_kids.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/25FW/summary_25fw_x_kids.json';
             break;
@@ -782,32 +782,32 @@ export default function BrandDashboard() {
           case '26SS-M':
             csvFileName = 'COST RAW/26SS/M_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
-            summaryFileName = 'COST RAW/26SS/summary_26ss_m.json';
+            summaryFileName = 'COST RAW/26SS/summary_26s_m.json';
             break;
           case '26SS-I':
             csvFileName = 'COST RAW/26SS/I_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
-            summaryFileName = 'COST RAW/26SS/summary_26ss_i.json';
+            summaryFileName = 'COST RAW/26SS/summary_26s_i.json';
             break;
           case '26SS-X':
             csvFileName = 'COST RAW/26SS/X_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
-            summaryFileName = 'COST RAW/26SS/summary_26ss_x.json';
+            summaryFileName = 'COST RAW/26SS/summary_26s_x.json';
             break;
           case '26SS-DISCOVERY-KIDS':
-            csvFileName = 'COST RAW/26SS/X_26S.csv';
+            csvFileName = 'COST RAW/26SS/X_26S_kids.csv';
             fxFileName = 'COST RAW/FX.csv';
-            summaryFileName = 'COST RAW/26SS/summary_26ss_x_kids.json';
+            summaryFileName = 'COST RAW/26SS/summary_26s_x_kids.json';
             break;
           case '26SS-ST':
             csvFileName = 'COST RAW/26SS/ST_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
-            summaryFileName = 'COST RAW/26SS/summary_26ss_st.json';
+            summaryFileName = 'COST RAW/26SS/summary_26s_st.json';
             break;
           case '26SS-V':
             csvFileName = 'COST RAW/26SS/V_26S.csv';
             fxFileName = 'COST RAW/FX.csv';
-            summaryFileName = 'COST RAW/26SS/summary_26ss_v.json';
+            summaryFileName = 'COST RAW/26SS/summary_26s_v.json';
             break;
           case '25SS-M':
             csvFileName = 'COST RAW/25S/M_25S.csv';
@@ -825,7 +825,7 @@ export default function BrandDashboard() {
             summaryFileName = 'COST RAW/25S/summary_25s_x.json';
             break;
           case '25SS-DISCOVERY-KIDS':
-            csvFileName = 'COST RAW/25S/X_25S.csv';
+            csvFileName = 'COST RAW/25S/X_25S_kids.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/25S/summary_25ss_x_kids.json';
             break;
@@ -852,17 +852,17 @@ export default function BrandDashboard() {
           case '26SS-M-NON':
             csvFileName = 'COST RAW/26SS/M_26S_NON.csv';
             fxFileName = 'COST RAW/FX_NON.csv';
-            summaryFileName = 'COST RAW/26SS/summary_26ss_m_non.json';
+            summaryFileName = 'COST RAW/26SS/summary_26s_m_non.json';
             break;
           case '26SS-I-NON':
             csvFileName = 'COST RAW/26SS/I_26S_NON.csv';
             fxFileName = 'COST RAW/FX_NON.csv';
-            summaryFileName = 'COST RAW/26SS/summary_26ss_i_non.json';
+            summaryFileName = 'COST RAW/26SS/summary_26s_i_non.json';
             break;
           case '26SS-X-NON':
             csvFileName = 'COST RAW/26SS/X_26S_NON.csv';
             fxFileName = 'COST RAW/FX_NON.csv';
-            summaryFileName = 'COST RAW/26SS/summary_26ss_x_non.json';
+            summaryFileName = 'COST RAW/26SS/summary_26s_x_non.json';
             break;
           case '26FW-M-NON':
             csvFileName = 'COST RAW/26FW/M_26F_NON.csv';
@@ -900,7 +900,7 @@ export default function BrandDashboard() {
             summaryFileName = 'COST RAW/26FW/summary_26fw_x.json';
             break;
           case '26FW-DISCOVERY-KIDS':
-            csvFileName = 'COST RAW/26FW/X_26F.csv';
+            csvFileName = 'COST RAW/26FW/X_26F_kids.csv';
             fxFileName = 'COST RAW/FX.csv';
             summaryFileName = 'COST RAW/26FW/summary_26fw_x_kids.json';
             break;
@@ -1067,94 +1067,22 @@ export default function BrandDashboard() {
         throw new Error(`파일을 불러올 수 없습니다 (${response.status}: ${response.statusText})`);
       }
 
-      // DISCOVERY-KIDS 브랜드인 경우 필터링 필요
-      const isDiscoveryKids = brandId === 'DISCOVERY-KIDS' || brandId?.includes('DISCOVERY-KIDS');
+      // 모든 브랜드 동일하게 처리 (이미 CSV 파일이 분리되어 있음)
+      const blob = await response.blob();
       
-      if (isDiscoveryKids) {
-        // CSV 텍스트로 가져오기 (인코딩 명시)
-        const csvText = await response.text();
-        
-        // Papa.parse로 CSV 파싱 (제대로 된 파싱)
-        const parseResult = Papa.parse(csvText, {
-          header: false,
-          skipEmptyLines: false
-        });
-        
-        if (!parseResult.data || parseResult.data.length === 0) {
-          throw new Error('CSV 파일이 비어있습니다.');
-        }
-        
-        // 헤더는 그대로 유지
-        const headerRow = parseResult.data[0] as string[];
-        const filteredRows: string[][] = [headerRow];
-        
-        // 데이터 행 필터링 (스타일 코드는 3번째 컬럼, 인덱스 2)
-        let filteredCount = 0;
-        for (let i = 1; i < parseResult.data.length; i++) {
-          const row = parseResult.data[i] as string[];
-          
-          // 빈 행은 건너뛰기
-          if (!row || row.length === 0) continue;
-          
-          // 스타일 코드 확인 (3번째 컬럼, 인덱스 2)
-          if (row.length > 2) {
-            const style = (row[2] || '').trim().toUpperCase();
-            if (style.startsWith('DK')) {
-              filteredRows.push(row);
-              filteredCount++;
-            }
-          }
-        }
-        
-        // Papa.unparse로 CSV로 변환
-        const filteredCsv = Papa.unparse(filteredRows, {
-          newline: '\n',
-          delimiter: ',',
-          header: false
-        });
-        
-        // 파일명 변경 (DISCOVERY-KIDS용)
-        const baseFileName = fileName.replace('.csv', '');
-        fileName = `${baseFileName}_kids.csv`;
-        
-        // UTF-8 BOM 추가하여 Excel에서 한글이 깨지지 않도록 함
-        const csvWithBom = '\ufeff' + filteredCsv;
-        
-        // Blob 생성 (UTF-8 BOM 포함)
-        const blob = new Blob([csvWithBom], { type: 'text/csv;charset=utf-8-sig;' });
-        
-        // 다운로드 링크 생성
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        
-        // 정리
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        console.log(`[DISCOVERY-KIDS 필터링] 원본: ${parseResult.data.length - 1}개 행, 필터링 후: ${filteredCount}개 행`);
-        console.log('CSV 다운로드 완료 (필터링됨):', fileName);
-      } else {
-        // 일반 브랜드는 기존 방식대로
-        const blob = await response.blob();
-        
-        // 다운로드 링크 생성
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        
-        // 정리
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        console.log('CSV 다운로드 완료:', fileName);
-      }
+      // 다운로드 링크 생성
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      
+      // 정리
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('CSV 다운로드 완료:', fileName);
     } catch (error) {
       console.error('CSV 다운로드 오류:', {
         error,

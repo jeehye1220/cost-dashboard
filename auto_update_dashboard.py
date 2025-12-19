@@ -117,6 +117,8 @@ def show_windows_notification(title: str, message: str, is_error: bool = False):
 
 def send_teams_message(config: Dict, title: str, message: str, is_error: bool = False):
     """Teams 메시지 전송"""
+    logger.info("Teams 메시지 전송 시도 중...")
+    
     if requests is None:
         logger.warning("requests 라이브러리가 설치되지 않아 Teams 메시지를 전송할 수 없습니다. 'pip install requests' 실행 필요")
         return
@@ -126,6 +128,8 @@ def send_teams_message(config: Dict, title: str, message: str, is_error: bool = 
     if not teams_webhook_url:
         logger.warning("Teams Webhook URL이 설정되지 않아 알림을 전송하지 않습니다.")
         return
+    
+    logger.info(f"Teams Webhook URL 확인됨: {teams_webhook_url[:50]}...")
     
     try:
         # 성공/실패에 따라 색상 결정
@@ -461,6 +465,70 @@ def git_commit_and_push(config: Dict) -> bool:
         return False
 
 
+def deploy_to_vercel(config: Dict) -> bool:
+    """Vercel에 자동 배포"""
+    logger.info("=" * 60)
+    logger.info("[6] Vercel 배포 시작")
+    logger.info("=" * 60)
+    
+    try:
+        # Vercel CLI가 설치되어 있는지 확인
+        result = subprocess.run(
+            ['vercel', '--version'],
+            capture_output=True,
+            text=True,
+            encoding='utf-8'
+        )
+        
+        if result.returncode != 0:
+            logger.warning("Vercel CLI가 설치되어 있지 않습니다. 배포를 건너뜁니다.")
+            return False
+        
+        logger.info("Vercel CLI 확인 완료")
+        
+        # Vercel 프로젝트가 연결되어 있는지 확인
+        result = subprocess.run(
+            ['vercel', 'ls'],
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            cwd=Path.cwd()
+        )
+        
+        if result.returncode != 0:
+            logger.warning("Vercel 프로젝트가 연결되어 있지 않습니다. 배포를 건너뜁니다.")
+            logger.info("Vercel 프로젝트 연결 방법: vercel link")
+            return False
+        
+        # 프로덕션 배포 실행
+        logger.info("Vercel 프로덕션 배포 실행 중...")
+        result = subprocess.run(
+            ['vercel', '--prod', '--yes'],
+            capture_output=True,
+            text=True,
+            encoding='utf-8',
+            cwd=Path.cwd()
+        )
+        
+        if result.returncode == 0:
+            logger.info("Vercel 배포 완료")
+            logger.info(result.stdout)
+            logger.info("=" * 60)
+            logger.info("[6] Vercel 배포 완료")
+            logger.info("=" * 60)
+            return True
+        else:
+            logger.error(f"Vercel 배포 실패: {result.stderr}")
+            return False
+            
+    except FileNotFoundError:
+        logger.warning("Vercel CLI가 설치되어 있지 않습니다. 배포를 건너뜁니다.")
+        return False
+    except Exception as e:
+        logger.error(f"Vercel 배포 중 오류 발생: {e}", exc_info=True)
+        return False
+
+
 def verify_files(config: Dict) -> bool:
     """생성된 파일 확인"""
     logger.info("=" * 60)
@@ -693,6 +761,11 @@ def main():
             if not git_commit_and_push(config):
                 logger.warning("Git 커밋/푸시 실패했지만 계속 진행합니다.")
                 # Git 실패는 전체 실패로 처리하지 않음 (선택사항)
+            
+            # 7. Vercel 배포 (Git 푸시 성공한 경우)
+            if not deploy_to_vercel(config):
+                logger.warning("Vercel 배포 실패했지만 계속 진행합니다.")
+                # 배포 실패는 전체 실패로 처리하지 않음
         
     except Exception as e:
         success = False

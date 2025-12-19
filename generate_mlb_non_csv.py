@@ -50,7 +50,7 @@ def calculate_periods(season: str) -> Tuple[date, date, date, date]:
     season_upper = season.upper()
     
     if 'FW' in season_upper or (season_upper.endswith('F') and len(season) == 3):
-        # FW: 6/1 ~ 11/30
+        # FW: 6/1 ~ 11/30 (항상 시즌 전체 기간)
         year_2digit = int(season[:2])
         # 2자리 연도를 4자리로 변환 (25 -> 2025)
         year = 2000 + year_2digit
@@ -60,35 +60,22 @@ def calculate_periods(season: str) -> Tuple[date, date, date, date]:
         prev_start = date(prev_year, 6, 1)
         prev_end = date(prev_year, 11, 30)
         curr_start = date(curr_year, 6, 1)
-        
-        # 현재 날짜 확인
-        today = date.today()
-        if today > date(curr_year, 11, 30):
-            curr_end = date(curr_year, 11, 30)
-        else:
-            curr_end = today
+        curr_end = date(curr_year, 11, 30)  # 항상 시즌 끝까지
             
     elif 'SS' in season_upper or (season_upper.endswith('S') and len(season) == 3):
-        # SS: 12/1 ~ 다음해 5/31
-        # 예: 25S 당년 = 2024-12-01 ~ 2025-05-31, 전년 = 2023-12-01 ~ 2024-05-31
+        # SS: 12/1 ~ 다음해 5/31 (항상 시즌 전체 기간)
+        # 예: 26S 당년 = 2025-12-01 ~ 2026-05-31, 전년 = 2024-12-01 ~ 2025-05-31
         year_2digit = int(season[:2])
         # 2자리 연도를 4자리로 변환 (25 -> 2025)
         year = 2000 + year_2digit
         
         # 당년: (year-1)년 12/1 ~ year년 5/31
         curr_start = date(year - 1, 12, 1)
-        curr_end_year = year
+        curr_end = date(year, 5, 31)  # 항상 시즌 끝까지
         
         # 전년: (year-2)년 12/1 ~ (year-1)년 5/31
         prev_start = date(year - 2, 12, 1)
         prev_end = date(year - 1, 5, 31)
-        
-        # 현재 날짜 확인
-        today = date.today()
-        if today > date(curr_end_year, 5, 31):
-            curr_end = date(curr_end_year, 5, 31)
-        else:
-            curr_end = today
     else:
         raise ValueError(f"지원하지 않는 시즌 형식: {season}")
     
@@ -97,7 +84,9 @@ def calculate_periods(season: str) -> Tuple[date, date, date, date]:
 
 def build_sql_query(prev_start: date, prev_end: date, curr_start: date, curr_end: date) -> str:
     """
-    SQL 쿼리 생성 (사용자 제공 쿼리 기반)
+    SQL 쿼리 생성 (합의납기일 기준)
+    - 입고일 기준에서 합의납기일(indc_dt_cnfm) 기준으로 변경
+    - 전년/당년 기간 필터링을 합의납기일 기준으로 처리
     """
     # 날짜를 문자열로 변환 (YYYY-MM-DD 형식)
     prev_start_str = prev_start.strftime('%Y-%m-%d')
@@ -106,38 +95,7 @@ def build_sql_query(prev_start: date, prev_end: date, curr_start: date, curr_end
     curr_end_str = curr_end.strftime('%Y-%m-%d')
     
     query = f"""
-with 
--- A) 전년/당년 기간 필터 + 기간 라벨링
-stor_filtered as (
-    select 
-        po_no,
-        stor_dt,
-        qty,
-        case 
-            when stor_dt between date '{prev_start_str}' and date '{prev_end_str}' then '전년'
-            when stor_dt between date '{curr_start_str}' and date '{curr_end_str}' then '당년'
-        end as period_label
-    from prcs.dw_stor
-    where (stor_dt between date '{prev_start_str}' and date '{prev_end_str}')
-       or (stor_dt between date '{curr_start_str}' and date '{curr_end_str}')
-),
--- B) 기간 내 PO만 (중복 방지용)
-stor_po as (
-    select distinct po_no, period_label
-    from stor_filtered
-),
--- C) 기간별 PO 집계: 입고수량 합계 + 최초/최종 입고일
-stor_sum as (
-    select 
-        po_no,
-        period_label,
-        sum(qty) as stor_qty_sum,
-        min(stor_dt) as first_stor_dt,
-        max(stor_dt) as last_stor_dt
-    from stor_filtered
-    group by po_no, period_label
-),
-main as (
+with main as (
     select 
         a.brd_cd,
         a.sesn,
@@ -167,32 +125,34 @@ main as (
         s.vtext2 as vtext2,
         o1.tag_price as tag_price,
         o2.po_qty_sum as po_qty_sum,
-        sp.period_label as period_label,
-        ss.stor_qty_sum as stor_qty_sum,
-        ss.first_stor_dt as first_stor_dt,
-        ss.last_stor_dt as last_stor_dt
+        o2.indc_dt_cnfm as indc_dt_cnfm,
+        case 
+            when o2.indc_dt_cnfm between date '{prev_start_str}' and date '{prev_end_str}' then '전년'
+            when o2.indc_dt_cnfm between date '{curr_start_str}' and date '{curr_end_str}' then '당년'
+        end as period_label
     from prcs.db_cost_mst a
     join prcs.db_cost_dtl b on a.po_no = b.po_no 
         and a.quotation_seq = b.quotation_seq 
         and a.quotation_apv_stat_nm = '확정'
-    inner join stor_po sp on sp.po_no = a.po_no
-    left join stor_sum ss on ss.po_no = a.po_no and ss.period_label = sp.period_label
     left join prcs.db_prdt p on p.prdt_cd = a.brd_cd || a.sesn || a.part_cd
     left join sap_fnf.mst_prdt s on s.prdt_cd = p.prdt_cd
+    -- TAG (대표 TAG)
     left join (
         select prdt_cd, min(tag_price) as tag_price
         from prcs.dw_ord
         where tag_price is not null
         group by prdt_cd
     ) o1 on o1.prdt_cd = p.prdt_cd
+    -- PO별 수량 + 합의납기일
     left join (
-        select po_no, sum(ord_qty) as po_qty_sum
+        select po_no, sum(ord_qty) as po_qty_sum, max(indc_dt_cnfm) as indc_dt_cnfm
         from prcs.dw_ord
         group by po_no
     ) o2 on o2.po_no = a.po_no
     where a.sesn like '%N%'
       and a.brd_cd in ('M', 'I', 'X')
       and b.currency in ('USD', 'KRW')
+      and o2.indc_dt_cnfm between date '{prev_start_str}' and date '{curr_end_str}'
 )
 select 
     period_label as "기간",
@@ -204,14 +164,12 @@ select
     po_no as "PO",
     tag_price as "TAG",
     po_qty_sum as "발주수량",
-    stor_qty_sum as "입고수량",
-    first_stor_dt as "최초입고일",
-    last_stor_dt as "최종입고일",
     cost_quotation_no as "원가견적번호",
     currency as "발주통화",
     mfac_compy_nm as "제조업체",
     quotation_submit_dt as "견적서제출일자",
-    -- USD 금액 (기존)
+    indc_dt_cnfm as "합의납기일",
+    -- USD 단가
     sum(case when type1 = 100 then mfac_offer_cost_amt_curr else 0 end) as "본사협의단가_금액(USD)_원자재",
     sum(case when type1 = 200 then mfac_offer_cost_amt_curr else 0 end) as "본사협의단가_금액(USD)_아트웍",
     sum(case when type1 = 300 then mfac_offer_cost_amt_curr else 0 end) as "본사협의단가_금액(USD)_부자재",
@@ -220,7 +178,7 @@ select
     sum(case when type1 = 700 then mfac_offer_cost_amt_curr else 0 end) as "(USD)본사공급자재",
     sum(case when type1 = 500 and type2 = 'AAA' then mfac_offer_cost_amt_curr else 0 end) as "본사협의단가_금액(USD)_정상마진",
     sum(case when type1 = 500 and type2 <> 'AAA' then mfac_offer_cost_amt_curr else 0 end) as "본사협의단가_금액(USD)_기타마진/경비",
-    -- KRW 금액(기존)
+    -- KRW 단가
     sum(case when type1 = 100 then mfac_nego_cost_amt else 0 end) as "본사협의단가_T_금액(KRW)_원자재",
     sum(case when type1 = 200 then mfac_nego_cost_amt else 0 end) as "본사협의단가_T_금액(KRW)_아트웍",
     sum(case when type1 = 300 then mfac_nego_cost_amt else 0 end) as "본사협의단가_T_금액(KRW)_부자재",
@@ -242,10 +200,10 @@ select
     coalesce(po_qty_sum,0) * coalesce(sum(case when type1 = 500 and type2 = 'AAA' then mfac_nego_cost_amt else 0 end),0) as "KRW_정상마진_총금액(단가×수량)",
     coalesce(po_qty_sum,0) * coalesce(sum(case when type1 = 500 and (type2 <> 'AAA' or type2 is null) then mfac_nego_cost_amt else 0 end),0) as "KRW_경비_총금액(단가×수량)"
 from main
+where period_label is not null
 group by 
     period_label, brd_cd, sesn, part_cd, vtext2, item_nm, po_no, tag_price, 
-    po_qty_sum, stor_qty_sum, first_stor_dt, last_stor_dt, 
-    cost_quotation_no, currency, mfac_compy_nm, quotation_submit_dt
+    po_qty_sum, cost_quotation_no, currency, mfac_compy_nm, quotation_submit_dt, indc_dt_cnfm
 order by period_label desc, brd_cd, sesn desc, part_cd, po_no
 """
     return query
@@ -756,10 +714,10 @@ def map_to_m24s_format(df: pd.DataFrame, season: str, exchange_rates: Dict[str, 
                     tag_usd = tag_total_krw / prev_rate
                     df_result.at[idx, 'TAG_USD금액(전년환율)'] = tag_usd
     
-    # M_25F.csv 컬럼 순서 정의
+    # M_25F.csv 컬럼 순서 정의 (합의납기일 추가, 입고 관련 컬럼 제거)
     base_columns = [
         '브랜드', '시즌', '스타일', '중분류', '아이템명', 'PO', 'TAG', '수량',
-        'TAG_총금액', 'TAG_USD금액(전년환율)', '원가견적번호', '발주통화', '제조업체', '견적서제출일자'
+        'TAG_총금액', 'TAG_USD금액(전년환율)', '원가견적번호', '발주통화', '제조업체', '견적서제출일자', '합의납기일'
     ]
     
     # PO 컬럼명이 다를 수 있으므로 확인
@@ -790,20 +748,12 @@ def map_to_m24s_format(df: pd.DataFrame, season: str, exchange_rates: Dict[str, 
         'KRW_공임_총금액(단가×수량)', 'KRW_정상마진_총금액(단가×수량)', 'KRW_경비_총금액(단가×수량)'
     ]
     
-    # 입고 관련 컬럼 (맨 끝으로)
-    storage_columns = ['입고수량', '최초입고일', '최종입고일']
-    
     # 컬럼 순서대로 재구성
     ordered_columns = []
     for col_list in [base_columns, usd_unit_columns, krw_unit_columns, usd_total_columns, krw_total_columns]:
         for col in col_list:
             if col in df_result.columns:
                 ordered_columns.append(col)
-    
-    # 입고 관련 컬럼 추가 (있는 경우만)
-    for col in storage_columns:
-        if col in df_result.columns:
-            ordered_columns.append(col)
     
     # 기간 컬럼 제거 (시즌에 이미 포함됨)
     if '기간' in ordered_columns:

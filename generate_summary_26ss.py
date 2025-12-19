@@ -31,6 +31,19 @@ from typing import Dict, Any
 # 카테고리 순서 (중분류 통합 후: SHOES/BAG/HEADWEAR → Acc_etc)
 CATEGORY_ORDER = ['Outer', 'Inner', 'Bottom', 'Acc_etc', 'Wear_etc']
 
+def normalize_season_for_filename(season: str) -> str:
+    """
+    시즌 코드를 파일명용으로 정규화
+    25SS → 25s, 26SS → 26s, 25FW → 25fw, 26FW → 26fw
+    """
+    season_upper = season.upper()
+    if season_upper.endswith('SS'):
+        return season_upper[:-2].lower() + 's'  # 25SS → 25s
+    elif season_upper.endswith('FW'):
+        return season_upper.lower()  # 25FW → 25fw
+    else:
+        return season.lower()
+
 # FX 파일 경로
 FX_FILE = 'public/COST RAW/FX.csv'
 
@@ -172,19 +185,12 @@ def calculate_season_kpi(
     qty = df_season.iloc[:, 7].sum()  # 수량
     
     if currency == 'USD':
-        # 전시즌 환율 사용 (25SS → 24SS 환율, 26SS → 25SS 환율)
-        prev_season = get_previous_season(current_season_code)
-        prev_season_code = convert_season_format(prev_season) if prev_season else current_season_code
-        
-        # TAG (USD) - 전시즌 환율 사용
-        # 각 행별로 카테고리에 맞는 환율 조회
+        # TAG (USD) - CSV에 이미 계산된 TAG_USD금액(전년환율) 컬럼 사용
+        # 컬럼 9: TAG_USD금액(전년환율) - sql_to_csv_with_fx.py에서 분석기간 기준 환율로 계산됨
         tag_total = 0
         for idx, row in df_season.iterrows():
-            category = row.iloc[3] if len(row) > 3 else None
-            fx_rate = get_exchange_rate(df_fx, brand_code, prev_season_code, category)
-            tag_krw = pd.to_numeric(row.iloc[6], errors='coerce') or 0
-            qty_row = pd.to_numeric(row.iloc[7], errors='coerce') or 0
-            tag_total += (tag_krw / fx_rate) * qty_row
+            tag_usd = pd.to_numeric(row.iloc[9], errors='coerce') or 0  # TAG_USD금액(전년환율)
+            tag_total += tag_usd
         
         avg_tag = tag_total / qty if qty > 0 else 0
         
@@ -581,7 +587,7 @@ def main():
             if len(df_discovery) > 0:
                 print(f"\n[1-1] DISCOVERY 데이터 필터링: {len(df_discovery)}개 레코드")
                 process_brand_data(df_discovery, df_fx, brand_code, season_code, prev_season_code, 
-                                 season_folder, season, f'summary_{season.lower()}_{brand_code.lower()}.json')
+                                 season_folder, season, f'summary_{normalize_season_for_filename(season)}_{brand_code.lower()}.json')
             else:
                 print(f"\n[WARN] DISCOVERY 데이터가 없습니다. (DK로 시작하지 않는 스타일 없음)")
             
@@ -589,19 +595,19 @@ def main():
             if len(df_kids) > 0:
                 print(f"\n[1-2] DISCOVERY-KIDS 데이터 필터링: {len(df_kids)}개 레코드")
                 process_brand_data(df_kids, df_fx, brand_code, season_code, prev_season_code, 
-                                 season_folder, season, f'summary_{season.lower()}_{brand_code.lower()}_kids.json')
+                                 season_folder, season, f'summary_{normalize_season_for_filename(season)}_{brand_code.lower()}_kids.json')
             else:
                 print(f"\n[WARN] DISCOVERY-KIDS 데이터가 없습니다. (DK로 시작하는 스타일 없음)")
             
             continue
         
         # X 브랜드가 아닌 경우 기존 로직 사용
-        output_file = f'public/COST RAW/{season_folder}/summary_{season.lower()}_{brand_code.lower()}.json'
+        output_file = f'public/COST RAW/{season_folder}/summary_{normalize_season_for_filename(season)}_{brand_code.lower()}.json'
         print(f"출력 파일: {output_file}")
         
         # 공통 처리 함수 호출
         process_brand_data(df, df_fx, brand_code, season_code, prev_season_code, 
-                         season_folder, season, f'summary_{season.lower()}_{brand_code.lower()}.json')
+                         season_folder, season, f'summary_{normalize_season_for_filename(season)}_{brand_code.lower()}.json')
     
     print("\n" + "=" * 60)
     print("All tasks completed.")

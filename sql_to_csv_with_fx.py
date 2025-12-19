@@ -410,6 +410,62 @@ def get_previous_season(season: str) -> str:
     return ''
 
 # ============================================
+# 최신 시즌 감지
+# ============================================
+def get_latest_season(seasons) -> str:
+    """
+    시즌 리스트에서 최신 시즌 반환
+    예: ['26S', '25S'] → '26S'
+        ['25F', '24F'] → '25F'
+        ['26SS', '25SS'] → '26SS'
+    
+    Args:
+        seasons: pandas Series 또는 numpy array 또는 list
+    """
+    # pandas Series 또는 numpy array를 list로 변환
+    if hasattr(seasons, 'tolist'):
+        seasons = seasons.tolist()
+    
+    if not seasons or len(seasons) == 0:
+        return ''
+    
+    # 시즌 정규화 함수
+    def normalize_and_rank(season):
+        """시즌을 정규화하고 비교 가능한 값으로 변환"""
+        if pd.isna(season) or season == '':
+            return (0, 0)  # 최하위
+        
+        season_str = str(season).strip().upper()
+        
+        # 연도와 시즌 타입 추출
+        if season_str.endswith('FW'):
+            year = int(season_str[:-2])
+            season_type = 1  # F/FW
+        elif season_str.endswith('SS'):
+            year = int(season_str[:-2])
+            season_type = 0  # S/SS
+        elif season_str.endswith('F'):
+            year = int(season_str[:-1])
+            season_type = 1  # F/FW
+        elif season_str.endswith('S'):
+            year = int(season_str[:-1])
+            season_type = 0  # S/SS
+        else:
+            return (0, 0)
+        
+        # 정렬 키: (연도, 시즌타입)
+        # 26S < 26F < 27S 순서
+        return (year, season_type)
+    
+    # 모든 시즌을 정규화하고 최댓값 찾기
+    valid_seasons = [s for s in seasons if not pd.isna(s) and s != '']
+    if not valid_seasons:
+        return ''
+    
+    latest = max(valid_seasons, key=normalize_and_rank)
+    return str(latest).strip()
+
+# ============================================
 # MLB FW 형식으로 데이터 변환
 # ============================================
 def format_data_like_mlb_fw(df: pd.DataFrame, df_fx: pd.DataFrame) -> pd.DataFrame:
@@ -428,39 +484,40 @@ def format_data_like_mlb_fw(df: pd.DataFrame, df_fx: pd.DataFrame) -> pd.DataFra
     # 1. TAG_총금액 계산 (TAG × 수량)
     df_result['TAG_총금액'] = df_result['TAG'] * df_result['수량']
     
-    # 2. TAG_USD금액 계산 (각 행의 시즌에 따라 전시즌 환율 사용)
-    # 예: 25F → 24F 환율, 24S → 23S 환율, 25S → 24S 환율
+    # 2. TAG_USD금액 계산 (분석기간 기준 환율 사용)
+    # 데이터의 최신 시즌을 분석 기간으로 간주하고, 분석기간-1년 환율을 모든 행에 적용
     df_result['TAG_USD금액(전년환율)'] = 0.0  # 초기화
     
-    print("\n[INFO] TAG_USD금액 계산 중 (전시즌 환율 적용)...")
-    for idx, row in df_result.iterrows():
-        brand_code = str(row['브랜드']).strip()
-        current_season = str(row['시즌']).strip()
-        category = row['중분류'] if '중분류' in row else None
-        
-        # 전시즌 계산
-        prev_season = get_previous_season(current_season)
-        
-        if prev_season:
-            # 시즌 형식 변환 (25FW → 25F)
-            prev_season_code = convert_season_format(prev_season)
-            
-            # 전시즌 환율 조회
-            fx_rate = get_exchange_rate(df_fx, brand_code, prev_season_code, category)
-            
-            # TAG_USD금액 계산 (TAG_총금액 / 전시즌 환율)
-            tag_total = pd.to_numeric(row['TAG_총금액'], errors='coerce')
-            if pd.notna(tag_total) and fx_rate > 0:
-                df_result.at[idx, 'TAG_USD금액(전년환율)'] = tag_total / fx_rate
-        else:
-            # 전시즌이 없는 경우 기본 환율 사용
-            season_code = convert_season_format(current_season)
-            fx_rate = get_exchange_rate(df_fx, brand_code, season_code, category)
-            tag_total = pd.to_numeric(row['TAG_총금액'], errors='coerce')
-            if pd.notna(tag_total) and fx_rate > 0:
-                df_result.at[idx, 'TAG_USD금액(전년환율)'] = tag_total / fx_rate
+    # 2-1. 데이터에서 최신 시즌 감지 (분석 기간)
+    seasons = df_result['시즌'].unique()
+    current_period = get_latest_season(seasons)
     
-    print("[OK] TAG_USD금액 계산 완료")
+    if not current_period:
+        print("[WARN] 시즌 정보를 찾을 수 없습니다. TAG_USD금액 계산을 건너뜁니다.")
+    else:
+        # 2-2. 기준 환율 시즌 계산 (분석기간 - 1년)
+        ref_fx_season = get_previous_season(current_period)
+        ref_fx_season_code = convert_season_format(ref_fx_season) if ref_fx_season else current_period
+        
+        print(f"\n[INFO] TAG_USD금액 계산 중...")
+        print(f"[INFO] 분석기간: {current_period}, 기준환율시즌: {ref_fx_season_code}")
+        print(f"[INFO] 모든 행(당년/전년)에 대해 {ref_fx_season_code} 환율 적용")
+        
+        # 2-3. 모든 행에 동일한 기준 환율 시즌 적용 (카테고리별로 조회)
+        for idx, row in df_result.iterrows():
+            brand_code = str(row['브랜드']).strip()
+            category = row['중분류'] if '중분류' in row else None
+            
+            # 모든 행이 동일한 기준 환율 시즌 사용
+            # 카테고리에 따라 의류/슈즈/용품 환율이 다르게 조회됨
+            fx_rate = get_exchange_rate(df_fx, brand_code, ref_fx_season_code, category)
+            
+            # TAG_USD금액 계산 (TAG_총금액 / 기준 환율)
+            tag_total = pd.to_numeric(row['TAG_총금액'], errors='coerce')
+            if pd.notna(tag_total) and fx_rate > 0:
+                df_result.at[idx, 'TAG_USD금액(전년환율)'] = tag_total / fx_rate
+        
+        print("[OK] TAG_USD금액 계산 완료")
     
     # 3. 컬럼명 수정 (MLB FW 형식에 맞게)
     # "TAG_USD금액(24F환율)" → "TAG_USD금액(전년환율)" (기존 파일 호환성)
@@ -569,12 +626,52 @@ def format_data_like_mlb_fw(df: pd.DataFrame, df_fx: pd.DataFrame) -> pd.DataFra
 # ============================================
 # CSV 파일 저장 (브랜드별로 분리, 전년 시즌 포함)
 # ============================================
-def save_csv_by_brand_season(df: pd.DataFrame):
+def recalculate_tag_usd(df: pd.DataFrame, df_fx: pd.DataFrame, analysis_season: str) -> pd.DataFrame:
+    """
+    분석기간에 맞는 전년 환율로 TAG_USD금액(전년환율) 재계산
+    
+    Args:
+        df: 데이터프레임
+        df_fx: 환율 데이터프레임
+        analysis_season: 분석기간 (예: '26S', '25S', '26F', '25F')
+    
+    Returns:
+        TAG_USD금액이 재계산된 데이터프레임
+    """
+    if df_fx is None or df_fx.empty:
+        return df
+    
+    # 분석기간의 전년 환율 시즌 계산
+    ref_fx_season = get_previous_season(analysis_season)
+    ref_fx_season_code = convert_season_format(ref_fx_season) if ref_fx_season else analysis_season
+    
+    print(f"  [FX] 분석기간: {analysis_season}, 적용환율: {ref_fx_season_code}")
+    
+    # TAG_USD금액(전년환율) 재계산
+    for idx, row in df.iterrows():
+        brand_code = str(row['브랜드']).strip()
+        category = row['중분류'] if '중분류' in row else None
+        
+        fx_rate = get_exchange_rate(df_fx, brand_code, ref_fx_season_code, category)
+        
+        tag_total = pd.to_numeric(row['TAG_총금액'], errors='coerce')
+        if pd.notna(tag_total) and fx_rate > 0:
+            df.at[idx, 'TAG_USD금액(전년환율)'] = tag_total / fx_rate
+    
+    return df
+
+def save_csv_by_brand_season(df: pd.DataFrame, df_fx: pd.DataFrame = None):
     """
     브랜드와 시즌별로 CSV 파일 저장
     각 파일에는 해당 시즌과 전년 시즌 데이터가 모두 포함됨
     파일명 형식: {브랜드코드}_{시즌}.csv
     예: M_25F.csv → 25F와 24F 데이터 포함
+    
+    중요: 각 분석기간별로 올바른 전년 환율 적용
+    - 26S 파일 → 25S 환율
+    - 25S 파일 → 24S 환율
+    - 26F 파일 → 25F 환율
+    - 25F 파일 → 24F 환율
     """
     if df is None or df.empty:
         print("[WARN] 저장할 데이터가 없습니다.")
@@ -625,35 +722,89 @@ def save_csv_by_brand_season(df: pd.DataFrame):
                 combined_df = current_season_df
                 print(f"[INFO] {brand}_{normalized_season}.csv: {season} ({len(combined_df)}행) (전년 시즌 없음)")
             
-            # 파일 저장
-            filename = f"{brand}_{normalized_season}.csv"
+            # ★ 핵심: 해당 분석기간에 맞는 전년 환율로 TAG_USD금액 재계산
+            if df_fx is not None and not df_fx.empty:
+                combined_df = recalculate_tag_usd(combined_df, df_fx, normalized_season)
             
-            # 시즌별 폴더에 저장 (26SS, 25S 등)
-            if season in ['26SS', '26S', '25SS', '25S', '24SS', '24S', '26FW', '26F', '25FW', '25F']:
-                # 시즌 폴더명 결정 (26SS → 26SS, 25S → 25S)
-                if season in ['26SS', '26S']:
-                    season_folder = '26SS'
-                elif season in ['25SS', '25S']:
-                    season_folder = '25S'
-                elif season in ['24SS', '24S']:
-                    season_folder = '24S'
-                elif season in ['26FW', '26F']:
-                    season_folder = '26FW'
-                elif season in ['25FW', '25F']:
-                    season_folder = '25FW'
-                else:
-                    season_folder = season
+            # X 브랜드인 경우 DISCOVERY와 DISCOVERY KIDS 분리
+            if brand == 'X':
+                # 스타일 컬럼을 대문자로 변환하여 확인
+                combined_df['스타일_upper'] = combined_df['스타일'].astype(str).str.upper().str.strip()
                 
-                season_dir = os.path.join(OUTPUT_DIR, season_folder)
-                os.makedirs(season_dir, exist_ok=True)
-                filepath = os.path.join(season_dir, filename)
+                # DISCOVERY (DK로 시작하지 않는 것)
+                df_discovery = combined_df[~combined_df['스타일_upper'].str.startswith('DK', na=False)].copy()
+                df_discovery = df_discovery.drop(columns=['스타일_upper'])
+                
+                # DISCOVERY KIDS (DK로 시작하는 것)
+                df_kids = combined_df[combined_df['스타일_upper'].str.startswith('DK', na=False)].copy()
+                df_kids = df_kids.drop(columns=['스타일_upper'])
+                
+                # 시즌 폴더 결정
+                if season in ['26SS', '26S', '25SS', '25S', '24SS', '24S', '26FW', '26F', '25FW', '25F']:
+                    if season in ['26SS', '26S']:
+                        season_folder = '26SS'
+                    elif season in ['25SS', '25S']:
+                        season_folder = '25S'
+                    elif season in ['24SS', '24S']:
+                        season_folder = '24S'
+                    elif season in ['26FW', '26F']:
+                        season_folder = '26FW'
+                    elif season in ['25FW', '25F']:
+                        season_folder = '25FW'
+                    else:
+                        season_folder = season
+                    
+                    season_dir = os.path.join(OUTPUT_DIR, season_folder)
+                    os.makedirs(season_dir, exist_ok=True)
+                else:
+                    season_dir = OUTPUT_DIR
+                    os.makedirs(season_dir, exist_ok=True)
+                
+                # DISCOVERY 파일 저장
+                filename_discovery = f"X_{normalized_season}.csv"
+                filepath_discovery = os.path.join(season_dir, filename_discovery)
+                df_discovery.to_csv(filepath_discovery, index=False, encoding='utf-8-sig', lineterminator='\n')
+                saved_files.append(filepath_discovery)
+                print(f"[OK] {filename_discovery} 저장 완료 (DISCOVERY, DK 제외: {len(df_discovery)}개 행)")
+                
+                # DISCOVERY KIDS 파일 저장 (데이터가 있는 경우만)
+                if len(df_kids) > 0:
+                    filename_kids = f"X_{normalized_season}_kids.csv"
+                    filepath_kids = os.path.join(season_dir, filename_kids)
+                    df_kids.to_csv(filepath_kids, index=False, encoding='utf-8-sig', lineterminator='\n')
+                    saved_files.append(filepath_kids)
+                    print(f"[OK] {filename_kids} 저장 완료 (DISCOVERY KIDS, DK만: {len(df_kids)}개 행)")
+                else:
+                    print(f"[INFO] DISCOVERY KIDS 데이터 없음 (DK로 시작하는 스타일 없음)")
             else:
-                filepath = os.path.join(OUTPUT_DIR, filename)
-            
-            # UTF-8 BOM 인코딩으로 저장 (Excel 호환성)
-            combined_df.to_csv(filepath, index=False, encoding='utf-8-sig', lineterminator='\n')
-            saved_files.append(filepath)
-            print(f"[OK] {filename} 저장 완료 ({len(combined_df)}개 행)")
+                # 다른 브랜드는 기존 방식대로
+                filename = f"{brand}_{normalized_season}.csv"
+                
+                # 시즌별 폴더에 저장
+                if season in ['26SS', '26S', '25SS', '25S', '24SS', '24S', '26FW', '26F', '25FW', '25F']:
+                    if season in ['26SS', '26S']:
+                        season_folder = '26SS'
+                    elif season in ['25SS', '25S']:
+                        season_folder = '25S'
+                    elif season in ['24SS', '24S']:
+                        season_folder = '24S'
+                    elif season in ['26FW', '26F']:
+                        season_folder = '26FW'
+                    elif season in ['25FW', '25F']:
+                        season_folder = '25FW'
+                    else:
+                        season_folder = season
+                    
+                    season_dir = os.path.join(OUTPUT_DIR, season_folder)
+                    os.makedirs(season_dir, exist_ok=True)
+                    filepath = os.path.join(season_dir, filename)
+                else:
+                    filepath = os.path.join(OUTPUT_DIR, filename)
+                
+                # UTF-8 BOM 인코딩으로 저장 (Excel 호환성)
+                combined_df.to_csv(filepath, index=False, encoding='utf-8-sig', lineterminator='\n')
+                saved_files.append(filepath)
+                print(f"[OK] {filename} 저장 완료 ({len(combined_df)}개 행)")
     
     print("\n" + "=" * 60)
     print(f"[완료] 총 {len(saved_files)}개 파일 생성 완료!")
@@ -700,8 +851,8 @@ def main():
         else:
             print("[WARN] FX 파일이 없어 MLB FW 형식 변환을 건너뜁니다.")
         
-        # 6. CSV 파일 저장 (브랜드_시즌 형식)
-        save_csv_by_brand_season(df)
+        # 6. CSV 파일 저장 (브랜드_시즌 형식, 각 분석기간별 전년 환율 적용)
+        save_csv_by_brand_season(df, df_fx)
         
         print("\n[OK] 모든 작업이 완료되었습니다!")
         

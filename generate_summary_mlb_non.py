@@ -22,6 +22,19 @@ from typing import Dict, Any, List
 # 카테고리 순서
 CATEGORY_ORDER = ['Outer', 'Inner', 'Bottom', 'Shoes', 'Bag', 'Headwear', 'Acc_etc', 'Wear_etc']
 
+def normalize_season_for_filename(season: str) -> str:
+    """
+    시즌 코드를 파일명용으로 정규화
+    25SS → 25s, 26SS → 26s, 25FW → 25fw, 26FW → 26fw
+    """
+    season_upper = season.upper()
+    if season_upper.endswith('SS'):
+        return season_upper[:-2].lower() + 's'  # 25SS → 25s, 26SS → 26s
+    elif season_upper.endswith('FW'):
+        return season_upper.lower()  # 25FW → 25fw
+    else:
+        return season.lower()
+
 
 def calculate_season_kpi(df_season: pd.DataFrame, season: str, currency: str = 'USD') -> Dict[str, float]:
     """
@@ -463,7 +476,7 @@ def main():
         print(f"   > {cat['category']}: {cat['costRate25F_usd']:.1f}%")
     
     # JSON 저장
-    output_file = f'public/COST RAW/{season_folder}/summary_{season_folder.lower()}_{brand.lower()}_non.json'
+    output_file = f'public/COST RAW/{season_folder}/summary_{normalize_season_for_filename(season)}_{brand.lower()}_non.json'
     print(f"\n[4] JSON 파일 저장: {output_file}")
     
     summary = {

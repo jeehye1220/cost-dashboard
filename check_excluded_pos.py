@@ -22,3 +22,11 @@ if 'PO' in df.columns:
                         print(f'{period} 기간 제외된 PO USD 총액: {period_usd:,.2f}')
 
 
+
+
+
+
+
+
+
+
