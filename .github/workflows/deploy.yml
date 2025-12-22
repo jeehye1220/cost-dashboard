@@ -1,5 +1,5 @@
 name: Deploy to Vercel
-# Triggered on 2025-12-22
+# Triggered on 2025-12-22 - retry with secrets
 
 on:
   push:
