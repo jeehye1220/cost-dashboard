@@ -39,7 +39,7 @@
     "avgTag25F_krw": 81371.17,
     "tagYoY_krw": 103.5,
     "avgCost24F_krw": 12591.12,
-    "avgCost25F_krw": 12796.99,
+    "avgCost25F_krw": 12797.0,
     "costYoY_krw": 101.6
   },
   "categories": [
@@ -55,8 +55,8 @@
       "avgTag25F_usd": 112.03,
       "tagYoY_usd": 103.3,
       "avgCost24F_usd": 19.23,
-      "avgCost25F_usd": 18.41,
-      "costYoY_usd": 95.7,
+      "avgCost25F_usd": 18.42,
+      "costYoY_usd": 95.8,
       "material24F_usd": 11.74,
       "material25F_usd": 11.04,
       "artwork24F_usd": 1.8,
@@ -143,8 +143,8 @@
       "avgTag25F_usd": 30.24,
       "tagYoY_usd": 104.6,
       "avgCost24F_usd": 4.34,
-      "avgCost25F_usd": 3.97,
-      "costYoY_usd": 91.5,
+      "avgCost25F_usd": 3.98,
+      "costYoY_usd": 91.7,
       "material24F_usd": 1.77,
       "material25F_usd": 1.58,
       "artwork24F_usd": 0.5,
@@ -198,7 +198,7 @@
       "margin24F_usd": 0.24,
       "margin25F_usd": 0.35,
       "expense24F_usd": 0.03,
-      "expense25F_usd": 0.1,
+      "expense25F_usd": 0.11,
       "materialRate24F_usd": 8.3,
       "materialRate25F_usd": 9.1,
       "artworkRate24F_usd": 0.6,
@@ -216,7 +216,7 @@
       "avgTag25F_krw": 23801.12,
       "tagYoY_krw": 150.3,
       "avgCost24F_krw": 2555.09,
-      "avgCost25F_krw": 4074.36,
+      "avgCost25F_krw": 4074.67,
       "costYoY_krw": 159.5
     }
   ]
