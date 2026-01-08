@@ -570,36 +570,37 @@ def main():
             print(f"\n[ERROR] {csv_file} 파일이 없습니다. 건너뜁니다.")
             continue
         
-        print(f"\n[1] CSV 파일 로드: {csv_file}")
-        df = pd.read_csv(csv_file, encoding='utf-8-sig')
-        
-        # X 브랜드인 경우 스타일 코드로 필터링하여 두 개의 Summary 파일 생성
+        # X 브랜드인 경우 별도의 CSV 파일 사용 (DISCOVERY와 DISCOVERY-KIDS가 분리되어 있음)
         if brand_code == 'X':
-            # 스타일 코드 필터링 (컬럼 인덱스 2가 스타일 코드)
-            df['style_upper'] = df.iloc[:, 2].astype(str).str.upper().str.strip()
-            
-            # DISCOVERY-KIDS: DK로 시작하는 스타일
-            df_kids = df[df['style_upper'].str.startswith('DK', na=False)].copy()
-            # DISCOVERY: DK로 시작하지 않는 나머지 모든 스타일
-            df_discovery = df[~df['style_upper'].str.startswith('DK', na=False)].copy()
+            # DISCOVERY용 CSV 파일 (DK 제외)
+            csv_file_discovery = f'public/COST RAW/{season_folder}/X_{file_season}.csv'
+            # DISCOVERY-KIDS용 CSV 파일 (DK만)
+            csv_file_kids = f'public/COST RAW/{season_folder}/X_{file_season}_kids.csv'
             
             # DISCOVERY Summary 생성
-            if len(df_discovery) > 0:
-                print(f"\n[1-1] DISCOVERY 데이터 필터링: {len(df_discovery)}개 레코드")
+            if os.path.exists(csv_file_discovery):
+                print(f"\n[1-1] DISCOVERY CSV 파일 로드: {csv_file_discovery}")
+                df_discovery = pd.read_csv(csv_file_discovery, encoding='utf-8-sig')
+                print(f"     DISCOVERY 데이터: {len(df_discovery)}개 레코드")
                 process_brand_data(df_discovery, df_fx, brand_code, season_code, prev_season_code, 
                                  season_folder, season, f'summary_{normalize_season_for_filename(season)}_{brand_code.lower()}.json')
             else:
-                print(f"\n[WARN] DISCOVERY 데이터가 없습니다. (DK로 시작하지 않는 스타일 없음)")
+                print(f"\n[WARN] DISCOVERY CSV 파일이 없습니다: {csv_file_discovery}")
             
             # DISCOVERY-KIDS Summary 생성
-            if len(df_kids) > 0:
-                print(f"\n[1-2] DISCOVERY-KIDS 데이터 필터링: {len(df_kids)}개 레코드")
+            if os.path.exists(csv_file_kids):
+                print(f"\n[1-2] DISCOVERY-KIDS CSV 파일 로드: {csv_file_kids}")
+                df_kids = pd.read_csv(csv_file_kids, encoding='utf-8-sig')
+                print(f"     DISCOVERY-KIDS 데이터: {len(df_kids)}개 레코드")
                 process_brand_data(df_kids, df_fx, brand_code, season_code, prev_season_code, 
                                  season_folder, season, f'summary_{normalize_season_for_filename(season)}_{brand_code.lower()}_kids.json')
             else:
-                print(f"\n[WARN] DISCOVERY-KIDS 데이터가 없습니다. (DK로 시작하는 스타일 없음)")
+                print(f"\n[WARN] DISCOVERY-KIDS CSV 파일이 없습니다: {csv_file_kids}")
             
             continue
+        
+        print(f"\n[1] CSV 파일 로드: {csv_file}")
+        df = pd.read_csv(csv_file, encoding='utf-8-sig')
         
         # X 브랜드가 아닌 경우 기존 로직 사용
         output_file = f'public/COST RAW/{season_folder}/summary_{normalize_season_for_filename(season)}_{brand_code.lower()}.json'

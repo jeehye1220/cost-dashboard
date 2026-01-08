@@ -601,7 +601,7 @@ export default function Home() {
         '26SS-M': { summary: 'COST RAW/26SS/summary_26ss_m.json', fx: 'COST RAW/FX.csv' },
         '26SS-I': { summary: 'COST RAW/26SS/summary_26ss_i.json', fx: 'COST RAW/FX.csv' },
         '26SS-X': { summary: 'COST RAW/26SS/summary_26ss_x.json', fx: 'COST RAW/FX.csv' },
-        '26SS-DISCOVERY-KIDS': { summary: 'COST RAW/26SS/summary_26ss_x_kids.json', fx: 'COST RAW/FX.csv' },
+        '26SS-DISCOVERY-KIDS': { summary: 'COST RAW/26SS/summary_26s_x_kids.json', fx: 'COST RAW/FX.csv' },
         '26SS-ST': { summary: 'COST RAW/26SS/summary_26ss_st.json', fx: 'COST RAW/FX.csv' },
         '26SS-V': { summary: 'COST RAW/26SS/summary_26ss_v.json', fx: 'COST RAW/FX.csv' },
         '25SS-M': { summary: 'COST RAW/25S/summary_25s_m.json', fx: 'COST RAW/FX.csv' },
