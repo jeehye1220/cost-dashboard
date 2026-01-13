@@ -4,19 +4,26 @@ import React, { useState, useEffect } from 'react';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 import { loadInsightsFromCSV, detectSeasonType, isSummaryDataValid } from '@/lib/insightsLoader';
 import { saveStructuredInsights } from '@/lib/insightsSaver';
+import { calculateTotalStats } from '@/lib/calculations';
+import { CostDataItem } from '@/lib/types';
 
 interface ExecutiveSummaryProps {
   summary: any;
   brandId?: string;
+  items?: CostDataItem[]; // items 추가
 }
 
-const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId }) => {
-  // 데이터가 없어도 카드는 표시 (기본값으로 표시)
-  if (!summary || !summary.total) {
-    return null; // 또는 기본 구조를 표시할 수도 있음
+const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId, items = [] }) => {
+  // 공통 함수로 total 계산 (summary.total이 있으면 우선 사용, 없으면 items 기반)
+  const calculatedTotal = calculateTotalStats(items, summary);
+  
+  // 데이터가 없으면 표시하지 않음
+  if (!calculatedTotal) {
+    return null;
   }
 
-  const { total } = summary;
+  // calculatedTotal을 total로 사용 (summary.total과 동일한 형식)
+  const total = calculatedTotal;
   
   // 데이터 유효성 검사 (인사이트 로드 여부 결정)
   const hasValidData = isSummaryDataValid(summary);
@@ -30,7 +37,7 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
   let seasonType = is25SS ? '25SS' : 
                    is26SS ? '26SS' : 
                    is26FW ? '26FW' : 
-                   detectSeasonType(total.qty24F);
+                   detectSeasonType(total.totalQty24F || 0);
   
   // DISCOVERY-KIDS는 명시적으로 시즌 설정
   if (brandId === 'DISCOVERY-KIDS') {
@@ -416,9 +423,9 @@ const ExecutiveSummary: React.FC<ExecutiveSummaryProps> = ({ summary, brandId })
     setLoadingAI({ ...loadingAI, [key]: true });
     try {
       const data = {
-        costRate24F_usd: total.costRate24F_usd,
-        costRate25F_usd: total.costRate25F_usd,
-        costRateChange_usd: total.costRateChange_usd,
+        costRate24F_usd: total.costRate24F_usd || 0,
+        costRate25F_usd: total.costRate25F_usd || 0,
+        costRateChange_usd: total.costRateChange || 0,
         avgTag24F_usd: total.avgTag24F_usd,
         avgTag25F_usd: total.avgTag25F_usd,
         tagYoY_usd: total.tagYoY_usd,

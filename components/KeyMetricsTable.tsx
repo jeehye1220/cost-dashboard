@@ -3,20 +3,28 @@
 import React from 'react';
 import { loadInsightsFromCSV, detectSeasonType, isSummaryDataValid } from '@/lib/insightsLoader';
 import { saveInsightsToCSV } from '@/lib/insightsSaver';
+import { calculateTotalStats } from '@/lib/calculations';
+import { CostDataItem } from '@/lib/types';
 
 interface KeyMetricsTableProps {
   summary: any;
   brandId?: string;
+  items?: CostDataItem[]; // items 추가
 }
 
-const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) => {
+const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId, items = [] }) => {
   const [showTable, setShowTable] = React.useState(false);
 
-  if (!summary || !summary.total) {
+  // 공통 함수로 total 계산 (summary.total이 있으면 우선 사용, 없으면 items 기반)
+  const calculatedTotal = calculateTotalStats(items, summary);
+  
+  if (!calculatedTotal) {
     return <div>데이터를 불러오는 중...</div>;
   }
 
-  const { total, fx } = summary;
+  // calculatedTotal을 total로 사용, fx는 summary에서 가져옴
+  const total = calculatedTotal;
+  const fx = summary?.fx;
   
   // 브랜드명 매핑
   const getBrandName = (brandCode: string): string => {
@@ -130,13 +138,13 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
   const muYoY = mu24F > 0 ? ((mu25F / mu24F - 1) * 100) : 0;
 
   // 총판매가 계산 (TAG 금액)
-  const totalTagPrev_KRW = total.avgTag24F_usd * total.qty24F * fxPrev;
-  const totalTagCurr_KRW = total.avgTag25F_usd * total.qty25F * fxPrev; // 당년도 전년 환율 사용
+  const totalTagPrev_KRW = total.avgTag24F_usd * total.totalQty24F * fxPrev;
+  const totalTagCurr_KRW = total.avgTag25F_usd * total.totalQty25F * fxPrev; // 당년도 전년 환율 사용
   const tagAmountYoY = totalTagPrev_KRW > 0 ? ((totalTagCurr_KRW / totalTagPrev_KRW) * 100) : 0; // 비율 (예: 108.7%)
 
   // 총생산액 계산 (원가 총액)
-  const totalCost24F_USD = total.avgCost24F_usd * total.qty24F;
-  const totalCost25F_USD = total.avgCost25F_usd * total.qty25F;
+  const totalCost24F_USD = total.avgCost24F_usd * total.totalQty24F;
+  const totalCost25F_USD = total.avgCost25F_usd * total.totalQty25F;
   const costAmountYoY = totalCost24F_USD > 0 ? ((totalCost25F_USD / totalCost24F_USD) * 100) : 0; // 비율 (예: 103.5%)
   
   // 하드코딩된 getDefaultInsights 함수 제거 - CSV에서만 로드
@@ -149,7 +157,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
     }
     
     // brandId에서 기간 추출 (26SS, 25SS 등)
-    let seasonType = detectSeasonType(total.qty24F);
+    let seasonType = detectSeasonType(total.totalQty24F || 0);
     if (brandId?.startsWith('25SS-') || brandId?.startsWith('26SS-') || brandId?.startsWith('26FW-')) {
       seasonType = brandId.startsWith('25SS-') ? '25SS' : 
                    brandId.startsWith('26SS-') ? '26SS' : '26FW';
@@ -183,7 +191,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
         });
       }
     });
-  }, [tabName, total.qty24F, brandId, summary]);
+  }, [tabName, total.totalQty24F, brandId, summary]);
   
   // 편집 가능한 텍스트 컴포넌트
   const EditableText = ({ id, value, className, onSave, showAIButton = false }: any) => {
@@ -246,8 +254,8 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
     setLoadingAI({ ...loadingAI, [field]: true });
     try {
       const data = {
-        qty24F: total.qty24F,
-        qty25F: total.qty25F,
+        qty24F: total.totalQty24F,
+        qty25F: total.totalQty25F,
         qtyYoY: total.qtyYoY,
         costRate24F_usd: total.costRate24F_usd,
         costRate25F_usd: total.costRate25F_usd,
@@ -301,7 +309,7 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
 
   // CSV 파일에 저장하는 함수
   const saveToCSV = async () => {
-    const seasonType = detectSeasonType(total.qty24F);
+    const seasonType = detectSeasonType(total.totalQty24F || 0);
     const updates: { [key: string]: string } = {};
     
     if (insights.title) updates['metrics_title'] = insights.title;
@@ -341,8 +349,8 @@ const KeyMetricsTable: React.FC<KeyMetricsTableProps> = ({ summary, brandId }) =
   const metrics = [
     {
       label: '총생산수량',
-      value24F: total.qty24F?.toLocaleString() || '0',
-      value25F: total.qty25F?.toLocaleString() || '0',
+      value24F: total.totalQty24F?.toLocaleString() || '0',
+      value25F: total.totalQty25F?.toLocaleString() || '0',
       yoy: total.qtyYoY || 0,
       unit: '',
       displayType: 'percent' // 백분율 표시

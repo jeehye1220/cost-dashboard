@@ -1228,7 +1228,7 @@ export default function BrandDashboard() {
       {/* 메인 컨텐츠 */}
       <main className="w-full max-w-[98%] mx-auto px-2 sm:px-4 lg:px-6 py-4">
         {/* 경영진 요약 */}
-        <ExecutiveSummary summary={summary} brandId={brandId} />
+        <ExecutiveSummary summary={summary} brandId={brandId} items={items} />
 
         {/* 인사이트 요약 - 데이터가 유효할 때만 표시 */}
         {summary && isSummaryDataValid(summary) && (
@@ -1306,8 +1306,8 @@ export default function BrandDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
           {summary ? (
             <>
-              <KeyMetricsTable summary={summary} brandId={brandId} />
-              <CostRateSummaryTable summary={summary} brandId={brandId} />
+              <KeyMetricsTable summary={summary} brandId={brandId} items={items} />
+              <CostRateSummaryTable summary={summary} brandId={brandId} items={items} />
             </>
           ) : (
             <div className="col-span-2 bg-white rounded-xl shadow-md p-6 text-center text-gray-500">
@@ -1329,7 +1329,7 @@ export default function BrandDashboard() {
         <CategoryComparison summary={summary} />
 
         {/* 히트맵 테이블 */}
-        <Dashboard items={items} />
+        <Dashboard items={items} summary={summary} />
 
         {/* 범례 - 실제 존재하는 카테고리만 표시 */}
         <div className="bg-gray-100 rounded-lg p-4 mb-4">

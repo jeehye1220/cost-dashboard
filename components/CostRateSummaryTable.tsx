@@ -1,20 +1,27 @@
 'use client';
 
 import React, { useState } from 'react';
+import { calculateTotalStats } from '@/lib/calculations';
+import { CostDataItem } from '@/lib/types';
 
 interface CostRateSummaryTableProps {
   summary: any;
   brandId?: string;
+  items?: CostDataItem[]; // items 추가
 }
 
-const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary, brandId }) => {
+const CostRateSummaryTable: React.FC<CostRateSummaryTableProps> = ({ summary, brandId, items = [] }) => {
   const [showTable, setShowTable] = useState(false);
 
-  if (!summary || !summary.total) {
+  // 공통 함수로 total 계산 (summary.total이 있으면 우선 사용, 없으면 items 기반)
+  const calculatedTotal = calculateTotalStats(items, summary);
+  
+  if (!calculatedTotal) {
     return null;
   }
 
-  const { total } = summary;
+  // calculatedTotal을 total로 사용
+  const total = calculatedTotal;
 
   // 하드코딩된 시즌 판별 로직 제거 - brandId 기반으로만 판별 (필요시 사용)
 

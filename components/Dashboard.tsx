@@ -4,13 +4,16 @@ import React, { useState } from 'react';
 import { CostDataItem, CategoryInfo } from '@/lib/types';
 import { CATEGORIES } from '@/lib/csvParser';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { calculateCategoryAverage, calculateTotalStats } from '@/lib/calculations';
 
 interface DashboardProps {
   items: CostDataItem[];
+  summary?: any; // summary JSON 데이터 (전체 평균 계산용)
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ items }) => {
+const Dashboard: React.FC<DashboardProps> = ({ items, summary }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [selectedCategory, setSelectedCategory] = useState<string>('전체');
   const [sortBy, setSortBy] = useState<string>('수량순');
 
@@ -88,6 +91,17 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
     setExpandedItems(newExpanded);
   };
 
+  // 카테고리 확장/축소 토글
+  const toggleCategory = (categoryId: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoryId)) {
+      newExpanded.delete(categoryId);
+    } else {
+      newExpanded.add(categoryId);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
   // 카테고리 정보 조회
   const getCategoryInfo = (categoryId: string): CategoryInfo | undefined => {
     // 먼저 availableCategories에서 찾기
@@ -99,22 +113,15 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
     return CATEGORIES.find(c => c.id === categoryId);
   };
 
-  // 필터링된 아이템
-  // NON 시즌인 경우: qty24F > 0 || qty25F > 0 (둘 중 하나라도 있으면 표시)
-  // 일반 시즌인 경우: qty24F > 0 && qty25F > 0 (둘 다 있어야 표시)
+  // 필터링된 아이템 (모든 아이템 표시)
   const filteredItems = React.useMemo(() => {
     const categoryFiltered = selectedCategory === '전체' 
       ? items 
       : items.filter(item => item.category === selectedCategory);
     
-    if (isNonSeason) {
-      // NON 시즌: 전년 또는 당년 데이터가 하나라도 있으면 표시
-      return categoryFiltered.filter(item => item.qty24F > 0 || item.qty25F > 0);
-    } else {
-      // 일반 시즌: 전년과 당년 데이터가 모두 있어야 표시
-      return categoryFiltered.filter(item => item.qty24F > 0 && item.qty25F > 0);
-    }
-  }, [items, selectedCategory, isNonSeason]);
+    // 필터링 조건 제거 - 모든 아이템 표시
+    return categoryFiltered;
+  }, [items, selectedCategory]);
 
   // 정렬
   const sortedItems = [...filteredItems].sort((a, b) => {
@@ -134,6 +141,11 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
     acc[item.category].push(item);
     return acc;
   }, {} as Record<string, CostDataItem[]>);
+
+  // 전체 합계 계산 함수 (공통 함수 사용)
+  const calculateTotalAverage = () => {
+    return calculateTotalStats(sortedItems, summary);
+  };
 
   return (
     <div className="bg-white rounded-xl shadow-md p-6 mb-4 border border-gray-100">
@@ -217,26 +229,431 @@ const Dashboard: React.FC<DashboardProps> = ({ items }) => {
             </tr>
           </thead>
           <tbody>
+            {/* 전체 합계 행 */}
+            {(() => {
+              const totalAvg = calculateTotalAverage();
+              if (!totalAvg) return null;
+
+              return (
+                <tr className="bg-blue-50 border-b-2 border-blue-300 font-bold">
+                  <td className="border-r border-gray-200 px-3 py-3 text-center text-blue-700">
+                    합계
+                  </td>
+                  <td className="border-r border-gray-200 px-3 py-3 text-center text-blue-700">
+                    전체 합계
+                  </td>
+                  <td className="border-r border-gray-200 px-3 py-3 text-center text-blue-700">
+                    -
+                  </td>
+                  <td className="border-r border-gray-200 px-3 py-3 text-right text-blue-700">
+                    {totalAvg.avgTag25F.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </td>
+                  <td className={`border-r border-gray-200 px-3 py-3 text-right font-semibold ${
+                    totalAvg.tagYoY > 100 ? 'text-blue-600' : 'text-red-600'
+                  }`}>
+                    {totalAvg.tagYoY.toFixed(0)}%
+                  </td>
+                  <td className={`border-r border-gray-200 px-3 py-3 text-right font-semibold ${
+                    totalAvg.costYoY > 100 ? 'text-red-600' : 'text-blue-600'
+                  }`}>
+                    {totalAvg.costYoY.toFixed(0)}%
+                  </td>
+                  <td
+                    className="border-r border-gray-200 px-3 py-3 text-right font-bold"
+                    style={{
+                      backgroundColor: totalAvg.costRateChange < 0 ? '#dbeafe' : '#fee2e2',
+                      color: totalAvg.costRateChange < 0 ? '#1e40af' : '#991b1b'
+                    }}
+                  >
+                    {totalAvg.costRateChange > 0 ? '+' : ''}
+                    {totalAvg.costRateChange.toFixed(1)}%p
+                  </td>
+                  <td
+                    className="border-r border-gray-200 px-3 py-3 text-right font-semibold"
+                    style={{
+                      backgroundColor: totalAvg.totalCostChange < 0 ? '#dbeafe' : '#fee2e2',
+                      color: totalAvg.totalCostChange < 0 ? '#1e40af' : '#991b1b'
+                    }}
+                  >
+                    {totalAvg.totalCostChange >= 0 ? '+' : '-'}
+                    ${Math.abs(totalAvg.totalCostChange).toFixed(2)}
+                  </td>
+                  <td
+                    className="border-r border-gray-200 px-3 py-3 text-right"
+                    style={{ backgroundColor: getHeatmapColor(totalAvg.materialChange) }}
+                  >
+                    {totalAvg.materialChange >= 0 ? '+' : '-'}${Math.abs(totalAvg.materialChange).toFixed(2)}
+                  </td>
+                  <td
+                    className="border-r border-gray-200 px-3 py-3 text-right"
+                    style={{ backgroundColor: getHeatmapColor(totalAvg.artworkChange) }}
+                  >
+                    {totalAvg.artworkChange >= 0 ? '+' : '-'}${Math.abs(totalAvg.artworkChange).toFixed(2)}
+                  </td>
+                  <td
+                    className="border-r border-gray-200 px-3 py-3 text-right"
+                    style={{ backgroundColor: getHeatmapColor(totalAvg.laborChange) }}
+                  >
+                    {totalAvg.laborChange >= 0 ? '+' : '-'}${Math.abs(totalAvg.laborChange).toFixed(2)}
+                  </td>
+                  <td
+                    className="border-r border-gray-200 px-3 py-3 text-right"
+                    style={{ backgroundColor: getHeatmapColor(totalAvg.marginChange) }}
+                  >
+                    {totalAvg.marginChange >= 0 ? '+' : '-'}${Math.abs(totalAvg.marginChange).toFixed(2)}
+                  </td>
+                  <td
+                    className="border-r border-gray-200 px-3 py-3 text-right"
+                    style={{ backgroundColor: getHeatmapColor(totalAvg.expenseChange) }}
+                  >
+                    {totalAvg.expenseChange >= 0 ? '+' : '-'}${Math.abs(totalAvg.expenseChange).toFixed(2)}
+                  </td>
+                  <td className="border-r border-gray-200 px-3 py-3 text-right text-blue-700">
+                    {totalAvg.totalQty25F.toLocaleString()}개
+                    {totalAvg.totalQty24F > 0 && (
+                      <span className="text-blue-600 ml-1">
+                        ({Math.round(totalAvg.qtyYoY)}%)
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })()}
+
             {availableCategories.map(category => {
               const categoryItems = groupedItems[category.id] || [];
               
               if (categoryItems.length === 0) return null;
 
+              const categoryAvg = calculateCategoryAverage(categoryItems);
+
               return (
                 <React.Fragment key={category.id}>
-                  {/* 카테고리 헤더 */}
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <td
-                      colSpan={14}
-                      className="border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-800"
-                      style={{ 
-                        color: category.color,
-                        borderLeft: `4px solid ${category.color}`
-                      }}
-                    >
-                      {category.name} ({categoryItems.length}개 아이템)
-                    </td>
-                  </tr>
+                  {/* 카테고리 헤더 (소계 지표 포함) */}
+                  {categoryAvg && (() => {
+                    const isExpanded = expandedCategories.has(category.id);
+                    return (
+                      <>
+                        <tr className="bg-gray-50 border-b border-gray-200 font-bold" style={{ borderLeft: `4px solid ${category.color}` }}>
+                          <td className="border-r border-gray-200 px-3 py-3 text-center text-gray-800">
+                            <button
+                              onClick={() => toggleCategory(category.id)}
+                              className="text-gray-500 hover:text-blue-600"
+                            >
+                              {isExpanded ? '▼' : '▶'}
+                            </button>
+                          </td>
+                          <td className="border-r border-gray-200 px-4 py-3 text-left font-bold text-gray-800" style={{ color: category.color }}>
+                            {category.name} ({categoryItems.length}개 아이템)
+                          </td>
+                          <td className="border-r border-gray-200 px-3 py-3 text-center text-gray-800">
+                            소계
+                          </td>
+                      <td className="border-r border-gray-200 px-3 py-3 text-right text-gray-800">
+                        {categoryAvg.avgTag25F.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </td>
+                      <td className={`border-r border-gray-200 px-3 py-3 text-right font-semibold ${
+                        categoryAvg.tagYoY > 100 ? 'text-blue-600' : 'text-red-600'
+                      }`}>
+                        {categoryAvg.tagYoY.toFixed(0)}%
+                      </td>
+                      <td className={`border-r border-gray-200 px-3 py-3 text-right font-semibold ${
+                        categoryAvg.costYoY > 100 ? 'text-red-600' : 'text-blue-600'
+                      }`}>
+                        {categoryAvg.costYoY.toFixed(0)}%
+                      </td>
+                      <td
+                        className="border-r border-gray-200 px-3 py-3 text-right font-bold"
+                        style={{
+                          backgroundColor: categoryAvg.costRateChange < 0 ? '#dbeafe' : '#fee2e2',
+                          color: categoryAvg.costRateChange < 0 ? '#1e40af' : '#991b1b'
+                        }}
+                      >
+                        {categoryAvg.costRateChange > 0 ? '+' : ''}
+                        {categoryAvg.costRateChange.toFixed(1)}%p
+                      </td>
+                      <td
+                        className="border-r border-gray-200 px-3 py-3 text-right font-semibold"
+                        style={{
+                          backgroundColor: categoryAvg.totalCostChange < 0 ? '#dbeafe' : '#fee2e2',
+                          color: categoryAvg.totalCostChange < 0 ? '#1e40af' : '#991b1b'
+                        }}
+                      >
+                        {categoryAvg.totalCostChange >= 0 ? '+' : '-'}
+                        ${Math.abs(categoryAvg.totalCostChange).toFixed(2)}
+                      </td>
+                      <td
+                        className="border-r border-gray-200 px-3 py-3 text-right"
+                        style={{ backgroundColor: getHeatmapColor(categoryAvg.materialChange) }}
+                      >
+                        {categoryAvg.materialChange >= 0 ? '+' : '-'}${Math.abs(categoryAvg.materialChange).toFixed(2)}
+                      </td>
+                      <td
+                        className="border-r border-gray-200 px-3 py-3 text-right"
+                        style={{ backgroundColor: getHeatmapColor(categoryAvg.artworkChange) }}
+                      >
+                        {categoryAvg.artworkChange >= 0 ? '+' : '-'}${Math.abs(categoryAvg.artworkChange).toFixed(2)}
+                      </td>
+                      <td
+                        className="border-r border-gray-200 px-3 py-3 text-right"
+                        style={{ backgroundColor: getHeatmapColor(categoryAvg.laborChange) }}
+                      >
+                        {categoryAvg.laborChange >= 0 ? '+' : '-'}${Math.abs(categoryAvg.laborChange).toFixed(2)}
+                      </td>
+                      <td
+                        className="border-r border-gray-200 px-3 py-3 text-right"
+                        style={{ backgroundColor: getHeatmapColor(categoryAvg.marginChange) }}
+                      >
+                        {categoryAvg.marginChange >= 0 ? '+' : '-'}${Math.abs(categoryAvg.marginChange).toFixed(2)}
+                      </td>
+                      <td
+                        className="border-r border-gray-200 px-3 py-3 text-right"
+                        style={{ backgroundColor: getHeatmapColor(categoryAvg.expenseChange) }}
+                      >
+                        {categoryAvg.expenseChange >= 0 ? '+' : '-'}${Math.abs(categoryAvg.expenseChange).toFixed(2)}
+                      </td>
+                      <td className="border-r border-gray-200 px-3 py-3 text-right text-gray-800">
+                        {categoryAvg.totalQty25F.toLocaleString()}개
+                        {categoryAvg.totalQty24F > 0 && (
+                          <span className="text-gray-600 ml-1">
+                            ({Math.round(categoryAvg.qtyYoY)}%)
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+
+                    {/* 확장된 카테고리 상세 정보 */}
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={14} className="border-r border-gray-200 px-6 py-5 bg-gradient-to-br from-blue-50/30 via-white to-pink-50/30">
+                          <div className="grid grid-cols-2 gap-6">
+                            {/* 전년 시즌 */}
+                            <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+                              <h4 className="font-bold text-gray-800 mb-4 text-base">
+                                전년 시즌
+                              </h4>
+                              <div className="space-y-2.5 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">수량:</span>
+                                  <span className="font-medium">
+                                    {categoryAvg.totalQty24F?.toLocaleString() || '0'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">평균 TAG:</span>
+                                  <span className="font-medium">
+                                    {categoryAvg.avgTag24F?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '0'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">원부자재:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgMaterial24F?.toFixed(2) || '0.00'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">아트웍:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgArtwork24F?.toFixed(2) || '0.00'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">공임:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgLabor24F?.toFixed(2) || '0.00'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">마진:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgMargin24F?.toFixed(2) || '0.00'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">경비:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgExpense24F?.toFixed(2) || '0.00'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between pt-3 border-t border-gray-200">
+                                  <span className="text-gray-800 font-semibold">
+                                    평균 원가:
+                                  </span>
+                                  <span className="font-bold text-gray-900">
+                                    ${categoryAvg.avgCost24F?.toFixed(2) || '0.00'}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-800 font-semibold">
+                                    원가율:
+                                  </span>
+                                  <span className="font-bold text-gray-900">
+                                    {categoryAvg.avgCostRate24F?.toFixed(1) || '0.0'}%
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* 당년 시즌 */}
+                            <div className="bg-white rounded-lg p-4 shadow-sm border border-blue-100">
+                              <h4 className="font-bold text-gray-800 mb-4 text-base">
+                                당년 시즌
+                              </h4>
+                              <div className="space-y-2.5 text-sm">
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">수량:</span>
+                                  <span className="font-medium">
+                                    {categoryAvg.totalQty25F?.toLocaleString() || '0'}
+                                    <span
+                                      className={`ml-2 text-xs ${
+                                        (categoryAvg.totalQty25F - categoryAvg.totalQty24F) >= 0
+                                          ? 'text-blue-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    >
+                                      ({(categoryAvg.totalQty25F - categoryAvg.totalQty24F) >= 0 ? '+' : ''}
+                                      {(categoryAvg.totalQty25F - categoryAvg.totalQty24F)?.toLocaleString()})
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">평균 TAG:</span>
+                                  <span className="font-medium">
+                                    {categoryAvg.avgTag25F?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '0'}
+                                    <span className={`ml-2 text-xs ${
+                                      (categoryAvg.tagYoY || 0) > 100
+                                        ? 'text-blue-600'
+                                        : 'text-red-600'
+                                    }`}>
+                                      (YOY: {categoryAvg.tagYoY?.toFixed(1) || '0'}%)
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">원부자재:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgMaterial25F?.toFixed(2) || '0.00'}
+                                    <span
+                                      className={`ml-2 text-xs ${
+                                        categoryAvg.materialChange < 0
+                                          ? 'text-blue-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    >
+                                      ({categoryAvg.materialChange >= 0 ? '+' : '-'}$
+                                      {Math.abs(categoryAvg.materialChange)?.toFixed(2)})
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">아트웍:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgArtwork25F?.toFixed(2) || '0.00'}
+                                    <span
+                                      className={`ml-2 text-xs ${
+                                        categoryAvg.artworkChange < 0
+                                          ? 'text-blue-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    >
+                                      ({categoryAvg.artworkChange >= 0 ? '+' : '-'}$
+                                      {Math.abs(categoryAvg.artworkChange)?.toFixed(2)})
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">공임:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgLabor25F?.toFixed(2) || '0.00'}
+                                    <span
+                                      className={`ml-2 text-xs ${
+                                        categoryAvg.laborChange < 0
+                                          ? 'text-blue-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    >
+                                      ({categoryAvg.laborChange >= 0 ? '+' : '-'}$
+                                      {Math.abs(categoryAvg.laborChange)?.toFixed(2)})
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">마진:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgMargin25F?.toFixed(2) || '0.00'}
+                                    <span
+                                      className={`ml-2 text-xs ${
+                                        categoryAvg.marginChange < 0
+                                          ? 'text-blue-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    >
+                                      ({categoryAvg.marginChange >= 0 ? '+' : '-'}$
+                                      {Math.abs(categoryAvg.marginChange)?.toFixed(2)})
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-600">경비:</span>
+                                  <span className="font-medium">
+                                    ${categoryAvg.avgExpense25F?.toFixed(2) || '0.00'}
+                                    <span
+                                      className={`ml-2 text-xs ${
+                                        categoryAvg.expenseChange < 0
+                                          ? 'text-blue-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    >
+                                      ({categoryAvg.expenseChange >= 0 ? '+' : '-'}$
+                                      {Math.abs(categoryAvg.expenseChange)?.toFixed(2)})
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="flex justify-between pt-3 border-t border-gray-200">
+                                  <span className="text-gray-800 font-semibold">
+                                    평균 원가:
+                                  </span>
+                                  <span className="font-bold">
+                                    ${categoryAvg.avgCost25F?.toFixed(2) || '0.00'}
+                                    <span
+                                      className={`ml-2 text-xs ${
+                                        (categoryAvg.avgCost25F - categoryAvg.avgCost24F) < 0
+                                          ? 'text-blue-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    >
+                                      ({(categoryAvg.avgCost25F - categoryAvg.avgCost24F) >= 0 ? '+' : '-'}$
+                                      {Math.abs(categoryAvg.avgCost25F - categoryAvg.avgCost24F)?.toFixed(2)})
+                                    </span>
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-gray-800 font-semibold">
+                                    원가율:
+                                  </span>
+                                  <span className="font-bold">
+                                    {categoryAvg.avgCostRate25F?.toFixed(1) || '0.0'}%
+                                    <span
+                                      className={`ml-2 text-xs ${
+                                        categoryAvg.costRateChange < 0
+                                          ? 'text-blue-600'
+                                          : 'text-red-600'
+                                      }`}
+                                    >
+                                      ({categoryAvg.costRateChange >= 0 ? '+' : ''}
+                                      {categoryAvg.costRateChange?.toFixed(1)}%p)
+                                    </span>
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                      </>
+                    );
+                  })()}
 
                   {/* 아이템 목록 */}
                   {categoryItems.map(item => {
